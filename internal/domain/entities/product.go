@@ -29,11 +29,12 @@ func (p *Product) validate() error {
 	return nil
 }
 
-func NewProduct(name string, price float64) *Product {
+func NewProduct(name string, price float64, seller *Seller) *Product {
 	return &Product{
-		ID:    uuid.New(),
-		Name:  name,
-		Price: price,
+		ID:     uuid.New(),
+		Name:   name,
+		Price:  price,
+		Seller: seller,
 	}
 }
 
