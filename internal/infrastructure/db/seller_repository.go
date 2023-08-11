@@ -1,6 +1,7 @@
 package db
 
 import (
+	"github.com/google/uuid"
 	"github.com/sklinkert/go-ddd/internal/domain/entities"
 	"github.com/sklinkert/go-ddd/internal/domain/repositories"
 	"gorm.io/gorm"
@@ -14,37 +15,41 @@ func NewGormSellerRepository(db *gorm.DB) repositories.SellerRepository {
 	return &GormSellerRepository{db: db}
 }
 
-func (repo *GormSellerRepository) Save(seller *entities.Seller) error {
+func (repo *GormSellerRepository) Save(seller *entities.ValidatedSeller) error {
 	dbSeller := ToDBSeller(seller)
 	return repo.db.Save(dbSeller).Error
 }
 
-func (repo *GormSellerRepository) FindByID(id int) (*entities.Seller, error) {
+func (repo *GormSellerRepository) FindByID(id uuid.UUID) (*entities.ValidatedSeller, error) {
 	var dbSeller Seller
 	if err := repo.db.First(&dbSeller, id).Error; err != nil {
 		return nil, err
 	}
-	return FromDBSeller(&dbSeller), nil
+	return FromDBSeller(&dbSeller)
 }
 
-func (repo *GormSellerRepository) GetAll() ([]*entities.Seller, error) {
+func (repo *GormSellerRepository) GetAll() ([]*entities.ValidatedSeller, error) {
+	var err error
 	var dbSellers []Seller
 	if err := repo.db.Find(&dbSellers).Error; err != nil {
 		return nil, err
 	}
 
-	sellers := make([]*entities.Seller, len(dbSellers))
+	sellers := make([]*entities.ValidatedSeller, len(dbSellers))
 	for i, dbSeller := range dbSellers {
-		sellers[i] = FromDBSeller(&dbSeller)
+		sellers[i], err = FromDBSeller(&dbSeller)
+		if err != nil {
+			return nil, err
+		}
 	}
 	return sellers, nil
 }
 
-func (repo *GormSellerRepository) Update(seller *entities.Seller) error {
+func (repo *GormSellerRepository) Update(seller *entities.ValidatedSeller) error {
 	dbSeller := ToDBSeller(seller)
 	return repo.db.Model(&Seller{}).Where("id = ?", dbSeller.ID).Updates(dbSeller).Error
 }
 
-func (repo *GormSellerRepository) Delete(id int) error {
+func (repo *GormSellerRepository) Delete(id uuid.UUID) error {
 	return repo.db.Delete(&Seller{}, id).Error
 }

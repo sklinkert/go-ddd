@@ -1,15 +1,17 @@
 package db
 
-import "github.com/jinzhu/gorm"
+import (
+	"github.com/google/uuid"
+)
 
 type Product struct {
-	gorm.Model
+	ID       uuid.UUID
 	Name     string
 	Price    float64
-	SellerID uint
+	SellerID uuid.UUID
 }
 
 type Seller struct {
-	gorm.Model
+	ID   uuid.UUID
 	Name string
 }

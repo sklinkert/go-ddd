@@ -4,7 +4,7 @@ import (
 	"github.com/sklinkert/go-ddd/internal/domain/entities"
 )
 
-func ToDBProduct(product *entities.Product) *Product {
+func ToDBProduct(product *entities.ValidatedProduct) *Product {
 	var p = &Product{
 		Name:     product.Name,
 		Price:    product.Price,
@@ -15,7 +15,7 @@ func ToDBProduct(product *entities.Product) *Product {
 	return p
 }
 
-func FromDBProduct(dbProduct *Product) *entities.Product {
+func FromDBProduct(dbProduct *Product) (*entities.ValidatedProduct, error) {
 	var p = &entities.Product{
 		Name:  dbProduct.Name,
 		Price: dbProduct.Price,
@@ -25,5 +25,5 @@ func FromDBProduct(dbProduct *Product) *entities.Product {
 	}
 	p.ID = dbProduct.ID
 
-	return p
+	return entities.NewValidatedProduct(p)
 }

@@ -1,6 +1,7 @@
 package services
 
 import (
+	"github.com/google/uuid"
 	"github.com/sklinkert/go-ddd/internal/domain/entities"
 	"github.com/sklinkert/go-ddd/internal/domain/repositories"
 )
@@ -14,13 +15,17 @@ func NewProductService(repo repositories.ProductRepository) *ProductService {
 }
 
 func (s *ProductService) CreateProduct(product *entities.Product) error {
-	return s.repo.Save(product)
+	validatedProduct, err := entities.NewValidatedProduct(product)
+	if err != nil {
+		return err
+	}
+	return s.repo.Save(validatedProduct)
 }
 
-func (s *ProductService) GetAllProducts() ([]*entities.Product, error) {
+func (s *ProductService) GetAllProducts() ([]*entities.ValidatedProduct, error) {
 	return s.repo.GetAll()
 }
 
-func (s *ProductService) FindProductByID(id int) (*entities.Product, error) {
+func (s *ProductService) FindProductByID(id uuid.UUID) (*entities.ValidatedProduct, error) {
 	return s.repo.FindByID(id)
 }

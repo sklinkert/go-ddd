@@ -1,11 +1,11 @@
 package rest
 
 import (
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/sklinkert/go-ddd/internal/application/services"
 	"github.com/sklinkert/go-ddd/internal/domain/entities"
 	"net/http"
-	"strconv"
 )
 
 type SellerController struct {
@@ -53,7 +53,7 @@ func (sc *SellerController) GetAllSellers(c echo.Context) error {
 }
 
 func (sc *SellerController) GetSellerByID(c echo.Context) error {
-	id, err := strconv.Atoi(c.Param("id"))
+	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{
 			"error": "Invalid seller ID format",

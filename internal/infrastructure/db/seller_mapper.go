@@ -5,7 +5,7 @@ import (
 )
 
 // ToDBSeller maps domain Seller entity to DB persistence model.
-func ToDBSeller(seller *entities.Seller) *Seller {
+func ToDBSeller(seller *entities.ValidatedSeller) *Seller {
 	s := &Seller{
 		Name: seller.Name,
 	}
@@ -15,12 +15,12 @@ func ToDBSeller(seller *entities.Seller) *Seller {
 }
 
 // FromDBSeller maps DB persistence model to domain Seller entity.
-func FromDBSeller(dbSeller *Seller) *entities.Seller {
+func FromDBSeller(dbSeller *Seller) (*entities.ValidatedSeller, error) {
 	s := &entities.Seller{
 		ID:   dbSeller.ID,
 		Name: dbSeller.Name,
 	}
 	s.ID = dbSeller.ID
 
-	return s
+	return entities.NewValidatedSeller(s)
 }
