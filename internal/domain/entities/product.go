@@ -12,15 +12,6 @@ type Product struct {
 	Seller *Seller
 }
 
-type ValidatedProduct struct {
-	Product
-	isValidated bool
-}
-
-func (vp *ValidatedProduct) IsValid() bool {
-	return vp.isValidated
-}
-
 func (p *Product) validate() error {
 	if p.Name == "" || p.Price <= 0 {
 		return errors.New("invalid product details")
@@ -36,15 +27,4 @@ func NewProduct(name string, price float64, seller *Seller) *Product {
 		Price:  price,
 		Seller: seller,
 	}
-}
-
-func NewValidatedProduct(product *Product) (*ValidatedProduct, error) {
-	if err := product.validate(); err != nil {
-		return nil, err
-	}
-
-	return &ValidatedProduct{
-		Product:     *product,
-		isValidated: true,
-	}, nil
 }
