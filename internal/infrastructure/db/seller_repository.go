@@ -17,7 +17,19 @@ func NewGormSellerRepository(db *gorm.DB) repositories.SellerRepository {
 
 func (repo *GormSellerRepository) Create(seller *entities.ValidatedSeller) error {
 	dbSeller := ToDBSeller(seller)
-	return repo.db.Save(dbSeller).Error
+
+	if err := repo.db.Save(dbSeller).Error; err != nil {
+		return err
+	}
+
+	storedSeller, err := repo.FindByID(dbSeller.ID)
+	if err != nil {
+		return err
+	}
+
+	*seller = *storedSeller
+
+	return nil
 }
 
 func (repo *GormSellerRepository) FindByID(id uuid.UUID) (*entities.ValidatedSeller, error) {
