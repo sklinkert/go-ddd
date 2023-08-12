@@ -26,9 +26,7 @@ func TestCreateProduct(t *testing.T) {
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
 	ctrl := rest.NewProductController(e, mockService)
-	expectedProduct := entities.NewProduct("TestProduct", 9.99, nil)
-	validatedProduct, _ := entities.NewValidatedProduct(expectedProduct)
-	mockService.On("CreateProduct", mock.Anything).Return(validatedProduct, nil)
+	mockService.On("CreateProduct", mock.Anything).Return(nil)
 
 	// Execute
 	err := ctrl.CreateProduct(c)

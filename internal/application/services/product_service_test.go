@@ -12,9 +12,9 @@ type MockProductRepository struct {
 	products []*entities.ValidatedProduct
 }
 
-func (m *MockProductRepository) Create(product *entities.ValidatedProduct) (*entities.ValidatedProduct, error) {
+func (m *MockProductRepository) Save(product *entities.ValidatedProduct) error {
 	m.products = append(m.products, product)
-	return product, nil
+	return nil
 }
 
 func (m *MockProductRepository) GetAll() ([]*entities.ValidatedProduct, error) {
@@ -55,7 +55,7 @@ func TestProductService_CreateProduct(t *testing.T) {
 	service := NewProductService(repo)
 
 	product := entities.NewProduct("Example", 100.0, nil)
-	_, err := service.CreateProduct(product)
+	err := service.CreateProduct(product)
 	if err != nil {
 		t.Errorf("Unexpected error: %s", err)
 	}
@@ -70,8 +70,8 @@ func TestProductService_GetAllProducts(t *testing.T) {
 	service := NewProductService(repo)
 
 	// Add two products
-	service.CreateProduct(entities.NewProduct("Example1", 100.0, nil))
-	service.CreateProduct(entities.NewProduct("Example2", 200.0, nil))
+	_ = service.CreateProduct(entities.NewProduct("Example1", 100.0, nil))
+	_ = service.CreateProduct(entities.NewProduct("Example2", 200.0, nil))
 
 	products, err := service.GetAllProducts()
 	if err != nil {
@@ -88,7 +88,7 @@ func TestProductService_FindProductByID(t *testing.T) {
 	service := NewProductService(repo)
 
 	product := entities.NewProduct("Example", 100.0, nil)
-	service.CreateProduct(product)
+	_ = service.CreateProduct(product)
 
 	foundProduct, err := service.FindProductByID(product.ID)
 	if err != nil {

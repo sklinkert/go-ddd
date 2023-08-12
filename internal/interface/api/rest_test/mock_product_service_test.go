@@ -10,9 +10,9 @@ type MockProductService struct {
 	mock.Mock
 }
 
-func (m *MockProductService) CreateProduct(product *entities.Product) (*entities.ValidatedProduct, error) {
+func (m *MockProductService) CreateProduct(product *entities.Product) error {
 	args := m.Called(product)
-	return args.Get(0).(*entities.ValidatedProduct), args.Error(1)
+	return args.Error(0)
 }
 
 func (m *MockProductService) GetAllProducts() ([]*entities.ValidatedProduct, error) {

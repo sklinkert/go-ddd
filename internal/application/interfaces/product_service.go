@@ -6,7 +6,7 @@ import (
 )
 
 type ProductService interface {
-	CreateProduct(product *entities.Product) (*entities.ValidatedProduct, error)
+	CreateProduct(product *entities.Product) error
 	GetAllProducts() ([]*entities.ValidatedProduct, error)
 	FindProductByID(id uuid.UUID) (*entities.ValidatedProduct, error)
 }

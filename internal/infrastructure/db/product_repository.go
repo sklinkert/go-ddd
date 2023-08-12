@@ -15,26 +15,11 @@ func NewGormProductRepository(db *gorm.DB) repositories.ProductRepository {
 	return &GormProductRepository{db: db}
 }
 
-func (repo *GormProductRepository) Create(product *entities.ValidatedProduct) (*entities.ValidatedProduct, error) {
+func (repo *GormProductRepository) Save(product *entities.ValidatedProduct) error {
 	// Map domain entity to DB model
 	dbProduct := ToDBProduct(product)
 
-	if err := repo.db.Save(dbProduct).Error; err != nil {
-		return nil, err
-	}
-
-	// read newly created row from db to never operate on data that was not persisted
-	if err := repo.db.First(dbProduct, dbProduct.ID).Error; err != nil {
-		return nil, err
-	}
-
-	// Map back to domain entity
-	storedProduct, err := FromDBProduct(dbProduct)
-	if err != nil {
-		return nil, err
-	}
-
-	return storedProduct, nil
+	return repo.db.Save(dbProduct).Error
 }
 
 func (repo *GormProductRepository) FindByID(id uuid.UUID) (*entities.ValidatedProduct, error) {
