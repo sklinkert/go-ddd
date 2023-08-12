@@ -1,4 +1,4 @@
-package db_test
+package sqlite_test
 
 import (
 	"github.com/sklinkert/go-ddd/internal/domain/entities"
