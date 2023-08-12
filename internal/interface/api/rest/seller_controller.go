@@ -3,16 +3,16 @@ package rest
 import (
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
-	"github.com/sklinkert/go-ddd/internal/application/services"
+	"github.com/sklinkert/go-ddd/internal/application/interfaces"
 	"github.com/sklinkert/go-ddd/internal/domain/entities"
 	"net/http"
 )
 
 type SellerController struct {
-	service *services.SellerService
+	service interfaces.SellerService
 }
 
-func NewSellerController(e *echo.Echo, service *services.SellerService) {
+func NewSellerController(e *echo.Echo, service interfaces.SellerService) *SellerController {
 	controller := &SellerController{
 		service: service,
 	}
@@ -20,6 +20,8 @@ func NewSellerController(e *echo.Echo, service *services.SellerService) {
 	e.POST("/sellers", controller.CreateSeller)
 	e.GET("/sellers", controller.GetAllSellers)
 	e.GET("/sellers/:id", controller.GetSellerByID)
+
+	return controller
 }
 
 func (sc *SellerController) CreateSeller(c echo.Context) error {
