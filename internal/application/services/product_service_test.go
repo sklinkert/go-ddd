@@ -54,7 +54,7 @@ func TestProductService_CreateProduct(t *testing.T) {
 	repo := &MockProductRepository{}
 	service := NewProductService(repo)
 
-	product := entities.NewProduct("Example", 100.0)
+	product := entities.NewProduct("Example", 100.0, nil)
 	err := service.CreateProduct(product)
 	if err != nil {
 		t.Errorf("Unexpected error: %s", err)
@@ -70,8 +70,8 @@ func TestProductService_GetAllProducts(t *testing.T) {
 	service := NewProductService(repo)
 
 	// Add two products
-	_ = service.CreateProduct(entities.NewProduct("Example1", 100.0))
-	_ = service.CreateProduct(entities.NewProduct("Example2", 200.0))
+	_ = service.CreateProduct(entities.NewProduct("Example1", 100.0, nil))
+	_ = service.CreateProduct(entities.NewProduct("Example2", 200.0, nil))
 
 	products, err := service.GetAllProducts()
 	if err != nil {
@@ -87,7 +87,7 @@ func TestProductService_FindProductByID(t *testing.T) {
 	repo := &MockProductRepository{}
 	service := NewProductService(repo)
 
-	product := entities.NewProduct("Example", 100.0)
+	product := entities.NewProduct("Example", 100.0, nil)
 	_ = service.CreateProduct(product)
 
 	foundProduct, err := service.FindProductByID(product.ID)
