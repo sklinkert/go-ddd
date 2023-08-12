@@ -1,20 +1,8 @@
 package entities
 
-import (
-	"errors"
-)
-
 type ValidatedSeller struct {
 	Seller
 	isValidated bool
-}
-
-func (s *Seller) validate() error {
-	if s.Name == "" {
-		return errors.New("invalid seller details")
-	}
-
-	return nil
 }
 
 func (vp *ValidatedSeller) IsValid() bool {

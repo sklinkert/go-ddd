@@ -1,6 +1,7 @@
 package entities
 
 import (
+	"errors"
 	"github.com/google/uuid"
 )
 
@@ -14,4 +15,12 @@ func NewSeller(name string) *Seller {
 		ID:   uuid.New(),
 		Name: name,
 	}
+}
+
+func (s *Seller) validate() error {
+	if s.Name == "" {
+		return errors.New("invalid seller details")
+	}
+
+	return nil
 }
