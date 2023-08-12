@@ -19,7 +19,7 @@ func (repo *GormProductRepository) Create(product *entities.ValidatedProduct) er
 	// Map domain entity to DB model
 	dbProduct := ToDBProduct(product)
 
-	if err := repo.db.Save(dbProduct).Error; err != nil {
+	if err := repo.db.Create(dbProduct).Error; err != nil {
 		return err
 	}
 
