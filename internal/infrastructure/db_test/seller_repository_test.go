@@ -17,7 +17,7 @@ func TestSellerRepositorySave(t *testing.T) {
 	seller := entities.NewSeller("John")
 	validatedSeller, _ := entities.NewValidatedSeller(seller)
 
-	err := repo.Save(validatedSeller)
+	err := repo.Create(validatedSeller)
 	assert.Nil(t, err)
 
 	// More assertions related to saving can go here.
@@ -31,7 +31,7 @@ func TestSellerRepositoryFindByID(t *testing.T) {
 
 	seller := entities.NewSeller("John")
 	validatedSeller, _ := entities.NewValidatedSeller(seller)
-	_ = repo.Save(validatedSeller)
+	_ = repo.Create(validatedSeller)
 
 	fetchedSeller, err := repo.FindByID(validatedSeller.Seller.ID)
 	assert.Nil(t, err)
@@ -48,11 +48,11 @@ func TestSellerRepositoryGetAll(t *testing.T) {
 
 	seller1 := entities.NewSeller("John")
 	validatedSeller1, _ := entities.NewValidatedSeller(seller1)
-	_ = repo.Save(validatedSeller1)
+	_ = repo.Create(validatedSeller1)
 
 	seller2 := entities.NewSeller("Jane")
 	validatedSeller2, _ := entities.NewValidatedSeller(seller2)
-	_ = repo.Save(validatedSeller2)
+	_ = repo.Create(validatedSeller2)
 
 	allSellers, err := repo.GetAll()
 	assert.Nil(t, err)
@@ -68,7 +68,7 @@ func TestSellerRepositoryUpdate(t *testing.T) {
 
 	seller := entities.NewSeller("John")
 	validatedSeller, _ := entities.NewValidatedSeller(seller)
-	_ = repo.Save(validatedSeller)
+	_ = repo.Create(validatedSeller)
 
 	// Update name and validate
 	validatedSeller.Seller.Name = "Johnny"
@@ -87,7 +87,7 @@ func TestSellerRepositoryDelete(t *testing.T) {
 
 	seller := entities.NewSeller("John")
 	validatedSeller, _ := entities.NewValidatedSeller(seller)
-	_ = repo.Save(validatedSeller)
+	_ = repo.Create(validatedSeller)
 
 	err := repo.Delete(validatedSeller.Seller.ID)
 	assert.Nil(t, err)

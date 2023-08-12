@@ -22,7 +22,7 @@ func (s *SellerService) CreateSeller(seller *entities.Seller) error {
 		return err
 	}
 
-	return s.repo.Save(validatedSeller)
+	return s.repo.Create(validatedSeller)
 }
 
 // GetAllSellers fetches all sellers

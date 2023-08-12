@@ -12,7 +12,7 @@ type MockSellerRepository struct {
 	sellers []*entities.ValidatedSeller
 }
 
-func (m *MockSellerRepository) Save(seller *entities.ValidatedSeller) error {
+func (m *MockSellerRepository) Create(seller *entities.ValidatedSeller) error {
 	m.sellers = append(m.sellers, seller)
 	return nil
 }

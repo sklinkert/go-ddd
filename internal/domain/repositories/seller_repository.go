@@ -6,7 +6,7 @@ import (
 )
 
 type SellerRepository interface {
-	Save(seller *entities.ValidatedSeller) error
+	Create(seller *entities.ValidatedSeller) error
 	FindByID(id uuid.UUID) (*entities.ValidatedSeller, error)
 	GetAll() ([]*entities.ValidatedSeller, error)
 	Update(seller *entities.ValidatedSeller) error

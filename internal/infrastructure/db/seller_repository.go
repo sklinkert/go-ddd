@@ -15,7 +15,7 @@ func NewGormSellerRepository(db *gorm.DB) repositories.SellerRepository {
 	return &GormSellerRepository{db: db}
 }
 
-func (repo *GormSellerRepository) Save(seller *entities.ValidatedSeller) error {
+func (repo *GormSellerRepository) Create(seller *entities.ValidatedSeller) error {
 	dbSeller := ToDBSeller(seller)
 	return repo.db.Save(dbSeller).Error
 }
