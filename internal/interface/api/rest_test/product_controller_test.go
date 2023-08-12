@@ -3,6 +3,8 @@ package rest_test
 import (
 	"bytes"
 	"encoding/json"
+	"github.com/google/uuid"
+	"github.com/sklinkert/go-ddd/internal/domain/entities"
 	"github.com/stretchr/testify/mock"
 	"net/http"
 	"net/http/httptest"
@@ -46,4 +48,45 @@ func TestCreateProduct(t *testing.T) {
 	assert.Equal(t, http.StatusCreated, rec.Code)
 	assert.Equal(t, reqBody, responseBody)
 	mockService.AssertExpectations(t)
+}
+
+func TestGetAllProducts(t *testing.T) {
+	// Setup
+	e := echo.New()
+	mockService := new(MockProductService) // Assuming you have a mock of ProductService
+
+	expectedProducts := []*entities.Product{
+		{
+			ID:    uuid.New(),
+			Name:  "TestProduct1",
+			Price: 9.99,
+		}, {
+			ID:    uuid.New(),
+			Name:  "TestProduct2",
+			Price: 14.99,
+		},
+	}
+	var expectedValidatedProducts []*entities.ValidatedProduct
+	for _, product := range expectedProducts {
+		validated, _ := entities.NewValidatedProduct(product)
+		expectedValidatedProducts = append(expectedValidatedProducts, validated)
+	}
+
+	req := httptest.NewRequest(http.MethodGet, "/expectedProducts", nil)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+
+	ctrl := rest.NewProductController(e, mockService)
+	mockService.On("GetAllProducts").Return(expectedValidatedProducts, nil)
+
+	// Assertions
+	if assert.NoError(t, ctrl.GetAllProducts(c)) {
+		assert.Equal(t, http.StatusOK, rec.Code)
+
+		var responseProducts []*entities.Product
+		err := json.Unmarshal(rec.Body.Bytes(), &responseProducts)
+		if assert.NoError(t, err) {
+			assert.ElementsMatch(t, expectedProducts, responseProducts)
+		}
+	}
 }
