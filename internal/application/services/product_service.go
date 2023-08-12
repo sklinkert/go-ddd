@@ -19,7 +19,7 @@ func (s *ProductService) CreateProduct(product *entities.Product) error {
 	if err != nil {
 		return err
 	}
-	return s.repo.Save(validatedProduct)
+	return s.repo.Create(validatedProduct)
 }
 
 func (s *ProductService) GetAllProducts() ([]*entities.ValidatedProduct, error) {

@@ -15,7 +15,7 @@ func NewGormProductRepository(db *gorm.DB) repositories.ProductRepository {
 	return &GormProductRepository{db: db}
 }
 
-func (repo *GormProductRepository) Save(product *entities.ValidatedProduct) error {
+func (repo *GormProductRepository) Create(product *entities.ValidatedProduct) error {
 	// Map domain entity to DB model
 	dbProduct := ToDBProduct(product)
 

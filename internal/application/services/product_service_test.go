@@ -12,7 +12,7 @@ type MockProductRepository struct {
 	products []*entities.ValidatedProduct
 }
 
-func (m *MockProductRepository) Save(product *entities.ValidatedProduct) error {
+func (m *MockProductRepository) Create(product *entities.ValidatedProduct) error {
 	m.products = append(m.products, product)
 	return nil
 }
