@@ -19,6 +19,9 @@ func (s *ProductService) CreateProduct(product *entities.Product) error {
 	if err != nil {
 		return err
 	}
+
+	*product = (*validatedProduct).Product
+
 	return s.repo.Create(validatedProduct)
 }
 

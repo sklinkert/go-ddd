@@ -22,6 +22,8 @@ func (s *SellerService) CreateSeller(seller *entities.Seller) error {
 		return err
 	}
 
+	*seller = (*validatedSeller).Seller
+
 	return s.repo.Create(validatedSeller)
 }
 
