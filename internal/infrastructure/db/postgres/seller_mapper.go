@@ -1,4 +1,4 @@
-package db
+package postgres
 
 import (
 	"github.com/sklinkert/go-ddd/internal/domain/entities"

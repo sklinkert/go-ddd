@@ -1,10 +1,10 @@
 package db_test
 
 import (
+	"github.com/sklinkert/go-ddd/internal/infrastructure/db/postgres"
 	"testing"
 
 	"github.com/sklinkert/go-ddd/internal/domain/entities"
-	"github.com/sklinkert/go-ddd/internal/infrastructure/db"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -12,7 +12,7 @@ func TestSellerRepositorySave(t *testing.T) {
 	gormDB, cleanup := setupDatabase()
 	defer cleanup()
 
-	repo := db.NewGormSellerRepository(gormDB)
+	repo := postgres.NewGormSellerRepository(gormDB)
 
 	seller := entities.NewSeller("John")
 	validatedSeller, _ := entities.NewValidatedSeller(seller)
@@ -27,7 +27,7 @@ func TestSellerRepositoryFindByID(t *testing.T) {
 	gormDB, cleanup := setupDatabase()
 	defer cleanup()
 
-	repo := db.NewGormSellerRepository(gormDB)
+	repo := postgres.NewGormSellerRepository(gormDB)
 
 	seller := entities.NewSeller("John")
 	validatedSeller, _ := entities.NewValidatedSeller(seller)
@@ -44,7 +44,7 @@ func TestSellerRepositoryGetAll(t *testing.T) {
 	gormDB, cleanup := setupDatabase()
 	defer cleanup()
 
-	repo := db.NewGormSellerRepository(gormDB)
+	repo := postgres.NewGormSellerRepository(gormDB)
 
 	seller1 := entities.NewSeller("John")
 	validatedSeller1, _ := entities.NewValidatedSeller(seller1)
@@ -64,7 +64,7 @@ func TestSellerRepositoryUpdate(t *testing.T) {
 	gormDB, cleanup := setupDatabase()
 	defer cleanup()
 
-	repo := db.NewGormSellerRepository(gormDB)
+	repo := postgres.NewGormSellerRepository(gormDB)
 
 	seller := entities.NewSeller("John")
 	validatedSeller, _ := entities.NewValidatedSeller(seller)
@@ -83,7 +83,7 @@ func TestSellerRepositoryDelete(t *testing.T) {
 	gormDB, cleanup := setupDatabase()
 	defer cleanup()
 
-	repo := db.NewGormSellerRepository(gormDB)
+	repo := postgres.NewGormSellerRepository(gormDB)
 
 	seller := entities.NewSeller("John")
 	validatedSeller, _ := entities.NewValidatedSeller(seller)

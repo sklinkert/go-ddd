@@ -2,7 +2,7 @@ package db_test
 
 import (
 	"github.com/sklinkert/go-ddd/internal/domain/entities"
-	"github.com/sklinkert/go-ddd/internal/infrastructure/db"
+	"github.com/sklinkert/go-ddd/internal/infrastructure/db/postgres"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"testing"
@@ -16,7 +16,7 @@ func setupDatabase() (*gorm.DB, func()) {
 	}
 
 	// AutoMigrate our Product model
-	err = database.AutoMigrate(&db.Product{}, &db.Seller{})
+	err = database.AutoMigrate(&postgres.Product{}, &postgres.Seller{})
 	if err != nil {
 		panic("Failed to migrate database")
 	}
@@ -35,7 +35,7 @@ func TestGormProductRepository_Save(t *testing.T) {
 	gormDB, cleanup := setupDatabase()
 	defer cleanup()
 
-	repo := db.NewGormProductRepository(gormDB)
+	repo := postgres.NewGormProductRepository(gormDB)
 
 	seller := entities.NewSeller("TestSeller")
 	product := entities.NewProduct("TestProduct", 9.99, seller)
@@ -51,7 +51,7 @@ func TestGormProductRepository_FindByID(t *testing.T) {
 	gormDB, cleanup := setupDatabase()
 	defer cleanup()
 
-	repo := db.NewGormProductRepository(gormDB)
+	repo := postgres.NewGormProductRepository(gormDB)
 
 	seller := entities.NewSeller("TestSeller")
 	product := entities.NewProduct("TestProduct", 9.99, seller)
@@ -68,7 +68,7 @@ func TestGormProductRepository_Update(t *testing.T) {
 	gormDB, cleanup := setupDatabase()
 	defer cleanup()
 
-	repo := db.NewGormProductRepository(gormDB)
+	repo := postgres.NewGormProductRepository(gormDB)
 
 	seller := entities.NewSeller("TestSeller")
 	product := entities.NewProduct("TestProduct", 9.99, seller)
@@ -91,7 +91,7 @@ func TestGormProductRepository_GetAll(t *testing.T) {
 	gormDB, cleanup := setupDatabase()
 	defer cleanup()
 
-	repo := db.NewGormProductRepository(gormDB)
+	repo := postgres.NewGormProductRepository(gormDB)
 
 	seller := entities.NewSeller("TestSeller")
 	product := entities.NewProduct("TestProduct", 9.99, seller)
@@ -108,7 +108,7 @@ func TestGormProductRepository_Delete(t *testing.T) {
 	gormDB, cleanup := setupDatabase()
 	defer cleanup()
 
-	repo := db.NewGormProductRepository(gormDB)
+	repo := postgres.NewGormProductRepository(gormDB)
 
 	seller := entities.NewSeller("TestSeller")
 	product := entities.NewProduct("TestProduct", 9.99, seller)

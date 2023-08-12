@@ -4,7 +4,7 @@ import (
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 	"github.com/labstack/echo/v4"
 	"github.com/sklinkert/go-ddd/internal/application/services"
-	"github.com/sklinkert/go-ddd/internal/infrastructure/db"
+	postgres2 "github.com/sklinkert/go-ddd/internal/infrastructure/db/postgres"
 	"github.com/sklinkert/go-ddd/internal/interface/api/rest"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -22,8 +22,8 @@ func main() {
 
 	//gormDB.AutoMigrate()
 
-	productRepo := db.NewGormProductRepository(gormDB)
-	sellerRepo := db.NewGormSellerRepository(gormDB)
+	productRepo := postgres2.NewGormProductRepository(gormDB)
+	sellerRepo := postgres2.NewGormSellerRepository(gormDB)
 
 	productService := services.NewProductService(productRepo)
 	sellerService := services.NewSellerService(sellerRepo)
