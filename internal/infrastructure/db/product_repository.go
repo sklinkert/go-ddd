@@ -19,7 +19,20 @@ func (repo *GormProductRepository) Create(product *entities.ValidatedProduct) er
 	// Map domain entity to DB model
 	dbProduct := ToDBProduct(product)
 
-	return repo.db.Save(dbProduct).Error
+	if err := repo.db.Save(dbProduct).Error; err != nil {
+		return err
+	}
+
+	// Read row from DB to never return different data than persisted
+	storedProduct, err := repo.FindByID(dbProduct.ID)
+	if err != nil {
+		return err
+	}
+
+	// Map back to domain entity
+	*product = *storedProduct
+
+	return nil
 }
 
 func (repo *GormProductRepository) FindByID(id uuid.UUID) (*entities.ValidatedProduct, error) {
