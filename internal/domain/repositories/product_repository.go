@@ -6,7 +6,7 @@ import (
 )
 
 type ProductRepository interface {
-	Save(product *entities.ValidatedProduct) error
+	Create(product *entities.ValidatedProduct) (*entities.ValidatedProduct, error)
 	FindByID(id uuid.UUID) (*entities.ValidatedProduct, error)
 	GetAll() ([]*entities.ValidatedProduct, error)
 	Update(product *entities.ValidatedProduct) error

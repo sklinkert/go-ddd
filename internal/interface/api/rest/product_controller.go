@@ -33,7 +33,7 @@ func (pc *ProductController) CreateProduct(c echo.Context) error {
 		})
 	}
 
-	err := pc.service.CreateProduct(product)
+	_, err := pc.service.CreateProduct(product)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{
 			"error": "Failed to create product",

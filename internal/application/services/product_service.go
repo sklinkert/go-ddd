@@ -14,12 +14,12 @@ func NewProductService(repo repositories.ProductRepository) *ProductService {
 	return &ProductService{repo: repo}
 }
 
-func (s *ProductService) CreateProduct(product *entities.Product) error {
+func (s *ProductService) CreateProduct(product *entities.Product) (*entities.ValidatedProduct, error) {
 	validatedProduct, err := entities.NewValidatedProduct(product)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return s.repo.Save(validatedProduct)
+	return s.repo.Create(validatedProduct)
 }
 
 func (s *ProductService) GetAllProducts() ([]*entities.ValidatedProduct, error) {

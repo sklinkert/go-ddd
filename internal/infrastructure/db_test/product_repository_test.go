@@ -41,7 +41,7 @@ func TestGormProductRepository_Save(t *testing.T) {
 	product := entities.NewProduct("TestProduct", 9.99, seller)
 	validProduct, _ := entities.NewValidatedProduct(product)
 
-	err := repo.Save(validProduct)
+	_, err := repo.Create(validProduct)
 	if err != nil {
 		t.Errorf("Unexpected error during save: %s", err)
 	}
@@ -56,7 +56,7 @@ func TestGormProductRepository_FindByID(t *testing.T) {
 	seller := entities.NewSeller("TestSeller")
 	product := entities.NewProduct("TestProduct", 9.99, seller)
 	validProduct, _ := entities.NewValidatedProduct(product)
-	repo.Save(validProduct)
+	repo.Create(validProduct)
 
 	foundProduct, err := repo.FindByID(validProduct.ID)
 	if err != nil || foundProduct.Name != "TestProduct" {
@@ -73,7 +73,7 @@ func TestGormProductRepository_Update(t *testing.T) {
 	seller := entities.NewSeller("TestSeller")
 	product := entities.NewProduct("TestProduct", 9.99, seller)
 	validProduct, _ := entities.NewValidatedProduct(product)
-	repo.Save(validProduct)
+	repo.Create(validProduct)
 
 	validProduct.Name = "UpdatedProduct"
 	err := repo.Update(validProduct)
@@ -96,7 +96,7 @@ func TestGormProductRepository_GetAll(t *testing.T) {
 	seller := entities.NewSeller("TestSeller")
 	product := entities.NewProduct("TestProduct", 9.99, seller)
 	validProduct, _ := entities.NewValidatedProduct(product)
-	repo.Save(validProduct)
+	repo.Create(validProduct)
 
 	products, err := repo.GetAll()
 	if err != nil || len(products) != 1 {
@@ -113,7 +113,7 @@ func TestGormProductRepository_Delete(t *testing.T) {
 	seller := entities.NewSeller("TestSeller")
 	product := entities.NewProduct("TestProduct", 9.99, seller)
 	validProduct, _ := entities.NewValidatedProduct(product)
-	repo.Save(validProduct)
+	repo.Create(validProduct)
 
 	err := repo.Delete(validProduct.ID)
 	if err != nil {
