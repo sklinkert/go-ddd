@@ -9,7 +9,7 @@ type Product struct {
 	ID     uuid.UUID
 	Name   string
 	Price  float64
-	Seller *Seller
+	Seller ValidatedSeller
 }
 
 func (p *Product) validate() error {
@@ -20,7 +20,7 @@ func (p *Product) validate() error {
 	return nil
 }
 
-func NewProduct(name string, price float64, seller *Seller) *Product {
+func NewProduct(name string, price float64, seller ValidatedSeller) *Product {
 	return &Product{
 		ID:     uuid.New(),
 		Name:   name,

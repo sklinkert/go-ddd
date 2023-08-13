@@ -19,8 +19,7 @@ func NewSellerService(repo repositories.SellerRepository) *SellerService {
 
 // CreateSeller saves a new seller
 func (s *SellerService) CreateSeller(sellerCommand *command.CreateSellerCommand) (*command.CreateSellerCommandResult, error) {
-
-	newSeller := entities.NewSeller(sellerCommand.Name)
+	var newSeller = entities.NewSeller(sellerCommand.Name)
 
 	validatedSeller, err := entities.NewValidatedSeller(newSeller)
 	if err != nil {
@@ -33,7 +32,7 @@ func (s *SellerService) CreateSeller(sellerCommand *command.CreateSellerCommand)
 	}
 
 	var result command.CreateSellerCommandResult
-	result.Result = *mapper.NewSellerResultFromEntity(&validatedSeller.Seller)
+	result.Result = mapper.NewSellerResultFromEntity(*validatedSeller)
 
 	return &result, nil
 }

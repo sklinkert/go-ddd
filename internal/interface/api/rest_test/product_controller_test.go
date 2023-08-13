@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"github.com/google/uuid"
+	"github.com/sklinkert/go-ddd/internal/application/command"
 	"github.com/sklinkert/go-ddd/internal/domain/entities"
 	"github.com/stretchr/testify/mock"
 	"net/http"
@@ -19,14 +20,22 @@ func TestCreateProduct(t *testing.T) {
 	// Setup
 	e := echo.New()
 	mockService := new(MockProductService)
-	reqBody := map[string]interface{}{"Name": "TestProduct", "Price": 9.99}
+	reqBody := map[string]interface{}{"Name": "TestProduct", "Price": 9.99, "SellerId": "123e4567-e89b-12d3-a456-426614174000"}
 	reqBodyBytes, _ := json.Marshal(reqBody)
 	req := httptest.NewRequest(http.MethodPost, "/products", bytes.NewReader(reqBodyBytes))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
 	ctrl := rest.NewProductController(e, mockService)
-	mockService.On("CreateProduct", mock.Anything).Return(nil)
+
+	createProductCommandResult := &command.CreateProductCommandResult{
+		Result: command.ProductResult{
+			Id:    uuid.New(),
+			Name:  "TestProduct",
+			Price: 9.99,
+		},
+	}
+	mockService.On("CreateProduct", mock.Anything).Return(createProductCommandResult, nil)
 
 	// Execute
 	err := ctrl.CreateProduct(c)
@@ -41,8 +50,9 @@ func TestCreateProduct(t *testing.T) {
 
 	// Remove fields from responseBody that are not present in reqBody
 	// For example, remove ID and Seller fields
-	delete(responseBody, "ID")
+	delete(responseBody, "Id")
 	delete(responseBody, "Seller")
+	delete(reqBody, "SellerId")
 
 	// Assertions
 	assert.Equal(t, http.StatusCreated, rec.Code)

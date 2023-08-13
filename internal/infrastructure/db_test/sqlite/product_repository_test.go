@@ -37,8 +37,10 @@ func TestGormProductRepository_Save(t *testing.T) {
 
 	repo := postgres.NewGormProductRepository(gormDB)
 
-	seller := entities.NewSeller("TestSeller")
-	product := entities.NewProduct("TestProduct", 9.99, seller)
+	seller := getPersistedSeller(gormDB)
+	validatedSeller, _ := entities.NewValidatedSeller(&seller.Seller)
+
+	product := entities.NewProduct("TestProduct", 9.99, *validatedSeller)
 	validProduct, _ := entities.NewValidatedProduct(product)
 
 	err := repo.Create(validProduct)
@@ -53,8 +55,10 @@ func TestGormProductRepository_FindByID(t *testing.T) {
 
 	repo := postgres.NewGormProductRepository(gormDB)
 
-	seller := entities.NewSeller("TestSeller")
-	product := entities.NewProduct("TestProduct", 9.99, seller)
+	seller := getPersistedSeller(gormDB)
+	validatedSeller, _ := entities.NewValidatedSeller(&seller.Seller)
+
+	product := entities.NewProduct("TestProduct", 9.99, *validatedSeller)
 	validProduct, _ := entities.NewValidatedProduct(product)
 	repo.Create(validProduct)
 
@@ -70,13 +74,18 @@ func TestGormProductRepository_Update(t *testing.T) {
 
 	repo := postgres.NewGormProductRepository(gormDB)
 
-	seller := entities.NewSeller("TestSeller")
-	product := entities.NewProduct("TestProduct", 9.99, seller)
+	seller := getPersistedSeller(gormDB)
+	validatedSeller, _ := entities.NewValidatedSeller(&seller.Seller)
+
+	product := entities.NewProduct("TestProduct", 9.99, *validatedSeller)
 	validProduct, _ := entities.NewValidatedProduct(product)
-	repo.Create(validProduct)
+	err := repo.Create(validProduct)
+	if err != nil {
+		t.Fatalf("Unexpected error during save: %s", err)
+	}
 
 	validProduct.Name = "UpdatedProduct"
-	err := repo.Update(validProduct)
+	err = repo.Update(validProduct)
 	if err != nil {
 		t.Errorf("Unexpected error during update: %s", err)
 	}
@@ -93,8 +102,10 @@ func TestGormProductRepository_GetAll(t *testing.T) {
 
 	repo := postgres.NewGormProductRepository(gormDB)
 
-	seller := entities.NewSeller("TestSeller")
-	product := entities.NewProduct("TestProduct", 9.99, seller)
+	seller := getPersistedSeller(gormDB)
+	validatedSeller, _ := entities.NewValidatedSeller(&seller.Seller)
+
+	product := entities.NewProduct("TestProduct", 9.99, *validatedSeller)
 	validProduct, _ := entities.NewValidatedProduct(product)
 	repo.Create(validProduct)
 
@@ -111,7 +122,8 @@ func TestGormProductRepository_Delete(t *testing.T) {
 	repo := postgres.NewGormProductRepository(gormDB)
 
 	seller := entities.NewSeller("TestSeller")
-	product := entities.NewProduct("TestProduct", 9.99, seller)
+	validatedSeller, _ := entities.NewValidatedSeller(seller)
+	product := entities.NewProduct("TestProduct", 9.99, *validatedSeller)
 	validProduct, _ := entities.NewValidatedProduct(product)
 	repo.Create(validProduct)
 
@@ -124,4 +136,14 @@ func TestGormProductRepository_Delete(t *testing.T) {
 	if err == nil {
 		t.Error("Product should have been deleted, but was found")
 	}
+}
+
+func getPersistedSeller(gormDB *gorm.DB) entities.ValidatedSeller {
+	seller := entities.NewSeller("TestSeller")
+	validatedSeller, _ := entities.NewValidatedSeller(seller)
+
+	repo := postgres.NewGormSellerRepository(gormDB)
+	repo.Create(validatedSeller)
+
+	return *validatedSeller
 }

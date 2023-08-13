@@ -2,33 +2,56 @@ package services
 
 import (
 	"github.com/google/uuid"
+	"github.com/sklinkert/go-ddd/internal/application/command"
+	"github.com/sklinkert/go-ddd/internal/application/mapper"
 	"github.com/sklinkert/go-ddd/internal/domain/entities"
 	"github.com/sklinkert/go-ddd/internal/domain/repositories"
 )
 
 type ProductService struct {
-	repo repositories.ProductRepository
+	productRepository repositories.ProductRepository
+	sellerRepository  repositories.SellerRepository
 }
 
-func NewProductService(repo repositories.ProductRepository) *ProductService {
-	return &ProductService{repo: repo}
+func NewProductService(
+	productRepository repositories.ProductRepository,
+	sellerRepository repositories.SellerRepository,
+) *ProductService {
+	return &ProductService{productRepository: productRepository, sellerRepository: sellerRepository}
 }
 
-func (s *ProductService) CreateProduct(product *entities.Product) error {
-	validatedProduct, err := entities.NewValidatedProduct(product)
+func (s *ProductService) CreateProduct(productCommand *command.CreateProductCommand) (*command.CreateProductCommandResult, error) {
+	storedSeller, err := s.sellerRepository.FindByID(productCommand.SellerID)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	*product = (*validatedProduct).Product
+	var newProduct = entities.NewProduct(
+		productCommand.Name,
+		productCommand.Price,
+		*storedSeller,
+	)
 
-	return s.repo.Create(validatedProduct)
+	validatedProduct, err := entities.NewValidatedProduct(newProduct)
+	if err != nil {
+		return nil, err
+	}
+
+	err = s.productRepository.Create(validatedProduct)
+	if err != nil {
+		return nil, err
+	}
+
+	var result command.CreateProductCommandResult
+	result.Result = mapper.NewProductResultFromEntity(validatedProduct)
+
+	return &result, nil
 }
 
 func (s *ProductService) GetAllProducts() ([]*entities.ValidatedProduct, error) {
-	return s.repo.GetAll()
+	return s.productRepository.GetAll()
 }
 
 func (s *ProductService) FindProductByID(id uuid.UUID) (*entities.ValidatedProduct, error) {
-	return s.repo.FindByID(id)
+	return s.productRepository.FindByID(id)
 }

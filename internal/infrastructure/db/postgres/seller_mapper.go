@@ -17,7 +17,6 @@ func ToDBSeller(seller *entities.ValidatedSeller) *Seller {
 // FromDBSeller maps DB persistence model to domain Seller entity.
 func FromDBSeller(dbSeller *Seller) (*entities.ValidatedSeller, error) {
 	s := &entities.Seller{
-		ID:   dbSeller.ID,
 		Name: dbSeller.Name,
 	}
 	s.ID = dbSeller.ID

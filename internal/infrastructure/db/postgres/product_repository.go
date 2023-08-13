@@ -37,7 +37,7 @@ func (repo *GormProductRepository) Create(product *entities.ValidatedProduct) er
 
 func (repo *GormProductRepository) FindByID(id uuid.UUID) (*entities.ValidatedProduct, error) {
 	var dbProduct Product
-	if err := repo.db.First(&dbProduct, id).Error; err != nil {
+	if err := repo.db.Preload("Seller").First(&dbProduct, id).Error; err != nil {
 		return nil, err
 	}
 
@@ -49,7 +49,7 @@ func (repo *GormProductRepository) GetAll() ([]*entities.ValidatedProduct, error
 	var dbProducts []Product
 	var err error
 
-	if err := repo.db.Find(&dbProducts).Error; err != nil {
+	if err := repo.db.Preload("Seller").Find(&dbProducts).Error; err != nil {
 		return nil, err
 	}
 

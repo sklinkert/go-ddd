@@ -2,6 +2,7 @@ package services
 
 import (
 	"errors"
+	"fmt"
 	"github.com/google/uuid"
 	"github.com/sklinkert/go-ddd/internal/application/command"
 	"github.com/sklinkert/go-ddd/internal/domain/entities"
@@ -26,6 +27,8 @@ func (m *MockSellerRepository) FindByID(id uuid.UUID) (*entities.ValidatedSeller
 	for _, s := range m.sellers {
 		if s.ID == id {
 			return s, nil
+		} else {
+			fmt.Printf("ID: %s - %s\n", s.ID, id)
 		}
 	}
 	return nil, errors.New("seller not found")
@@ -61,7 +64,7 @@ func TestSellerService_CreateSeller(t *testing.T) {
 	}
 
 	if len(repo.sellers) != 1 {
-		t.Errorf("Expected 1 seller in repo, but got %d", len(repo.sellers))
+		t.Errorf("Expected 1 seller in productRepository, but got %d", len(repo.sellers))
 	}
 }
 

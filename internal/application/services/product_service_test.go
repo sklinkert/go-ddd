@@ -2,7 +2,9 @@ package services
 
 import (
 	"errors"
+	"fmt"
 	"github.com/google/uuid"
+	"github.com/sklinkert/go-ddd/internal/application/command"
 	"github.com/sklinkert/go-ddd/internal/domain/entities"
 	"testing"
 )
@@ -46,32 +48,43 @@ func (m *MockProductRepository) FindByID(id uuid.UUID) (*entities.ValidatedProdu
 		if p.ID == id {
 			return p, nil
 		}
+		fmt.Printf("ID: mem:%s - %s\n", p.ID, id)
 	}
 	return nil, errors.New("product not found")
 }
 
 func TestProductService_CreateProduct(t *testing.T) {
-	repo := &MockProductRepository{}
-	service := NewProductService(repo)
+	productRepo := &MockProductRepository{}
+	sellerRepo := &MockSellerRepository{}
+	service := NewProductService(productRepo, sellerRepo)
 
-	product := entities.NewProduct("Example", 100.0, nil)
-	err := service.CreateProduct(product)
+	// Create seller
+	seller := createPersistedSeller(t, sellerRepo)
+
+	// Create product
+	product := entities.NewProduct("Example", 100.0, *seller)
+	productCommand := getCreateProductCommand(product)
+	_, err := service.CreateProduct(productCommand)
 	if err != nil {
 		t.Errorf("Unexpected error: %s", err)
 	}
 
-	if len(repo.products) != 1 {
-		t.Errorf("Expected 1 product in repo, but got %d", len(repo.products))
+	if len(productRepo.products) != 1 {
+		t.Errorf("Expected 1 product in productRepository, but got %d", len(productRepo.products))
 	}
 }
 
 func TestProductService_GetAllProducts(t *testing.T) {
-	repo := &MockProductRepository{}
-	service := NewProductService(repo)
+	productRepo := &MockProductRepository{}
+	sellerRepo := &MockSellerRepository{}
+	service := NewProductService(productRepo, sellerRepo)
+
+	// Create seller
+	seller := createPersistedSeller(t, sellerRepo)
 
 	// Add two products
-	_ = service.CreateProduct(entities.NewProduct("Example1", 100.0, nil))
-	_ = service.CreateProduct(entities.NewProduct("Example2", 200.0, nil))
+	_, _ = service.CreateProduct(getCreateProductCommand(entities.NewProduct("Example1", 100.0, *seller)))
+	_, _ = service.CreateProduct(getCreateProductCommand(entities.NewProduct("Example2", 200.0, *seller)))
 
 	products, err := service.GetAllProducts()
 	if err != nil {
@@ -84,15 +97,22 @@ func TestProductService_GetAllProducts(t *testing.T) {
 }
 
 func TestProductService_FindProductByID(t *testing.T) {
-	repo := &MockProductRepository{}
-	service := NewProductService(repo)
+	productRepo := &MockProductRepository{}
+	sellerRepo := &MockSellerRepository{}
+	service := NewProductService(productRepo, sellerRepo)
 
-	product := entities.NewProduct("Example", 100.0, nil)
-	_ = service.CreateProduct(product)
+	// Create seller
+	seller := createPersistedSeller(t, sellerRepo)
 
-	foundProduct, err := service.FindProductByID(product.ID)
+	product := entities.NewProduct("Example", 100.0, *seller)
+	result, err := service.CreateProduct(getCreateProductCommand(product))
 	if err != nil {
 		t.Errorf("Unexpected error: %s", err)
+	}
+
+	foundProduct, err := service.FindProductByID(result.Result.Id)
+	if err != nil {
+		t.Fatalf("Unexpected error: %s", err)
 	}
 
 	if foundProduct.Name != "Example" {
@@ -103,4 +123,25 @@ func TestProductService_FindProductByID(t *testing.T) {
 	if err == nil {
 		t.Error("Expected error for non-existent product, but got none")
 	}
+}
+
+func getCreateProductCommand(product *entities.Product) *command.CreateProductCommand {
+	return &command.CreateProductCommand{
+		Name:     product.Name,
+		Price:    product.Price,
+		SellerID: product.Seller.ID,
+	}
+}
+
+func createPersistedSeller(t *testing.T, sellerRepo *MockSellerRepository) *entities.ValidatedSeller {
+	seller := entities.NewSeller("John Doe")
+	validatedSeller, err := entities.NewValidatedSeller(seller)
+	if err != nil {
+		t.Fatalf("Unexpected error: %s", err)
+	}
+	err = sellerRepo.Create(validatedSeller)
+	if err != nil {
+		t.Fatalf("Unexpected error: %s", err)
+	}
+	return validatedSeller
 }

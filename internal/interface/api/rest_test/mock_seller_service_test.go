@@ -31,7 +31,7 @@ func (m *MockSellerService) CreateSeller(seller *command.CreateSellerCommand) (*
 
 	m.sellers[validatedSeller.ID] = validatedSeller
 
-	result.Result = *mapper.NewSellerResultFromEntity(&validatedSeller.Seller)
+	result.Result = mapper.NewSellerResultFromEntity(*validatedSeller)
 
 	return &result, nil
 }

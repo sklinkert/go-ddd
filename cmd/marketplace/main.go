@@ -25,7 +25,7 @@ func main() {
 	productRepo := postgres2.NewGormProductRepository(gormDB)
 	sellerRepo := postgres2.NewGormSellerRepository(gormDB)
 
-	productService := services.NewProductService(productRepo)
+	productService := services.NewProductService(productRepo, sellerRepo)
 	sellerService := services.NewSellerService(sellerRepo)
 
 	e := echo.New()
