@@ -3,8 +3,8 @@ package rest
 import (
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
-	"github.com/sklinkert/go-ddd/internal/application/command"
 	"github.com/sklinkert/go-ddd/internal/application/interfaces"
+	"github.com/sklinkert/go-ddd/internal/interface/api/rest/request"
 	"net/http"
 )
 
@@ -25,11 +25,18 @@ func NewSellerController(e *echo.Echo, service interfaces.SellerService) *Seller
 }
 
 func (sc *SellerController) CreateSeller(c echo.Context) error {
-	sellerCommand := &command.CreateSellerCommand{}
+	var createSellerRequest request.CreateSellerRequest
 
-	if err := c.Bind(sellerCommand); err != nil {
+	if err := c.Bind(&createSellerRequest); err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{
 			"error": "Failed to parse request body",
+		})
+	}
+
+	sellerCommand, err := createSellerRequest.ToCreateSellerCommand()
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{
+			"error": "Invalid seller ID format",
 		})
 	}
 

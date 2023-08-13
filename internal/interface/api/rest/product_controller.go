@@ -3,8 +3,8 @@ package rest
 import (
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
-	"github.com/sklinkert/go-ddd/internal/application/command"
 	"github.com/sklinkert/go-ddd/internal/application/interfaces"
+	"github.com/sklinkert/go-ddd/internal/interface/api/rest/request"
 	"net/http"
 )
 
@@ -25,7 +25,7 @@ func NewProductController(e *echo.Echo, service interfaces.ProductService) *Prod
 }
 
 func (pc *ProductController) CreateProduct(c echo.Context) error {
-	var createProductRequest CreateProductRequest
+	var createProductRequest request.CreateProductRequest
 
 	if err := c.Bind(&createProductRequest); err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{
@@ -33,7 +33,7 @@ func (pc *ProductController) CreateProduct(c echo.Context) error {
 		})
 	}
 
-	productCommand, err := getCreateProductCommand(&createProductRequest)
+	productCommand, err := createProductRequest.ToCreateProductCommand()
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{
 			"error": "Invalid product ID format",
@@ -77,17 +77,4 @@ func (pc *ProductController) GetProductByID(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, product)
-}
-
-func getCreateProductCommand(createProductRequest *CreateProductRequest) (*command.CreateProductCommand, error) {
-	sellerId, err := uuid.Parse(createProductRequest.SellerID)
-	if err != nil {
-		return nil, err
-	}
-
-	return &command.CreateProductCommand{
-		Name:     createProductRequest.Name,
-		Price:    createProductRequest.Price,
-		SellerID: sellerId,
-	}, nil
 }
