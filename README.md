@@ -23,6 +23,23 @@ Domain-Driven Design is a methodology and design pattern used to build complex e
 - `interface`: The external layer which interacts with the outside world, like API endpoints.
     - `api/rest`: Handlers or controllers for managing HTTP requests and responses.
 
+## Further principles
+
+- Domain
+  - Must not depend on other layers.
+  - Provides infrastructure with interfaces, but must not access infrastructure.
+  - Implements business logic and rules.
+  - Executes validations on entities. Validated entities are passed to the infrastructure layer.
+  - Domain layer sets defaults of entities (e.g. uuid for ID or creation timestamp). Don't set defaults in the infrastructure layer or even database!
+  - Do not leak domain objects to the outside world.
+- Application
+  - The glue code between the domain and infrastructure layer.
+- Infrastructure
+   - Repositories are responsible for translating a domain entity to a database model and retrieving it. No business logic is executed here.
+   - Implements interfaces defined by the domain layer.
+   - Implements persistence logic like accessing a postgres or mysql database.
+   - When writing to storage, read written data before returning it. This ensures that the data is written correctly.
+
 ## Getting Started
 
 1. Clone this repository:
