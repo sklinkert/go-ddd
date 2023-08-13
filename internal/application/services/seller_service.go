@@ -2,6 +2,8 @@ package services
 
 import (
 	"github.com/google/uuid"
+	"github.com/sklinkert/go-ddd/internal/application/command"
+	"github.com/sklinkert/go-ddd/internal/application/mapper"
 	"github.com/sklinkert/go-ddd/internal/domain/entities"
 	"github.com/sklinkert/go-ddd/internal/domain/repositories"
 )
@@ -16,15 +18,24 @@ func NewSellerService(repo repositories.SellerRepository) *SellerService {
 }
 
 // CreateSeller saves a new seller
-func (s *SellerService) CreateSeller(seller *entities.Seller) error {
-	validatedSeller, err := entities.NewValidatedSeller(seller)
+func (s *SellerService) CreateSeller(sellerCommand *command.CreateSellerCommand) (*command.CreateSellerCommandResult, error) {
+
+	newSeller := entities.NewSeller(sellerCommand.Name)
+
+	validatedSeller, err := entities.NewValidatedSeller(newSeller)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	*seller = (*validatedSeller).Seller
+	err = s.repo.Create(validatedSeller)
+	if err != nil {
+		return nil, err
+	}
 
-	return s.repo.Create(validatedSeller)
+	var result command.CreateSellerCommandResult
+	result.Result = *mapper.NewSellerResultFromEntity(&validatedSeller.Seller)
+
+	return &result, nil
 }
 
 // GetAllSellers fetches all sellers

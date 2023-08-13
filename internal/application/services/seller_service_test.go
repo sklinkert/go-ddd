@@ -3,6 +3,7 @@ package services
 import (
 	"errors"
 	"github.com/google/uuid"
+	"github.com/sklinkert/go-ddd/internal/application/command"
 	"github.com/sklinkert/go-ddd/internal/domain/entities"
 	"testing"
 )
@@ -54,8 +55,7 @@ func TestSellerService_CreateSeller(t *testing.T) {
 	repo := &MockSellerRepository{}
 	service := NewSellerService(repo)
 
-	seller := entities.NewSeller("John Doe")
-	err := service.CreateSeller(seller)
+	_, err := service.CreateSeller(getCreateSellerCommand("John Doe"))
 	if err != nil {
 		t.Errorf("Unexpected error: %s", err)
 	}
@@ -70,8 +70,8 @@ func TestSellerService_GetAllSellers(t *testing.T) {
 	service := NewSellerService(repo)
 
 	// Add two sellers
-	_ = service.CreateSeller(entities.NewSeller("John Doe"))
-	_ = service.CreateSeller(entities.NewSeller("Jane Doe"))
+	_, _ = service.CreateSeller(getCreateSellerCommand("John Doe"))
+	_, _ = service.CreateSeller(getCreateSellerCommand("Jane Doe"))
 
 	sellers, err := service.GetAllSellers()
 	if err != nil {
@@ -87,10 +87,10 @@ func TestSellerService_GetSellerByID(t *testing.T) {
 	repo := &MockSellerRepository{}
 	service := NewSellerService(repo)
 
-	seller := entities.NewSeller("John Doe")
-	_ = service.CreateSeller(seller)
+	createdSellerResult, _ := service.CreateSeller(getCreateSellerCommand("John Doe"))
+	sellerID := createdSellerResult.Result.ID
 
-	foundSeller, err := service.GetSellerByID(seller.ID)
+	foundSeller, err := service.GetSellerByID(sellerID)
 	if err != nil {
 		t.Errorf("Unexpected error: %s", err)
 	}
@@ -109,17 +109,28 @@ func TestSellerService_UpdateSeller(t *testing.T) {
 	repo := &MockSellerRepository{}
 	service := NewSellerService(repo)
 
-	seller := entities.NewSeller("John Doe")
-	_ = service.CreateSeller(seller)
-	seller.Name = "Johnny Doe"
-	err := service.UpdateSeller(&entities.ValidatedSeller{Seller: *seller})
+	createdSellerResult, _ := service.CreateSeller(getCreateSellerCommand("John Doe"))
+	sellerID := createdSellerResult.Result.ID
+
+	var updatableSeller = entities.Seller{
+		ID:   sellerID,
+		Name: "Doe Johnny",
+	}
+
+	err := service.UpdateSeller(&entities.ValidatedSeller{Seller: updatableSeller})
 
 	if err != nil {
 		t.Errorf("Unexpected error: %s", err)
 	}
 
-	updatedSeller, _ := service.GetSellerByID(seller.ID)
-	if updatedSeller.Name != "Johnny Doe" {
+	updatedSeller, _ := service.GetSellerByID(sellerID)
+	if updatedSeller.Name != "Doe Johnny" {
 		t.Errorf("Expected seller name 'Johnny Doe', but got %s", updatedSeller.Name)
+	}
+}
+
+func getCreateSellerCommand(name string) *command.CreateSellerCommand {
+	return &command.CreateSellerCommand{
+		Name: name,
 	}
 }

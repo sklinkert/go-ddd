@@ -3,7 +3,9 @@ package rest
 import (
 	"errors"
 	"github.com/google/uuid"
+	"github.com/sklinkert/go-ddd/internal/application/command"
 	"github.com/sklinkert/go-ddd/internal/application/interfaces"
+	"github.com/sklinkert/go-ddd/internal/application/mapper"
 	"github.com/sklinkert/go-ddd/internal/domain/entities"
 )
 
@@ -17,14 +19,21 @@ func NewMockSellerService() interfaces.SellerService {
 	}
 }
 
-func (m *MockSellerService) CreateSeller(seller *entities.Seller) error {
-	validatedSeller, err := entities.NewValidatedSeller(seller)
+func (m *MockSellerService) CreateSeller(seller *command.CreateSellerCommand) (*command.CreateSellerCommandResult, error) {
+	var result command.CreateSellerCommandResult
+
+	newSeller := entities.NewSeller(seller.Name)
+
+	validatedSeller, err := entities.NewValidatedSeller(newSeller)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	m.sellers[validatedSeller.ID] = validatedSeller
-	return nil
+
+	result.Result = *mapper.NewSellerResultFromEntity(&validatedSeller.Seller)
+
+	return &result, nil
 }
 
 func (m *MockSellerService) GetAllSellers() ([]*entities.ValidatedSeller, error) {

@@ -3,8 +3,8 @@ package rest
 import (
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
+	"github.com/sklinkert/go-ddd/internal/application/command"
 	"github.com/sklinkert/go-ddd/internal/application/interfaces"
-	"github.com/sklinkert/go-ddd/internal/domain/entities"
 	"net/http"
 )
 
@@ -25,22 +25,22 @@ func NewSellerController(e *echo.Echo, service interfaces.SellerService) *Seller
 }
 
 func (sc *SellerController) CreateSeller(c echo.Context) error {
-	seller := &entities.Seller{}
+	sellerCommand := &command.CreateSellerCommand{}
 
-	if err := c.Bind(seller); err != nil {
+	if err := c.Bind(sellerCommand); err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{
 			"error": "Failed to parse request body",
 		})
 	}
 
-	err := sc.service.CreateSeller(seller)
+	commandResult, err := sc.service.CreateSeller(sellerCommand)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{
 			"error": "Failed to create seller",
 		})
 	}
 
-	return c.JSON(http.StatusCreated, seller)
+	return c.JSON(http.StatusCreated, commandResult.Result)
 }
 
 func (sc *SellerController) GetAllSellers(c echo.Context) error {
