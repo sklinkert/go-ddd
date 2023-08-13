@@ -65,7 +65,21 @@ func (repo *GormProductRepository) GetAll() ([]*entities.ValidatedProduct, error
 
 func (repo *GormProductRepository) Update(product *entities.ValidatedProduct) error {
 	dbProduct := ToDBProduct(product)
-	return repo.db.Model(&Product{}).Where("id = ?", dbProduct.ID).Updates(dbProduct).Error
+	err := repo.db.Model(&Product{}).Where("id = ?", dbProduct.ID).Updates(dbProduct).Error
+	if err != nil {
+		return err
+	}
+
+	// Read row from DB to never return different data than persisted
+	storedProduct, err := repo.FindByID(dbProduct.ID)
+	if err != nil {
+		return err
+	}
+
+	// Map back to domain entity
+	*product = *storedProduct
+
+	return nil
 }
 
 func (repo *GormProductRepository) Delete(id uuid.UUID) error {

@@ -59,7 +59,20 @@ func (repo *GormSellerRepository) GetAll() ([]*entities.ValidatedSeller, error) 
 
 func (repo *GormSellerRepository) Update(seller *entities.ValidatedSeller) error {
 	dbSeller := ToDBSeller(seller)
-	return repo.db.Model(&Seller{}).Where("id = ?", dbSeller.ID).Updates(dbSeller).Error
+
+	err := repo.db.Model(&Seller{}).Where("id = ?", dbSeller.ID).Updates(dbSeller).Error
+	if err != nil {
+		return err
+	}
+
+	storedSeller, err := repo.FindByID(dbSeller.ID)
+	if err != nil {
+		return err
+	}
+
+	*seller = *storedSeller
+
+	return nil
 }
 
 func (repo *GormSellerRepository) Delete(id uuid.UUID) error {
