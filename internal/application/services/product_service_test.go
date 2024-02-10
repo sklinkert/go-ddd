@@ -96,7 +96,7 @@ func TestProductService_GetAllProducts(t *testing.T) {
 	}
 }
 
-func TestProductService_FindProductByID(t *testing.T) {
+func TestProductService_FindProductById(t *testing.T) {
 	productRepo := &MockProductRepository{}
 	sellerRepo := &MockSellerRepository{}
 	service := NewProductService(productRepo, sellerRepo)
@@ -110,7 +110,7 @@ func TestProductService_FindProductByID(t *testing.T) {
 		t.Errorf("Unexpected error: %s", err)
 	}
 
-	foundProduct, err := service.FindProductByID(result.Result.Id)
+	foundProduct, err := service.FindProductById(result.Result.Id)
 	if err != nil {
 		t.Fatalf("Unexpected error: %s", err)
 	}
@@ -119,7 +119,7 @@ func TestProductService_FindProductByID(t *testing.T) {
 		t.Errorf("Expected product name 'Example', but got %s", foundProduct.Name)
 	}
 
-	_, err = service.FindProductByID(uuid.New()) // some non-existent ID
+	_, err = service.FindProductById(uuid.New()) // some non-existent ID
 	if err == nil {
 		t.Error("Expected error for non-existent product, but got none")
 	}

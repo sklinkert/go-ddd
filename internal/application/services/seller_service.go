@@ -42,8 +42,8 @@ func (s *SellerService) GetAllSellers() ([]*entities.ValidatedSeller, error) {
 	return s.repo.FindAll()
 }
 
-// GetSellerByID fetches a specific seller by ID
-func (s *SellerService) GetSellerByID(id uuid.UUID) (*entities.ValidatedSeller, error) {
+// GetSellerById fetches a specific seller by ID
+func (s *SellerService) GetSellerById(id uuid.UUID) (*entities.ValidatedSeller, error) {
 	return s.repo.FindById(id)
 }
 

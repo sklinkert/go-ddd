@@ -49,7 +49,7 @@ func TestGormProductRepository_Save(t *testing.T) {
 	}
 }
 
-func TestGormProductRepository_FindByID(t *testing.T) {
+func TestGormProductRepository_FindById(t *testing.T) {
 	gormDB, cleanup := setupDatabase()
 	defer cleanup()
 

@@ -19,7 +19,7 @@ func NewSellerController(e *echo.Echo, service interfaces.SellerService) *Seller
 
 	e.POST("/sellers", controller.CreateSeller)
 	e.GET("/sellers", controller.GetAllSellers)
-	e.GET("/sellers/:id", controller.GetSellerByID)
+	e.GET("/sellers/:id", controller.GetSellerById)
 
 	return controller
 }
@@ -61,7 +61,7 @@ func (sc *SellerController) GetAllSellers(c echo.Context) error {
 	return c.JSON(http.StatusOK, sellers)
 }
 
-func (sc *SellerController) GetSellerByID(c echo.Context) error {
+func (sc *SellerController) GetSellerById(c echo.Context) error {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{
@@ -69,7 +69,7 @@ func (sc *SellerController) GetSellerByID(c echo.Context) error {
 		})
 	}
 
-	seller, err := sc.service.GetSellerByID(id)
+	seller, err := sc.service.GetSellerById(id)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{
 			"error": "Failed to fetch seller",

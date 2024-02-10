@@ -23,7 +23,7 @@ func TestSellerRepositorySave(t *testing.T) {
 	// More assertions related to saving can go here.
 }
 
-func TestSellerRepositoryFindByID(t *testing.T) {
+func TestSellerRepositoryFindById(t *testing.T) {
 	gormDB, cleanup := setupDatabase()
 	defer cleanup()
 

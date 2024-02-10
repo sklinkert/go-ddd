@@ -52,6 +52,6 @@ func (s *ProductService) GetAllProducts() ([]*entities.ValidatedProduct, error) 
 	return s.productRepository.FindAll()
 }
 
-func (s *ProductService) FindProductByID(id uuid.UUID) (*entities.ValidatedProduct, error) {
+func (s *ProductService) FindProductById(id uuid.UUID) (*entities.ValidatedProduct, error) {
 	return s.productRepository.FindById(id)
 }

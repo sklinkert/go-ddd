@@ -47,7 +47,7 @@ func (m *MockProductService) GetAllProducts() ([]*entities.ValidatedProduct, err
 	return args.Get(0).([]*entities.ValidatedProduct), args.Error(1)
 }
 
-func (m *MockProductService) FindProductByID(id uuid.UUID) (*entities.ValidatedProduct, error) {
+func (m *MockProductService) FindProductById(id uuid.UUID) (*entities.ValidatedProduct, error) {
 	args := m.Called(id)
 	return args.Get(0).(*entities.ValidatedProduct), args.Error(1)
 }

@@ -86,14 +86,14 @@ func TestSellerService_GetAllSellers(t *testing.T) {
 	}
 }
 
-func TestSellerService_GetSellerByID(t *testing.T) {
+func TestSellerService_GetSellerById(t *testing.T) {
 	repo := &MockSellerRepository{}
 	service := NewSellerService(repo)
 
 	createdSellerResult, _ := service.CreateSeller(getCreateSellerCommand("John Doe"))
 	sellerID := createdSellerResult.Result.ID
 
-	foundSeller, err := service.GetSellerByID(sellerID)
+	foundSeller, err := service.GetSellerById(sellerID)
 	if err != nil {
 		t.Errorf("Unexpected error: %s", err)
 	}
@@ -102,7 +102,7 @@ func TestSellerService_GetSellerByID(t *testing.T) {
 		t.Errorf("Expected seller name 'John Doe', but got %s", foundSeller.Name)
 	}
 
-	_, err = service.GetSellerByID(uuid.New()) // some non-existent ID
+	_, err = service.GetSellerById(uuid.New()) // some non-existent ID
 	if err == nil {
 		t.Error("Expected error for non-existent seller, but got none")
 	}
@@ -126,7 +126,7 @@ func TestSellerService_UpdateSeller(t *testing.T) {
 		t.Errorf("Unexpected error: %s", err)
 	}
 
-	updatedSeller, _ := service.GetSellerByID(sellerID)
+	updatedSeller, _ := service.GetSellerById(sellerID)
 	if updatedSeller.Name != "Doe Johnny" {
 		t.Errorf("Expected seller name 'Johnny Doe', but got %s", updatedSeller.Name)
 	}

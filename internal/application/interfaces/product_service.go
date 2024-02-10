@@ -9,5 +9,5 @@ import (
 type ProductService interface {
 	CreateProduct(productCommand *command.CreateProductCommand) (*command.CreateProductCommandResult, error)
 	GetAllProducts() ([]*entities.ValidatedProduct, error)
-	FindProductByID(id uuid.UUID) (*entities.ValidatedProduct, error)
+	FindProductById(id uuid.UUID) (*entities.ValidatedProduct, error)
 }

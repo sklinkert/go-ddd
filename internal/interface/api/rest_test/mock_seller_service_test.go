@@ -44,7 +44,7 @@ func (m *MockSellerService) GetAllSellers() ([]*entities.ValidatedSeller, error)
 	return allSellers, nil
 }
 
-func (m *MockSellerService) GetSellerByID(id uuid.UUID) (*entities.ValidatedSeller, error) {
+func (m *MockSellerService) GetSellerById(id uuid.UUID) (*entities.ValidatedSeller, error) {
 	if seller, exists := m.sellers[id]; exists {
 		return seller, nil
 	}

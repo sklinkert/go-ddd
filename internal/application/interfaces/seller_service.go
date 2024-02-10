@@ -9,6 +9,6 @@ import (
 type SellerService interface {
 	CreateSeller(sellerCommand *command.CreateSellerCommand) (*command.CreateSellerCommandResult, error)
 	GetAllSellers() ([]*entities.ValidatedSeller, error)
-	GetSellerByID(id uuid.UUID) (*entities.ValidatedSeller, error)
+	GetSellerById(id uuid.UUID) (*entities.ValidatedSeller, error)
 	UpdateSeller(seller *entities.ValidatedSeller) error
 }
