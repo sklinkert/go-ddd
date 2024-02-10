@@ -24,7 +24,7 @@ func (repo *GormProductRepository) Create(product *entities.ValidatedProduct) er
 	}
 
 	// Read row from DB to never return different data than persisted
-	storedProduct, err := repo.FindByID(dbProduct.ID)
+	storedProduct, err := repo.FindById(dbProduct.ID)
 	if err != nil {
 		return err
 	}
@@ -35,7 +35,7 @@ func (repo *GormProductRepository) Create(product *entities.ValidatedProduct) er
 	return nil
 }
 
-func (repo *GormProductRepository) FindByID(id uuid.UUID) (*entities.ValidatedProduct, error) {
+func (repo *GormProductRepository) FindById(id uuid.UUID) (*entities.ValidatedProduct, error) {
 	var dbProduct Product
 	if err := repo.db.Preload("Seller").First(&dbProduct, id).Error; err != nil {
 		return nil, err
@@ -45,7 +45,7 @@ func (repo *GormProductRepository) FindByID(id uuid.UUID) (*entities.ValidatedPr
 	return FromDBProduct(&dbProduct)
 }
 
-func (repo *GormProductRepository) GetAll() ([]*entities.ValidatedProduct, error) {
+func (repo *GormProductRepository) FindAll() ([]*entities.ValidatedProduct, error) {
 	var dbProducts []Product
 	var err error
 
@@ -71,7 +71,7 @@ func (repo *GormProductRepository) Update(product *entities.ValidatedProduct) er
 	}
 
 	// Read row from DB to never return different data than persisted
-	storedProduct, err := repo.FindByID(dbProduct.ID)
+	storedProduct, err := repo.FindById(dbProduct.ID)
 	if err != nil {
 		return err
 	}

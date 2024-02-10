@@ -22,7 +22,7 @@ func (repo *GormSellerRepository) Create(seller *entities.ValidatedSeller) error
 		return err
 	}
 
-	storedSeller, err := repo.FindByID(dbSeller.ID)
+	storedSeller, err := repo.FindById(dbSeller.ID)
 	if err != nil {
 		return err
 	}
@@ -32,7 +32,7 @@ func (repo *GormSellerRepository) Create(seller *entities.ValidatedSeller) error
 	return nil
 }
 
-func (repo *GormSellerRepository) FindByID(id uuid.UUID) (*entities.ValidatedSeller, error) {
+func (repo *GormSellerRepository) FindById(id uuid.UUID) (*entities.ValidatedSeller, error) {
 	var dbSeller Seller
 	if err := repo.db.First(&dbSeller, id).Error; err != nil {
 		return nil, err
@@ -40,7 +40,7 @@ func (repo *GormSellerRepository) FindByID(id uuid.UUID) (*entities.ValidatedSel
 	return FromDBSeller(&dbSeller)
 }
 
-func (repo *GormSellerRepository) GetAll() ([]*entities.ValidatedSeller, error) {
+func (repo *GormSellerRepository) FindAll() ([]*entities.ValidatedSeller, error) {
 	var err error
 	var dbSellers []Seller
 	if err := repo.db.Find(&dbSellers).Error; err != nil {
@@ -65,7 +65,7 @@ func (repo *GormSellerRepository) Update(seller *entities.ValidatedSeller) error
 		return err
 	}
 
-	storedSeller, err := repo.FindByID(dbSeller.ID)
+	storedSeller, err := repo.FindById(dbSeller.ID)
 	if err != nil {
 		return err
 	}

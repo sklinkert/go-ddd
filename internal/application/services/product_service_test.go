@@ -19,7 +19,7 @@ func (m *MockProductRepository) Create(product *entities.ValidatedProduct) error
 	return nil
 }
 
-func (m *MockProductRepository) GetAll() ([]*entities.ValidatedProduct, error) {
+func (m *MockProductRepository) FindAll() ([]*entities.ValidatedProduct, error) {
 	return m.products, nil
 }
 
@@ -43,7 +43,7 @@ func (m *MockProductRepository) Delete(id uuid.UUID) error {
 	return errors.New("product not found for delete")
 }
 
-func (m *MockProductRepository) FindByID(id uuid.UUID) (*entities.ValidatedProduct, error) {
+func (m *MockProductRepository) FindById(id uuid.UUID) (*entities.ValidatedProduct, error) {
 	for _, p := range m.products {
 		if p.ID == id {
 			return p, nil

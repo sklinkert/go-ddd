@@ -7,8 +7,8 @@ import (
 
 type SellerRepository interface {
 	Create(seller *entities.ValidatedSeller) error
-	FindByID(id uuid.UUID) (*entities.ValidatedSeller, error)
-	GetAll() ([]*entities.ValidatedSeller, error)
+	FindById(id uuid.UUID) (*entities.ValidatedSeller, error)
+	FindAll() ([]*entities.ValidatedSeller, error)
 	Update(seller *entities.ValidatedSeller) error
 	Delete(id uuid.UUID) error
 }

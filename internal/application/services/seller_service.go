@@ -39,12 +39,12 @@ func (s *SellerService) CreateSeller(sellerCommand *command.CreateSellerCommand)
 
 // GetAllSellers fetches all sellers
 func (s *SellerService) GetAllSellers() ([]*entities.ValidatedSeller, error) {
-	return s.repo.GetAll()
+	return s.repo.FindAll()
 }
 
 // GetSellerByID fetches a specific seller by ID
 func (s *SellerService) GetSellerByID(id uuid.UUID) (*entities.ValidatedSeller, error) {
-	return s.repo.FindByID(id)
+	return s.repo.FindById(id)
 }
 
 // UpdateSeller updates a seller

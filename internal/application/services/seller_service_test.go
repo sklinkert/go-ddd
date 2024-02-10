@@ -19,11 +19,11 @@ func (m *MockSellerRepository) Create(seller *entities.ValidatedSeller) error {
 	return nil
 }
 
-func (m *MockSellerRepository) GetAll() ([]*entities.ValidatedSeller, error) {
+func (m *MockSellerRepository) FindAll() ([]*entities.ValidatedSeller, error) {
 	return m.sellers, nil
 }
 
-func (m *MockSellerRepository) FindByID(id uuid.UUID) (*entities.ValidatedSeller, error) {
+func (m *MockSellerRepository) FindById(id uuid.UUID) (*entities.ValidatedSeller, error) {
 	for _, s := range m.sellers {
 		if s.ID == id {
 			return s, nil

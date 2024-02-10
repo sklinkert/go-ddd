@@ -33,7 +33,7 @@ func TestSellerRepositoryFindByID(t *testing.T) {
 	validatedSeller, _ := entities.NewValidatedSeller(seller)
 	_ = repo.Create(validatedSeller)
 
-	fetchedSeller, err := repo.FindByID(validatedSeller.Seller.ID)
+	fetchedSeller, err := repo.FindById(validatedSeller.Seller.ID)
 	assert.Nil(t, err)
 	assert.Equal(t, "John", fetchedSeller.Seller.Name)
 
@@ -54,7 +54,7 @@ func TestSellerRepositoryGetAll(t *testing.T) {
 	validatedSeller2, _ := entities.NewValidatedSeller(seller2)
 	_ = repo.Create(validatedSeller2)
 
-	allSellers, err := repo.GetAll()
+	allSellers, err := repo.FindAll()
 	assert.Nil(t, err)
 	assert.Len(t, allSellers, 2)
 	// You could further assert the contents of the sellers if needed.
@@ -75,7 +75,7 @@ func TestSellerRepositoryUpdate(t *testing.T) {
 	err := repo.Update(validatedSeller)
 	assert.Nil(t, err)
 
-	updatedSeller, _ := repo.FindByID(validatedSeller.Seller.ID)
+	updatedSeller, _ := repo.FindById(validatedSeller.Seller.ID)
 	assert.Equal(t, "Johnny", updatedSeller.Seller.Name)
 }
 
@@ -93,7 +93,7 @@ func TestSellerRepositoryDelete(t *testing.T) {
 	assert.Nil(t, err)
 
 	// Try to find the deleted seller
-	deletedSeller, err := repo.FindByID(validatedSeller.Seller.ID)
+	deletedSeller, err := repo.FindById(validatedSeller.Seller.ID)
 	assert.NotNil(t, err) // Expect an error since the seller should be deleted
 	assert.Nil(t, deletedSeller)
 }

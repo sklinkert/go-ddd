@@ -21,7 +21,7 @@ func NewProductService(
 }
 
 func (s *ProductService) CreateProduct(productCommand *command.CreateProductCommand) (*command.CreateProductCommandResult, error) {
-	storedSeller, err := s.sellerRepository.FindByID(productCommand.SellerID)
+	storedSeller, err := s.sellerRepository.FindById(productCommand.SellerID)
 	if err != nil {
 		return nil, err
 	}
@@ -49,9 +49,9 @@ func (s *ProductService) CreateProduct(productCommand *command.CreateProductComm
 }
 
 func (s *ProductService) GetAllProducts() ([]*entities.ValidatedProduct, error) {
-	return s.productRepository.GetAll()
+	return s.productRepository.FindAll()
 }
 
 func (s *ProductService) FindProductByID(id uuid.UUID) (*entities.ValidatedProduct, error) {
-	return s.productRepository.FindByID(id)
+	return s.productRepository.FindById(id)
 }
