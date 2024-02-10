@@ -7,9 +7,9 @@ require (
 	github.com/jinzhu/gorm v1.9.16
 	github.com/labstack/echo/v4 v4.11.4
 	github.com/stretchr/testify v1.8.4
-	gorm.io/driver/postgres v1.5.4
+	gorm.io/driver/postgres v1.5.6
 	gorm.io/driver/sqlite v1.5.4
-	gorm.io/gorm v1.25.5
+	gorm.io/gorm v1.25.7-0.20240204074919-46816ad31dde
 )
 
 require (
