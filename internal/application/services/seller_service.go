@@ -33,8 +33,9 @@ func (s *SellerService) CreateSeller(sellerCommand *command.CreateSellerCommand)
 		return nil, err
 	}
 
-	var result command.CreateSellerCommandResult
-	result.Result = mapper.NewSellerResultFromEntity(validatedSeller.Seller)
+	result := command.CreateSellerCommandResult{
+		Result: mapper.NewSellerResultFromEntity(validatedSeller.Seller),
+	}
 
 	return &result, nil
 }
@@ -74,8 +75,9 @@ func (s *SellerService) UpdateSeller(updateCommand *command.UpdateSellerCommand)
 		return nil, err
 	}
 
-	var result command.UpdateSellerCommandResult
-	result.Result = mapper.NewSellerResultFromEntity(*seller)
+	result := command.UpdateSellerCommandResult{
+		Result: mapper.NewSellerResultFromEntity(*seller),
+	}
 
 	return &result, nil
 }

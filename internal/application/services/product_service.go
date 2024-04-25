@@ -53,8 +53,9 @@ func (s *ProductService) CreateProduct(productCommand *command.CreateProductComm
 		return nil, err
 	}
 
-	var result command.CreateProductCommandResult
-	result.Result = mapper.NewProductResultFromEntity(validatedProduct)
+	result := command.CreateProductCommandResult{
+		Result: mapper.NewProductResultFromEntity(validatedProduct),
+	}
 
 	return &result, nil
 }
