@@ -49,6 +49,8 @@ Domain-Driven Design is a methodology and design pattern used to build complex e
   - It's quite dangerous to have two sources of truth.
   - It's easier to test the domain layer.
   - Databases can get replaced, and you don't want to have to change all your default values. 
+- Always read the entity after write in the infrastructure layer.
+  - This ensures that the data is written correctly, and we are never operating on stale data.
 
 ## Getting Started
 
