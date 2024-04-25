@@ -40,6 +40,16 @@ Domain-Driven Design is a methodology and design pattern used to build complex e
    - Implements persistence logic like accessing a postgres or mysql database.
    - When writing to storage, read written data before returning it. This ensures that the data is written correctly.
 
+## Best Practices
+
+- Don't return validated entities from read methods in the repository. Instead, return the domain entity type directly.
+  - Validations might change in the future, and you don't want to change all the data in your database.
+  - Otherwise, you won't be able to read data from the database that was written with a different validation logic.
+- Don't put default values (e.g current timestamp or ID) in the database. Set them in the domain layer (factory!) for several reasons:
+  - It's quite dangerous to have two sources of truth.
+  - It's easier to test the domain layer.
+  - Databases can get replaced, and you don't want to have to change all your default values. 
+
 ## Getting Started
 
 1. Clone this repository:
@@ -47,7 +57,7 @@ Domain-Driven Design is a methodology and design pattern used to build complex e
 git clone https://github.com/sklinkert/go-ddd.git
 cd go-ddd
 go mod download
-go run main.go
+go run ./...
 ```
 
 ### Contributions
