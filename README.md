@@ -1,6 +1,6 @@
 # Go-DDD: Domain Driven Design Template in Golang
 
-Welcome to `go-ddd`, a reference implementation/template repository demonstrating the Domain Driven Design (DDD) approach in Golang. This project aims to help developers and architects understand the DDD structure, especially in the context of Go, and how it can lead to cleaner, more maintainable, and scalable codebases.
+Welcome to `go-ddd`, a reference implementation/template repository demonstrating the [Domain Driven Design (DDD)](https://en.wikipedia.org/wiki/Domain-driven_design) approach in Golang. This project aims to help developers and architects understand the DDD structure, especially in the context of Go, and how it can lead to cleaner, more maintainable, and scalable codebases.
 
 ## Overview
 
