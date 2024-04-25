@@ -1,6 +1,7 @@
 package services
 
 import (
+	"errors"
 	"github.com/google/uuid"
 	"github.com/sklinkert/go-ddd/internal/application/command"
 	"github.com/sklinkert/go-ddd/internal/application/mapper"
@@ -24,6 +25,10 @@ func (s *ProductService) CreateProduct(productCommand *command.CreateProductComm
 	storedSeller, err := s.sellerRepository.FindById(productCommand.SellerID)
 	if err != nil {
 		return nil, err
+	}
+
+	if storedSeller == nil {
+		return nil, errors.New("seller not found")
 	}
 
 	var newProduct = entities.NewProduct(
