@@ -14,12 +14,12 @@ func ToDBSeller(seller *entities.ValidatedSeller) *Seller {
 	return s
 }
 
-// FromDBSeller maps DB persistence model to domain Seller entity.
-func FromDBSeller(dbSeller *Seller) (*entities.ValidatedSeller, error) {
+// fromDBSeller maps DB persistence model to domain Seller entity.
+func fromDBSeller(dbSeller *Seller) *entities.Seller {
 	s := &entities.Seller{
 		Name: dbSeller.Name,
 	}
 	s.ID = dbSeller.ID
 
-	return entities.NewValidatedSeller(s)
+	return s
 }

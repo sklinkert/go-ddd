@@ -31,10 +31,15 @@ func (s *ProductService) CreateProduct(productCommand *command.CreateProductComm
 		return nil, errors.New("seller not found")
 	}
 
+	validatedSeller, err := entities.NewValidatedSeller(storedSeller)
+	if err != nil {
+		return nil, err
+	}
+
 	var newProduct = entities.NewProduct(
 		productCommand.Name,
 		productCommand.Price,
-		*storedSeller,
+		*validatedSeller,
 	)
 
 	validatedProduct, err := entities.NewValidatedProduct(newProduct)

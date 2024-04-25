@@ -6,9 +6,9 @@ import (
 )
 
 type SellerRepository interface {
-	Create(seller *entities.ValidatedSeller) error
-	FindById(id uuid.UUID) (*entities.ValidatedSeller, error)
-	FindAll() ([]*entities.ValidatedSeller, error)
-	Update(seller *entities.ValidatedSeller) error
+	Create(seller *entities.ValidatedSeller) (*entities.Seller, error)
+	FindById(id uuid.UUID) (*entities.Seller, error)
+	FindAll() ([]*entities.Seller, error)
+	Update(seller *entities.ValidatedSeller) (*entities.Seller, error)
 	Delete(id uuid.UUID) error
 }

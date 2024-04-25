@@ -17,7 +17,7 @@ func TestSellerRepositorySave(t *testing.T) {
 	seller := entities.NewSeller("John")
 	validatedSeller, _ := entities.NewValidatedSeller(seller)
 
-	err := repo.Create(validatedSeller)
+	_, err := repo.Create(validatedSeller)
 	assert.Nil(t, err)
 
 	// More assertions related to saving can go here.
@@ -31,11 +31,11 @@ func TestSellerRepositoryFindById(t *testing.T) {
 
 	seller := entities.NewSeller("John")
 	validatedSeller, _ := entities.NewValidatedSeller(seller)
-	_ = repo.Create(validatedSeller)
+	_, err := repo.Create(validatedSeller)
 
 	fetchedSeller, err := repo.FindById(validatedSeller.Seller.ID)
 	assert.Nil(t, err)
-	assert.Equal(t, "John", fetchedSeller.Seller.Name)
+	assert.Equal(t, "John", fetchedSeller.Name)
 
 	// More assertions related to fetching by ID can go here.
 }
@@ -48,11 +48,13 @@ func TestSellerRepositoryGetAll(t *testing.T) {
 
 	seller1 := entities.NewSeller("John")
 	validatedSeller1, _ := entities.NewValidatedSeller(seller1)
-	_ = repo.Create(validatedSeller1)
+	_, err := repo.Create(validatedSeller1)
+	assert.NoError(t, err)
 
 	seller2 := entities.NewSeller("Jane")
 	validatedSeller2, _ := entities.NewValidatedSeller(seller2)
-	_ = repo.Create(validatedSeller2)
+	_, err = repo.Create(validatedSeller2)
+	assert.NoError(t, err)
 
 	allSellers, err := repo.FindAll()
 	assert.Nil(t, err)
@@ -68,15 +70,16 @@ func TestSellerRepositoryUpdate(t *testing.T) {
 
 	seller := entities.NewSeller("John")
 	validatedSeller, _ := entities.NewValidatedSeller(seller)
-	_ = repo.Create(validatedSeller)
+	_, err := repo.Create(validatedSeller)
+	assert.NoError(t, err)
 
 	// Update name and validate
 	validatedSeller.Seller.Name = "Johnny"
-	err := repo.Update(validatedSeller)
+	_, err = repo.Update(validatedSeller)
 	assert.Nil(t, err)
 
 	updatedSeller, _ := repo.FindById(validatedSeller.Seller.ID)
-	assert.Equal(t, "Johnny", updatedSeller.Seller.Name)
+	assert.Equal(t, "Johnny", updatedSeller.Name)
 }
 
 func TestSellerRepositoryDelete(t *testing.T) {
@@ -87,9 +90,10 @@ func TestSellerRepositoryDelete(t *testing.T) {
 
 	seller := entities.NewSeller("John")
 	validatedSeller, _ := entities.NewValidatedSeller(seller)
-	_ = repo.Create(validatedSeller)
+	_, err := repo.Create(validatedSeller)
+	assert.NoError(t, err)
 
-	err := repo.Delete(validatedSeller.Seller.ID)
+	err = repo.Delete(validatedSeller.Seller.ID)
 	assert.Nil(t, err)
 
 	// Try to find the deleted seller

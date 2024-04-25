@@ -15,64 +15,47 @@ func NewGormSellerRepository(db *gorm.DB) repositories.SellerRepository {
 	return &GormSellerRepository{db: db}
 }
 
-func (repo *GormSellerRepository) Create(seller *entities.ValidatedSeller) error {
+func (repo *GormSellerRepository) Create(seller *entities.ValidatedSeller) (*entities.Seller, error) {
 	dbSeller := ToDBSeller(seller)
 
 	if err := repo.db.Create(dbSeller).Error; err != nil {
-		return err
+		return nil, err
 	}
 
-	storedSeller, err := repo.FindById(dbSeller.ID)
-	if err != nil {
-		return err
-	}
-
-	*seller = *storedSeller
-
-	return nil
+	return repo.FindById(dbSeller.ID)
 }
 
-func (repo *GormSellerRepository) FindById(id uuid.UUID) (*entities.ValidatedSeller, error) {
+func (repo *GormSellerRepository) FindById(id uuid.UUID) (*entities.Seller, error) {
 	var dbSeller Seller
 	if err := repo.db.First(&dbSeller, id).Error; err != nil {
 		return nil, err
 	}
-	return FromDBSeller(&dbSeller)
+	return fromDBSeller(&dbSeller), nil
 }
 
-func (repo *GormSellerRepository) FindAll() ([]*entities.ValidatedSeller, error) {
-	var err error
+func (repo *GormSellerRepository) FindAll() ([]*entities.Seller, error) {
 	var dbSellers []Seller
 	if err := repo.db.Find(&dbSellers).Error; err != nil {
 		return nil, err
 	}
 
-	sellers := make([]*entities.ValidatedSeller, len(dbSellers))
+	sellers := make([]*entities.Seller, len(dbSellers))
 	for i, dbSeller := range dbSellers {
-		sellers[i], err = FromDBSeller(&dbSeller)
-		if err != nil {
-			return nil, err
-		}
+		sellers[i] = fromDBSeller(&dbSeller)
 	}
+
 	return sellers, nil
 }
 
-func (repo *GormSellerRepository) Update(seller *entities.ValidatedSeller) error {
+func (repo *GormSellerRepository) Update(seller *entities.ValidatedSeller) (*entities.Seller, error) {
 	dbSeller := ToDBSeller(seller)
 
 	err := repo.db.Model(&Seller{}).Where("id = ?", dbSeller.ID).Updates(dbSeller).Error
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	storedSeller, err := repo.FindById(dbSeller.ID)
-	if err != nil {
-		return err
-	}
-
-	*seller = *storedSeller
-
-	return nil
+	return repo.FindById(dbSeller.ID)
 }
 
 func (repo *GormSellerRepository) Delete(id uuid.UUID) error {

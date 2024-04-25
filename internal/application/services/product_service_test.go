@@ -143,7 +143,7 @@ func createPersistedSeller(t *testing.T, sellerRepo *MockSellerRepository) *enti
 	if err != nil {
 		t.Fatalf("Unexpected error: %s", err)
 	}
-	err = sellerRepo.Create(validatedSeller)
+	_, err = sellerRepo.Create(validatedSeller)
 	if err != nil {
 		t.Fatalf("Unexpected error: %s", err)
 	}

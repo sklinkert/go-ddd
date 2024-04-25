@@ -36,17 +36,17 @@ func (m *MockSellerService) CreateSeller(seller *command.CreateSellerCommand) (*
 	return &result, nil
 }
 
-func (m *MockSellerService) FindAllSellers() ([]*entities.ValidatedSeller, error) {
-	var allSellers []*entities.ValidatedSeller
+func (m *MockSellerService) FindAllSellers() ([]*entities.Seller, error) {
+	var allSellers []*entities.Seller
 	for _, v := range m.sellers {
-		allSellers = append(allSellers, v)
+		allSellers = append(allSellers, &v.Seller)
 	}
 	return allSellers, nil
 }
 
-func (m *MockSellerService) FindSellerById(id uuid.UUID) (*entities.ValidatedSeller, error) {
+func (m *MockSellerService) FindSellerById(id uuid.UUID) (*entities.Seller, error) {
 	if seller, exists := m.sellers[id]; exists {
-		return seller, nil
+		return &seller.Seller, nil
 	}
 	return nil, errors.New("seller not found")
 }

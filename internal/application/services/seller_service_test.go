@@ -14,19 +14,23 @@ type MockSellerRepository struct {
 	sellers []*entities.ValidatedSeller
 }
 
-func (m *MockSellerRepository) Create(seller *entities.ValidatedSeller) error {
+func (m *MockSellerRepository) Create(seller *entities.ValidatedSeller) (*entities.Seller, error) {
 	m.sellers = append(m.sellers, seller)
-	return nil
+	return &seller.Seller, nil
 }
 
-func (m *MockSellerRepository) FindAll() ([]*entities.ValidatedSeller, error) {
-	return m.sellers, nil
+func (m *MockSellerRepository) FindAll() ([]*entities.Seller, error) {
+	var sellers []*entities.Seller
+	for _, s := range m.sellers {
+		sellers = append(sellers, &s.Seller)
+	}
+	return sellers, nil
 }
 
-func (m *MockSellerRepository) FindById(id uuid.UUID) (*entities.ValidatedSeller, error) {
+func (m *MockSellerRepository) FindById(id uuid.UUID) (*entities.Seller, error) {
 	for _, s := range m.sellers {
 		if s.ID == id {
-			return s, nil
+			return &s.Seller, nil
 		} else {
 			fmt.Printf("ID: %s - %s\n", s.ID, id)
 		}
@@ -44,14 +48,14 @@ func (m *MockSellerRepository) Delete(id uuid.UUID) error {
 	return errors.New("seller not found for deletion")
 }
 
-func (m *MockSellerRepository) Update(seller *entities.ValidatedSeller) error {
+func (m *MockSellerRepository) Update(seller *entities.ValidatedSeller) (*entities.Seller, error) {
 	for index, s := range m.sellers {
 		if s.ID == seller.ID {
 			m.sellers[index] = seller
-			return nil
+			return &seller.Seller, nil
 		}
 	}
-	return errors.New("seller not found for update")
+	return nil, errors.New("seller not found for update")
 }
 
 func TestSellerService_CreateSeller(t *testing.T) {
