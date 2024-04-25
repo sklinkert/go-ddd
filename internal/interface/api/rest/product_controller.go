@@ -17,14 +17,14 @@ func NewProductController(e *echo.Echo, service interfaces.ProductService) *Prod
 		service: service,
 	}
 
-	e.POST("/products", controller.CreateProduct)
-	e.GET("/products", controller.GetAllProducts)
-	e.GET("/products/:id", controller.GetProductById)
+	e.POST("/products", controller.CreateProductController)
+	e.GET("/products", controller.GetAllProductsController)
+	e.GET("/products/:id", controller.GetProductByIdController)
 
 	return controller
 }
 
-func (pc *ProductController) CreateProduct(c echo.Context) error {
+func (pc *ProductController) CreateProductController(c echo.Context) error {
 	var createProductRequest request.CreateProductRequest
 
 	if err := c.Bind(&createProductRequest); err != nil {
@@ -50,7 +50,7 @@ func (pc *ProductController) CreateProduct(c echo.Context) error {
 	return c.JSON(http.StatusCreated, result.Result)
 }
 
-func (pc *ProductController) GetAllProducts(c echo.Context) error {
+func (pc *ProductController) GetAllProductsController(c echo.Context) error {
 	products, err := pc.service.FindAllProducts()
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{
@@ -61,7 +61,7 @@ func (pc *ProductController) GetAllProducts(c echo.Context) error {
 	return c.JSON(http.StatusOK, products)
 }
 
-func (pc *ProductController) GetProductById(c echo.Context) error {
+func (pc *ProductController) GetProductByIdController(c echo.Context) error {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{

@@ -28,7 +28,7 @@ func TestCreateSeller(t *testing.T) {
 	c := echo.New().NewContext(req, rec)
 
 	// Act
-	if err := controller.CreateSeller(c); err != nil {
+	if err := controller.CreateSellerController(c); err != nil {
 		t.Fatal(err)
 	}
 

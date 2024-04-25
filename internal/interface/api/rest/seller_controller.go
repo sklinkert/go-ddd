@@ -17,14 +17,14 @@ func NewSellerController(e *echo.Echo, service interfaces.SellerService) *Seller
 		service: service,
 	}
 
-	e.POST("/sellers", controller.CreateSeller)
-	e.GET("/sellers", controller.GetAllSellers)
-	e.GET("/sellers/:id", controller.GetSellerById)
+	e.POST("/sellers", controller.CreateSellerController)
+	e.GET("/sellers", controller.GetAllSellersController)
+	e.GET("/sellers/:id", controller.GetSellerByIdController)
 
 	return controller
 }
 
-func (sc *SellerController) CreateSeller(c echo.Context) error {
+func (sc *SellerController) CreateSellerController(c echo.Context) error {
 	var createSellerRequest request.CreateSellerRequest
 
 	if err := c.Bind(&createSellerRequest); err != nil {
@@ -50,7 +50,7 @@ func (sc *SellerController) CreateSeller(c echo.Context) error {
 	return c.JSON(http.StatusCreated, commandResult.Result)
 }
 
-func (sc *SellerController) GetAllSellers(c echo.Context) error {
+func (sc *SellerController) GetAllSellersController(c echo.Context) error {
 	sellers, err := sc.service.FindAllSellers()
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{
@@ -61,7 +61,7 @@ func (sc *SellerController) GetAllSellers(c echo.Context) error {
 	return c.JSON(http.StatusOK, sellers)
 }
 
-func (sc *SellerController) GetSellerById(c echo.Context) error {
+func (sc *SellerController) GetSellerByIdController(c echo.Context) error {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{

@@ -38,7 +38,7 @@ func TestCreateProduct(t *testing.T) {
 	mockService.On("CreateProduct", mock.Anything).Return(createProductCommandResult, nil)
 
 	// Execute
-	err := ctrl.CreateProduct(c)
+	err := ctrl.CreateProductController(c)
 	assert.NoError(t, err)
 
 	// Deserialize the response body
@@ -85,7 +85,7 @@ func TestGetAllProducts(t *testing.T) {
 	mockService.On("FindAllProducts").Return(expectedProducts, nil)
 
 	// Assertions
-	if assert.NoError(t, ctrl.GetAllProducts(c)) {
+	if assert.NoError(t, ctrl.GetAllProductsController(c)) {
 		assert.Equal(t, http.StatusOK, rec.Code)
 
 		var responseProducts []*entities.Product
