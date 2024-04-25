@@ -53,7 +53,7 @@ func (s *ProductService) CreateProduct(productCommand *command.CreateProductComm
 	return &result, nil
 }
 
-func (s *ProductService) GetAllProducts() ([]*entities.ValidatedProduct, error) {
+func (s *ProductService) FindAllProducts() ([]*entities.ValidatedProduct, error) {
 	return s.productRepository.FindAll()
 }
 

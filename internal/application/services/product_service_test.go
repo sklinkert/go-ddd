@@ -86,7 +86,7 @@ func TestProductService_GetAllProducts(t *testing.T) {
 	_, _ = service.CreateProduct(getCreateProductCommand(entities.NewProduct("Example1", 100.0, *seller)))
 	_, _ = service.CreateProduct(getCreateProductCommand(entities.NewProduct("Example2", 200.0, *seller)))
 
-	products, err := service.GetAllProducts()
+	products, err := service.FindAllProducts()
 	if err != nil {
 		t.Errorf("Unexpected error: %s", err)
 	}

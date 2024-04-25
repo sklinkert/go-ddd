@@ -87,7 +87,7 @@ func TestGetAllProducts(t *testing.T) {
 	c := e.NewContext(req, rec)
 
 	ctrl := rest.NewProductController(e, mockService)
-	mockService.On("GetAllProducts").Return(expectedValidatedProducts, nil)
+	mockService.On("FindAllProducts").Return(expectedValidatedProducts, nil)
 
 	// Assertions
 	if assert.NoError(t, ctrl.GetAllProducts(c)) {
