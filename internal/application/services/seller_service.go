@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/google/uuid"
 	"github.com/sklinkert/go-ddd/internal/application/command"
+	"github.com/sklinkert/go-ddd/internal/application/interfaces"
 	"github.com/sklinkert/go-ddd/internal/application/mapper"
 	"github.com/sklinkert/go-ddd/internal/domain/entities"
 	"github.com/sklinkert/go-ddd/internal/domain/repositories"
@@ -14,7 +15,7 @@ type SellerService struct {
 }
 
 // NewSellerService - Constructor for the service
-func NewSellerService(repo repositories.SellerRepository) *SellerService {
+func NewSellerService(repo repositories.SellerRepository) interfaces.SellerService {
 	return &SellerService{repo: repo}
 }
 

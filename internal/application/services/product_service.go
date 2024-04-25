@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/google/uuid"
 	"github.com/sklinkert/go-ddd/internal/application/command"
+	"github.com/sklinkert/go-ddd/internal/application/interfaces"
 	"github.com/sklinkert/go-ddd/internal/application/mapper"
 	"github.com/sklinkert/go-ddd/internal/domain/entities"
 	"github.com/sklinkert/go-ddd/internal/domain/repositories"
@@ -17,7 +18,7 @@ type ProductService struct {
 func NewProductService(
 	productRepository repositories.ProductRepository,
 	sellerRepository repositories.SellerRepository,
-) *ProductService {
+) interfaces.ProductService {
 	return &ProductService{productRepository: productRepository, sellerRepository: sellerRepository}
 }
 
