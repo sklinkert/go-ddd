@@ -76,5 +76,11 @@ func (pc *ProductController) GetProductByIdController(c echo.Context) error {
 		})
 	}
 
+	if product == nil {
+		return c.JSON(http.StatusNotFound, map[string]string{
+			"error": "Product not found",
+		})
+	}
+
 	return c.JSON(http.StatusOK, product)
 }

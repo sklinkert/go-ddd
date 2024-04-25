@@ -76,5 +76,11 @@ func (sc *SellerController) GetSellerByIdController(c echo.Context) error {
 		})
 	}
 
+	if seller == nil {
+		return c.JSON(http.StatusNotFound, map[string]string{
+			"error": "Seller not found",
+		})
+	}
+
 	return c.JSON(http.StatusOK, seller)
 }
