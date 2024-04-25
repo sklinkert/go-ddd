@@ -76,7 +76,7 @@ func TestSellerService_GetAllSellers(t *testing.T) {
 	_, _ = service.CreateSeller(getCreateSellerCommand("John Doe"))
 	_, _ = service.CreateSeller(getCreateSellerCommand("Jane Doe"))
 
-	sellers, err := service.GetAllSellers()
+	sellers, err := service.FindAllSellers()
 	if err != nil {
 		t.Errorf("Unexpected error: %s", err)
 	}
@@ -93,7 +93,7 @@ func TestSellerService_GetSellerById(t *testing.T) {
 	createdSellerResult, _ := service.CreateSeller(getCreateSellerCommand("John Doe"))
 	sellerID := createdSellerResult.Result.ID
 
-	foundSeller, err := service.GetSellerById(sellerID)
+	foundSeller, err := service.FindSellerById(sellerID)
 	if err != nil {
 		t.Errorf("Unexpected error: %s", err)
 	}
@@ -102,7 +102,7 @@ func TestSellerService_GetSellerById(t *testing.T) {
 		t.Errorf("Expected seller name 'John Doe', but got %s", foundSeller.Name)
 	}
 
-	_, err = service.GetSellerById(uuid.New()) // some non-existent ID
+	_, err = service.FindSellerById(uuid.New()) // some non-existent ID
 	if err == nil {
 		t.Error("Expected error for non-existent seller, but got none")
 	}
@@ -120,13 +120,15 @@ func TestSellerService_UpdateSeller(t *testing.T) {
 		Name: "Doe Johnny",
 	}
 
-	err := service.UpdateSeller(&entities.ValidatedSeller{Seller: updatableSeller})
-
+	_, err := service.UpdateSeller(&command.UpdateSellerCommand{
+		ID:   sellerID,
+		Name: updatableSeller.Name,
+	})
 	if err != nil {
 		t.Errorf("Unexpected error: %s", err)
 	}
 
-	updatedSeller, _ := service.GetSellerById(sellerID)
+	updatedSeller, _ := service.FindSellerById(sellerID)
 	if updatedSeller.Name != "Doe Johnny" {
 		t.Errorf("Expected seller name 'Johnny Doe', but got %s", updatedSeller.Name)
 	}

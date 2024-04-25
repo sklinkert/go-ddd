@@ -51,7 +51,7 @@ func (sc *SellerController) CreateSeller(c echo.Context) error {
 }
 
 func (sc *SellerController) GetAllSellers(c echo.Context) error {
-	sellers, err := sc.service.GetAllSellers()
+	sellers, err := sc.service.FindAllSellers()
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{
 			"error": "Failed to fetch sellers",
@@ -69,7 +69,7 @@ func (sc *SellerController) GetSellerById(c echo.Context) error {
 		})
 	}
 
-	seller, err := sc.service.GetSellerById(id)
+	seller, err := sc.service.FindSellerById(id)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{
 			"error": "Failed to fetch seller",

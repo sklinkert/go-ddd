@@ -1,6 +1,7 @@
 package services
 
 import (
+	"errors"
 	"github.com/google/uuid"
 	"github.com/sklinkert/go-ddd/internal/application/command"
 	"github.com/sklinkert/go-ddd/internal/application/mapper"
@@ -37,17 +38,38 @@ func (s *SellerService) CreateSeller(sellerCommand *command.CreateSellerCommand)
 	return &result, nil
 }
 
-// GetAllSellers fetches all sellers
-func (s *SellerService) GetAllSellers() ([]*entities.ValidatedSeller, error) {
+// FindAllSellers fetches all sellers
+func (s *SellerService) FindAllSellers() ([]*entities.ValidatedSeller, error) {
 	return s.repo.FindAll()
 }
 
-// GetSellerById fetches a specific seller by ID
-func (s *SellerService) GetSellerById(id uuid.UUID) (*entities.ValidatedSeller, error) {
+// FindSellerById fetches a specific seller by ID
+func (s *SellerService) FindSellerById(id uuid.UUID) (*entities.ValidatedSeller, error) {
 	return s.repo.FindById(id)
 }
 
 // UpdateSeller updates a seller
-func (s *SellerService) UpdateSeller(seller *entities.ValidatedSeller) error {
-	return s.repo.Update(seller)
+func (s *SellerService) UpdateSeller(updateCommand *command.UpdateSellerCommand) (*command.UpdateSellerCommandResult, error) {
+	seller, err := s.repo.FindById(updateCommand.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	if seller == nil {
+		return nil, errors.New("seller not found")
+	}
+
+	if err := seller.Update(updateCommand.Name); err != nil {
+		return nil, err
+	}
+
+	err = s.repo.Update(seller)
+	if err != nil {
+		return nil, err
+	}
+
+	var result command.UpdateSellerCommandResult
+	result.Result = mapper.NewSellerResultFromEntity(*seller)
+
+	return &result, nil
 }

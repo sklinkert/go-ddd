@@ -36,7 +36,7 @@ func (m *MockSellerService) CreateSeller(seller *command.CreateSellerCommand) (*
 	return &result, nil
 }
 
-func (m *MockSellerService) GetAllSellers() ([]*entities.ValidatedSeller, error) {
+func (m *MockSellerService) FindAllSellers() ([]*entities.ValidatedSeller, error) {
 	var allSellers []*entities.ValidatedSeller
 	for _, v := range m.sellers {
 		allSellers = append(allSellers, v)
@@ -44,17 +44,19 @@ func (m *MockSellerService) GetAllSellers() ([]*entities.ValidatedSeller, error)
 	return allSellers, nil
 }
 
-func (m *MockSellerService) GetSellerById(id uuid.UUID) (*entities.ValidatedSeller, error) {
+func (m *MockSellerService) FindSellerById(id uuid.UUID) (*entities.ValidatedSeller, error) {
 	if seller, exists := m.sellers[id]; exists {
 		return seller, nil
 	}
 	return nil, errors.New("seller not found")
 }
 
-func (m *MockSellerService) UpdateSeller(seller *entities.ValidatedSeller) error {
-	if _, exists := m.sellers[seller.ID]; exists {
-		m.sellers[seller.ID] = seller
-		return nil
+func (m *MockSellerService) UpdateSeller(updateCommand *command.UpdateSellerCommand) (*command.UpdateSellerCommandResult, error) {
+	if _, exists := m.sellers[updateCommand.ID]; exists {
+		m.sellers[updateCommand.ID].Name = updateCommand.Name
+		return &command.UpdateSellerCommandResult{
+			Result: mapper.NewSellerResultFromEntity(*m.sellers[updateCommand.ID]),
+		}, nil
 	}
-	return errors.New("seller not found")
+	return nil, errors.New("seller not found")
 }

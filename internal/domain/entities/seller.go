@@ -24,3 +24,8 @@ func (s *Seller) validate() error {
 
 	return nil
 }
+
+func (s *Seller) Update(name string) error {
+	s.Name = name
+	return s.validate()
+}
