@@ -8,6 +8,6 @@ import (
 
 type ProductService interface {
 	CreateProduct(productCommand *command.CreateProductCommand) (*command.CreateProductCommandResult, error)
-	FindAllProducts() ([]*entities.ValidatedProduct, error)
-	FindProductById(id uuid.UUID) (*entities.ValidatedProduct, error)
+	FindAllProducts() ([]*entities.Product, error)
+	FindProductById(id uuid.UUID) (*entities.Product, error)
 }

@@ -31,7 +31,7 @@ func (m *MockSellerService) CreateSeller(seller *command.CreateSellerCommand) (*
 
 	m.sellers[validatedSeller.ID] = validatedSeller
 
-	result.Result = mapper.NewSellerResultFromEntity(*validatedSeller)
+	result.Result = mapper.NewSellerResultFromEntity(validatedSeller.Seller)
 
 	return &result, nil
 }
@@ -55,7 +55,7 @@ func (m *MockSellerService) UpdateSeller(updateCommand *command.UpdateSellerComm
 	if _, exists := m.sellers[updateCommand.ID]; exists {
 		m.sellers[updateCommand.ID].Name = updateCommand.Name
 		return &command.UpdateSellerCommandResult{
-			Result: mapper.NewSellerResultFromEntity(*m.sellers[updateCommand.ID]),
+			Result: mapper.NewSellerResultFromEntity(m.sellers[updateCommand.ID].Seller),
 		}, nil
 	}
 	return nil, errors.New("seller not found")

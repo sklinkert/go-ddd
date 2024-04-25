@@ -33,7 +33,7 @@ func (s *SellerService) CreateSeller(sellerCommand *command.CreateSellerCommand)
 	}
 
 	var result command.CreateSellerCommandResult
-	result.Result = mapper.NewSellerResultFromEntity(*validatedSeller)
+	result.Result = mapper.NewSellerResultFromEntity(validatedSeller.Seller)
 
 	return &result, nil
 }
@@ -69,7 +69,7 @@ func (s *SellerService) UpdateSeller(updateCommand *command.UpdateSellerCommand)
 	}
 
 	var result command.UpdateSellerCommandResult
-	result.Result = mapper.NewSellerResultFromEntity(*seller)
+	result.Result = mapper.NewSellerResultFromEntity(seller.Seller)
 
 	return &result, nil
 }

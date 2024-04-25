@@ -43,7 +43,7 @@ func TestGormProductRepository_Save(t *testing.T) {
 	product := entities.NewProduct("TestProduct", 9.99, *validatedSeller)
 	validProduct, _ := entities.NewValidatedProduct(product)
 
-	err := repo.Create(validProduct)
+	_, err := repo.Create(validProduct)
 	if err != nil {
 		t.Errorf("Unexpected error during save: %s", err)
 	}
@@ -79,13 +79,13 @@ func TestGormProductRepository_Update(t *testing.T) {
 
 	product := entities.NewProduct("TestProduct", 9.99, *validatedSeller)
 	validProduct, _ := entities.NewValidatedProduct(product)
-	err := repo.Create(validProduct)
+	_, err := repo.Create(validProduct)
 	if err != nil {
 		t.Fatalf("Unexpected error during save: %s", err)
 	}
 
 	validProduct.Name = "UpdatedProduct"
-	err = repo.Update(validProduct)
+	_, err = repo.Update(validProduct)
 	if err != nil {
 		t.Errorf("Unexpected error during update: %s", err)
 	}

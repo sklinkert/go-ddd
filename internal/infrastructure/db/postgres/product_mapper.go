@@ -15,23 +15,18 @@ func ToDBProduct(product *entities.ValidatedProduct) *Product {
 	return p
 }
 
-func FromDBProduct(dbProduct *Product) (*entities.ValidatedProduct, error) {
+func FromDBProduct(dbProduct *Product) *entities.Product {
 	var seller = &entities.Seller{
 		ID:   dbProduct.Seller.ID,
 		Name: dbProduct.Seller.Name,
 	}
 
-	validatedSeller, err := entities.NewValidatedSeller(seller)
-	if err != nil {
-		return nil, err
-	}
-
 	var p = &entities.Product{
 		Name:   dbProduct.Name,
 		Price:  dbProduct.Price,
-		Seller: *validatedSeller,
+		Seller: *seller,
 	}
 	p.ID = dbProduct.ID
 
-	return entities.NewValidatedProduct(p)
+	return p
 }

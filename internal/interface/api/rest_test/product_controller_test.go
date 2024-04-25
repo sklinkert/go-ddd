@@ -76,18 +76,13 @@ func TestGetAllProducts(t *testing.T) {
 			Price: 14.99,
 		},
 	}
-	var expectedValidatedProducts []*entities.ValidatedProduct
-	for _, product := range expectedProducts {
-		validated, _ := entities.NewValidatedProduct(product)
-		expectedValidatedProducts = append(expectedValidatedProducts, validated)
-	}
 
 	req := httptest.NewRequest(http.MethodGet, "/expectedProducts", nil)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
 
 	ctrl := rest.NewProductController(e, mockService)
-	mockService.On("FindAllProducts").Return(expectedValidatedProducts, nil)
+	mockService.On("FindAllProducts").Return(expectedProducts, nil)
 
 	// Assertions
 	if assert.NoError(t, ctrl.GetAllProducts(c)) {

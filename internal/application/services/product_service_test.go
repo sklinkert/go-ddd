@@ -14,23 +14,27 @@ type MockProductRepository struct {
 	products []*entities.ValidatedProduct
 }
 
-func (m *MockProductRepository) Create(product *entities.ValidatedProduct) error {
+func (m *MockProductRepository) Create(product *entities.ValidatedProduct) (*entities.Product, error) {
 	m.products = append(m.products, product)
-	return nil
+	return &product.Product, nil
 }
 
-func (m *MockProductRepository) FindAll() ([]*entities.ValidatedProduct, error) {
-	return m.products, nil
+func (m *MockProductRepository) FindAll() ([]*entities.Product, error) {
+	var products []*entities.Product
+	for _, p := range m.products {
+		products = append(products, &p.Product)
+	}
+	return products, nil
 }
 
-func (m *MockProductRepository) Update(product *entities.ValidatedProduct) error {
+func (m *MockProductRepository) Update(product *entities.ValidatedProduct) (*entities.Product, error) {
 	for index, p := range m.products {
 		if p.ID == product.ID {
 			m.products[index] = product
-			return nil
+			return &product.Product, nil
 		}
 	}
-	return errors.New("product not found for update")
+	return nil, errors.New("product not found for update")
 }
 
 func (m *MockProductRepository) Delete(id uuid.UUID) error {
@@ -43,10 +47,10 @@ func (m *MockProductRepository) Delete(id uuid.UUID) error {
 	return errors.New("product not found for delete")
 }
 
-func (m *MockProductRepository) FindById(id uuid.UUID) (*entities.ValidatedProduct, error) {
+func (m *MockProductRepository) FindById(id uuid.UUID) (*entities.Product, error) {
 	for _, p := range m.products {
 		if p.ID == id {
-			return p, nil
+			return &p.Product, nil
 		}
 		fmt.Printf("ID: mem:%s - %s\n", p.ID, id)
 	}

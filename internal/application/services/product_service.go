@@ -42,7 +42,7 @@ func (s *ProductService) CreateProduct(productCommand *command.CreateProductComm
 		return nil, err
 	}
 
-	err = s.productRepository.Create(validatedProduct)
+	_, err = s.productRepository.Create(validatedProduct)
 	if err != nil {
 		return nil, err
 	}
@@ -53,10 +53,10 @@ func (s *ProductService) CreateProduct(productCommand *command.CreateProductComm
 	return &result, nil
 }
 
-func (s *ProductService) FindAllProducts() ([]*entities.ValidatedProduct, error) {
+func (s *ProductService) FindAllProducts() ([]*entities.Product, error) {
 	return s.productRepository.FindAll()
 }
 
-func (s *ProductService) FindProductById(id uuid.UUID) (*entities.ValidatedProduct, error) {
+func (s *ProductService) FindProductById(id uuid.UUID) (*entities.Product, error) {
 	return s.productRepository.FindById(id)
 }

@@ -42,12 +42,12 @@ func (m *MockProductService) CreateProduct(productCommand *command.CreateProduct
 	return &result, args.Error(1)
 }
 
-func (m *MockProductService) FindAllProducts() ([]*entities.ValidatedProduct, error) {
+func (m *MockProductService) FindAllProducts() ([]*entities.Product, error) {
 	args := m.Called()
-	return args.Get(0).([]*entities.ValidatedProduct), args.Error(1)
+	return args.Get(0).([]*entities.Product), args.Error(1)
 }
 
-func (m *MockProductService) FindProductById(id uuid.UUID) (*entities.ValidatedProduct, error) {
+func (m *MockProductService) FindProductById(id uuid.UUID) (*entities.Product, error) {
 	args := m.Called(id)
-	return args.Get(0).(*entities.ValidatedProduct), args.Error(1)
+	return args.Get(0).(*entities.Product), args.Error(1)
 }

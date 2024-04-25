@@ -6,9 +6,9 @@ import (
 )
 
 type ProductRepository interface {
-	Create(product *entities.ValidatedProduct) error
-	FindById(id uuid.UUID) (*entities.ValidatedProduct, error)
-	FindAll() ([]*entities.ValidatedProduct, error)
-	Update(product *entities.ValidatedProduct) error
+	Create(product *entities.ValidatedProduct) (*entities.Product, error)
+	FindById(id uuid.UUID) (*entities.Product, error)
+	FindAll() ([]*entities.Product, error)
+	Update(product *entities.ValidatedProduct) (*entities.Product, error)
 	Delete(id uuid.UUID) error
 }
