@@ -51,6 +51,9 @@ Domain-Driven Design is a methodology and design pattern used to build complex e
   - Databases can get replaced, and you don't want to have to change all your default values. 
 - Always read the entity after write in the infrastructure layer.
   - This ensures that the data is written correctly, and we are never operating on stale data.
+- `find` vs `get`:
+  - `find` methods can return null or an empty list.
+  - `get` methods must return a value. If the value is not found, throw an error.
 
 ## Getting Started
 
