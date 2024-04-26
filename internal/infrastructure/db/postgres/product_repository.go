@@ -17,7 +17,7 @@ func NewGormProductRepository(db *gorm.DB) repositories.ProductRepository {
 
 func (repo *GormProductRepository) Create(product *entities.ValidatedProduct) (*entities.Product, error) {
 	// Map domain entity to DB model
-	dbProduct := ToDBProduct(product)
+	dbProduct := toDBProduct(product)
 
 	if err := repo.db.Create(dbProduct).Error; err != nil {
 		return nil, err
@@ -34,7 +34,7 @@ func (repo *GormProductRepository) FindById(id uuid.UUID) (*entities.Product, er
 	}
 
 	// Map back to domain entity
-	return FromDBProduct(&dbProduct), nil
+	return fromDBProduct(&dbProduct), nil
 }
 
 func (repo *GormProductRepository) FindAll() ([]*entities.Product, error) {
@@ -46,13 +46,13 @@ func (repo *GormProductRepository) FindAll() ([]*entities.Product, error) {
 
 	products := make([]*entities.Product, len(dbProducts))
 	for i, dbProduct := range dbProducts {
-		products[i] = FromDBProduct(&dbProduct)
+		products[i] = fromDBProduct(&dbProduct)
 	}
 	return products, nil
 }
 
 func (repo *GormProductRepository) Update(product *entities.ValidatedProduct) (*entities.Product, error) {
-	dbProduct := ToDBProduct(product)
+	dbProduct := toDBProduct(product)
 	err := repo.db.Model(&Product{}).Where("id = ?", dbProduct.ID).Updates(dbProduct).Error
 	if err != nil {
 		return nil, err

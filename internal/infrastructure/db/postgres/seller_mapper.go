@@ -4,8 +4,8 @@ import (
 	"github.com/sklinkert/go-ddd/internal/domain/entities"
 )
 
-// ToDBSeller maps domain Seller entity to DB persistence model.
-func ToDBSeller(seller *entities.ValidatedSeller) *Seller {
+// toDBSeller maps domain Seller entity to DB persistence model.
+func toDBSeller(seller *entities.ValidatedSeller) *Seller {
 	s := &Seller{
 		Name: seller.Name,
 	}

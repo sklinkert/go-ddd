@@ -16,7 +16,7 @@ func NewGormSellerRepository(db *gorm.DB) repositories.SellerRepository {
 }
 
 func (repo *GormSellerRepository) Create(seller *entities.ValidatedSeller) (*entities.Seller, error) {
-	dbSeller := ToDBSeller(seller)
+	dbSeller := toDBSeller(seller)
 
 	if err := repo.db.Create(dbSeller).Error; err != nil {
 		return nil, err
@@ -48,7 +48,7 @@ func (repo *GormSellerRepository) FindAll() ([]*entities.Seller, error) {
 }
 
 func (repo *GormSellerRepository) Update(seller *entities.ValidatedSeller) (*entities.Seller, error) {
-	dbSeller := ToDBSeller(seller)
+	dbSeller := toDBSeller(seller)
 
 	err := repo.db.Model(&Seller{}).Where("id = ?", dbSeller.ID).Updates(dbSeller).Error
 	if err != nil {
