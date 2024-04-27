@@ -5,8 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/labstack/echo/v4"
+	"github.com/sklinkert/go-ddd/internal/application/command"
 	"github.com/sklinkert/go-ddd/internal/domain/entities"
 	"github.com/sklinkert/go-ddd/internal/interface/api/rest"
+	"github.com/sklinkert/go-ddd/internal/interface/api/rest/request"
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
@@ -40,4 +42,38 @@ func TestCreateSeller(t *testing.T) {
 	var createdSeller entities.Seller
 	_ = json.Unmarshal(rec.Body.Bytes(), &createdSeller)
 	assert.Equal(t, seller.Name, createdSeller.Name)
+}
+
+func TestPutSeller(t *testing.T) {
+	// Arrange
+	mockService := NewMockSellerService()
+	controller := rest.NewSellerController(echo.New(), mockService)
+
+	createdSeller, err := mockService.CreateSeller(&command.CreateSellerCommand{Name: "TestSeller"})
+	assert.NoError(t, err)
+
+	updateRequest := request.UpdateSellerRequest{
+		ID:   createdSeller.Result.ID,
+		Name: "updatedName",
+	}
+
+	sellerJSON, _ := json.Marshal(updateRequest)
+	req := httptest.NewRequest(http.MethodPut, "/sellers", bytes.NewReader(sellerJSON))
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+	c := echo.New().NewContext(req, rec)
+
+	// Act
+	if err := controller.PutSellerController(c); err != nil {
+		t.Fatal(err)
+	}
+
+	// Assert
+	assert.Equal(t, http.StatusOK, rec.Code)
+
+	var updatedSeller command.UpdateSellerCommandResult
+	err = json.Unmarshal(rec.Body.Bytes(), &updatedSeller)
+	assert.NoError(t, err)
+
+	assert.Equal(t, updateRequest.Name, updatedSeller.Result.Name)
 }

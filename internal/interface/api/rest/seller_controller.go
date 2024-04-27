@@ -20,6 +20,7 @@ func NewSellerController(e *echo.Echo, service interfaces.SellerService) *Seller
 	e.POST("/sellers", controller.CreateSellerController)
 	e.GET("/sellers", controller.GetAllSellersController)
 	e.GET("/sellers/:id", controller.GetSellerByIdController)
+	e.PUT("/sellers", controller.PutSellerController)
 
 	return controller
 }
@@ -83,4 +84,30 @@ func (sc *SellerController) GetSellerByIdController(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, seller)
+}
+
+func (sc *SellerController) PutSellerController(c echo.Context) error {
+	var updateSellerRequest request.UpdateSellerRequest
+
+	if err := c.Bind(&updateSellerRequest); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{
+			"error": "Failed to parse request body",
+		})
+	}
+
+	updateSellerCommand, err := updateSellerRequest.ToUpdateSellerCommand()
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{
+			"error": "Invalid seller ID format",
+		})
+	}
+
+	commandResult, err := sc.service.UpdateSeller(updateSellerCommand)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{
+			"error": "Failed to update seller",
+		})
+	}
+
+	return c.JSON(http.StatusOK, commandResult)
 }
