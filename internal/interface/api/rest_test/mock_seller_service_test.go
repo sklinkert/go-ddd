@@ -60,3 +60,11 @@ func (m *MockSellerService) UpdateSeller(updateCommand *command.UpdateSellerComm
 	}
 	return nil, errors.New("seller not found")
 }
+
+func (m *MockSellerService) DeleteSeller(id uuid.UUID) error {
+	if _, exists := m.sellers[id]; exists {
+		delete(m.sellers, id)
+		return nil
+	}
+	return errors.New("seller not found")
+}

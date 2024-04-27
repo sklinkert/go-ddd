@@ -81,3 +81,7 @@ func (s *SellerService) UpdateSeller(updateCommand *command.UpdateSellerCommand)
 
 	return &result, nil
 }
+
+func (s *SellerService) DeleteSeller(id uuid.UUID) error {
+	return s.repo.Delete(id)
+}

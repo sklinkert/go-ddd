@@ -77,3 +77,30 @@ func TestPutSeller(t *testing.T) {
 
 	assert.Equal(t, updateRequest.Name, updatedSeller.Result.Name)
 }
+
+func TestDeleteSeller(t *testing.T) {
+	// Arrange
+	mockService := NewMockSellerService()
+	controller := rest.NewSellerController(echo.New(), mockService)
+
+	createdSeller, err := mockService.CreateSeller(&command.CreateSellerCommand{Name: "TestSeller"})
+	assert.NoError(t, err)
+
+	fmt.Printf("ID: %s\n", createdSeller.Result.ID.String())
+
+	req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/sellers/%s", createdSeller.Result.ID), nil)
+	rec := httptest.NewRecorder()
+	c := echo.New().NewContext(req, rec)
+
+	fmt.Printf("Deleting seller with ID: %s\n", createdSeller.Result.ID.String())
+
+	// Act
+	if err := controller.DeleteSellerController(c); err != nil {
+		t.Fatal(err)
+	}
+
+	fmt.Printf("rec: %s\n", rec.Body.String())
+
+	// Assert
+	assert.Equal(t, http.StatusNoContent, rec.Code)
+}

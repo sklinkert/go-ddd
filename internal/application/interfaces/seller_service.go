@@ -11,4 +11,5 @@ type SellerService interface {
 	FindAllSellers() ([]*entities.Seller, error)
 	FindSellerById(id uuid.UUID) (*entities.Seller, error)
 	UpdateSeller(updateCommand *command.UpdateSellerCommand) (*command.UpdateSellerCommandResult, error)
+	DeleteSeller(id uuid.UUID) error
 }

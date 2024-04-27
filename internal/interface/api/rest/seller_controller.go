@@ -21,6 +21,7 @@ func NewSellerController(e *echo.Echo, service interfaces.SellerService) *Seller
 	e.GET("/sellers", controller.GetAllSellersController)
 	e.GET("/sellers/:id", controller.GetSellerByIdController)
 	e.PUT("/sellers", controller.PutSellerController)
+	e.DELETE("/sellers/:id", controller.DeleteSellerController)
 
 	return controller
 }
@@ -110,4 +111,26 @@ func (sc *SellerController) PutSellerController(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, commandResult)
+}
+
+func (sc *SellerController) DeleteSellerController(c echo.Context) error {
+	// Hack: split the ID from the URL
+	// For some reason c.Param("id") doesn't work here
+	idRaw := c.Request().URL.Path[len("/sellers/"):]
+
+	id, err := uuid.Parse(idRaw)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{
+			"error": "Invalid seller ID format",
+		})
+	}
+
+	err = sc.service.DeleteSeller(id)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{
+			"error": "Failed to delete seller",
+		})
+	}
+
+	return c.NoContent(http.StatusNoContent)
 }
