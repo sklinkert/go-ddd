@@ -54,6 +54,7 @@ Domain-Driven Design is a methodology and design pattern used to build complex e
 - `find` vs `get`:
   - `find` methods can return null or an empty list.
   - `get` methods must return a value. If the value is not found, throw an error.
+- Deletion: Always use soft deletion. Create a `deleted_at` column in your database and set it to the current timestamp when deleting an entity. This way, you can always restore the entity if needed.
 
 ## Getting Started
 
