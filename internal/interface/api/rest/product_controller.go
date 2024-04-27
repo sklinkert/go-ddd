@@ -3,6 +3,7 @@ package rest
 import (
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 	"github.com/sklinkert/go-ddd/internal/application/interfaces"
 	"github.com/sklinkert/go-ddd/internal/interface/api/rest/request"
 	"net/http"
@@ -20,6 +21,7 @@ func NewProductController(e *echo.Echo, service interfaces.ProductService) *Prod
 	e.POST("/api/v1/products", controller.CreateProductController)
 	e.GET("/api/v1/products", controller.GetAllProductsController)
 	e.GET("/api/v1/products/:id", controller.GetProductByIdController)
+	e.Use(middleware.Recover())
 
 	return controller
 }
