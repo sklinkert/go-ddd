@@ -64,7 +64,11 @@ func (sc *SellerController) GetAllSellersController(c echo.Context) error {
 }
 
 func (sc *SellerController) GetSellerByIdController(c echo.Context) error {
-	id, err := uuid.Parse(c.Param("id"))
+	// Hack: split the ID from the URL
+	// For some reason c.Param("id") doesn't work here
+	idRaw := c.Request().URL.Path[len("/sellers/"):]
+
+	id, err := uuid.Parse(idRaw)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{
 			"error": "Invalid seller ID format",
