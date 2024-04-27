@@ -17,9 +17,9 @@ func NewProductController(e *echo.Echo, service interfaces.ProductService) *Prod
 		service: service,
 	}
 
-	e.POST("/products", controller.CreateProductController)
-	e.GET("/products", controller.GetAllProductsController)
-	e.GET("/products/:id", controller.GetProductByIdController)
+	e.POST("/api/v1/products", controller.CreateProductController)
+	e.GET("/api/v1/products", controller.GetAllProductsController)
+	e.GET("/api/v1/products/:id", controller.GetProductByIdController)
 
 	return controller
 }

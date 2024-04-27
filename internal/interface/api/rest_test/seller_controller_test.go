@@ -24,7 +24,7 @@ func TestCreateSeller(t *testing.T) {
 	seller := entities.NewSeller("TestSeller")
 
 	sellerJSON, _ := json.Marshal(seller)
-	req := httptest.NewRequest(http.MethodPost, "/sellers", bytes.NewReader(sellerJSON))
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/sellers", bytes.NewReader(sellerJSON))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := echo.New().NewContext(req, rec)
@@ -58,7 +58,7 @@ func TestPutSeller(t *testing.T) {
 	}
 
 	sellerJSON, _ := json.Marshal(updateRequest)
-	req := httptest.NewRequest(http.MethodPut, "/sellers", bytes.NewReader(sellerJSON))
+	req := httptest.NewRequest(http.MethodPut, "/api/v1/sellers", bytes.NewReader(sellerJSON))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := echo.New().NewContext(req, rec)
@@ -86,20 +86,14 @@ func TestDeleteSeller(t *testing.T) {
 	createdSeller, err := mockService.CreateSeller(&command.CreateSellerCommand{Name: "TestSeller"})
 	assert.NoError(t, err)
 
-	fmt.Printf("ID: %s\n", createdSeller.Result.ID.String())
-
-	req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/sellers/%s", createdSeller.Result.ID), nil)
+	req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/v1/sellers/%s", createdSeller.Result.ID), nil)
 	rec := httptest.NewRecorder()
 	c := echo.New().NewContext(req, rec)
-
-	fmt.Printf("Deleting seller with ID: %s\n", createdSeller.Result.ID.String())
 
 	// Act
 	if err := controller.DeleteSellerController(c); err != nil {
 		t.Fatal(err)
 	}
-
-	fmt.Printf("rec: %s\n", rec.Body.String())
 
 	// Assert
 	assert.Equal(t, http.StatusNoContent, rec.Code)
@@ -113,7 +107,7 @@ func TestGetSellerById(t *testing.T) {
 	createdSeller, err := mockService.CreateSeller(&command.CreateSellerCommand{Name: "TestSeller"})
 	assert.NoError(t, err)
 
-	req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/sellers/%s", createdSeller.Result.ID), nil)
+	req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/sellers/%s", createdSeller.Result.ID), nil)
 	rec := httptest.NewRecorder()
 	c := echo.New().NewContext(req, rec)
 
@@ -144,7 +138,7 @@ func TestGetAllSellers(t *testing.T) {
 	_, err = mockService.CreateSeller(&command.CreateSellerCommand{Name: "TestSeller2"})
 	assert.NoError(t, err)
 
-	req := httptest.NewRequest(http.MethodGet, "/sellers", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/sellers", nil)
 	rec := httptest.NewRecorder()
 	c := echo.New().NewContext(req, rec)
 

@@ -17,11 +17,11 @@ func NewSellerController(e *echo.Echo, service interfaces.SellerService) *Seller
 		service: service,
 	}
 
-	e.POST("/sellers", controller.CreateSellerController)
-	e.GET("/sellers", controller.GetAllSellersController)
-	e.GET("/sellers/:id", controller.GetSellerByIdController)
-	e.PUT("/sellers", controller.PutSellerController)
-	e.DELETE("/sellers/:id", controller.DeleteSellerController)
+	e.POST("/api/v1/sellers", controller.CreateSellerController)
+	e.GET("/api/v1/sellers", controller.GetAllSellersController)
+	e.GET("/api/v1/sellers/:id", controller.GetSellerByIdController)
+	e.PUT("/api/v1/sellers", controller.PutSellerController)
+	e.DELETE("/api/v1/sellers/:id", controller.DeleteSellerController)
 
 	return controller
 }
@@ -66,7 +66,7 @@ func (sc *SellerController) GetAllSellersController(c echo.Context) error {
 func (sc *SellerController) GetSellerByIdController(c echo.Context) error {
 	// Hack: split the ID from the URL
 	// For some reason c.Param("id") doesn't work here
-	idRaw := c.Request().URL.Path[len("/sellers/"):]
+	idRaw := c.Request().URL.Path[len("/api/v1/sellers/"):]
 
 	id, err := uuid.Parse(idRaw)
 	if err != nil {
@@ -120,7 +120,7 @@ func (sc *SellerController) PutSellerController(c echo.Context) error {
 func (sc *SellerController) DeleteSellerController(c echo.Context) error {
 	// Hack: split the ID from the URL
 	// For some reason c.Param("id") doesn't work here
-	idRaw := c.Request().URL.Path[len("/sellers/"):]
+	idRaw := c.Request().URL.Path[len("/api/v1/sellers/"):]
 
 	id, err := uuid.Parse(idRaw)
 	if err != nil {
