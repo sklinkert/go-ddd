@@ -95,8 +95,8 @@ func TestProductService_GetAllProducts(t *testing.T) {
 		t.Errorf("Unexpected error: %s", err)
 	}
 
-	if len(products) != 2 {
-		t.Errorf("Expected 2 products, but got %d", len(products))
+	if len(products.Result) != 2 {
+		t.Errorf("Expected 2 products, but got %d", len(products.Result))
 	}
 }
 
@@ -119,8 +119,8 @@ func TestProductService_FindProductById(t *testing.T) {
 		t.Fatalf("Unexpected error: %s", err)
 	}
 
-	if foundProduct.Name != "Example" {
-		t.Errorf("Expected product name 'Example', but got %s", foundProduct.Name)
+	if foundProduct.Result.Name != "Example" {
+		t.Errorf("Expected product name 'Example', but got %s", foundProduct.Result.Name)
 	}
 
 	_, err = service.FindProductById(uuid.New()) // some non-existent ID

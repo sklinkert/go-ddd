@@ -6,6 +6,7 @@ import (
 	"github.com/sklinkert/go-ddd/internal/application/command"
 	"github.com/sklinkert/go-ddd/internal/application/interfaces"
 	"github.com/sklinkert/go-ddd/internal/application/mapper"
+	"github.com/sklinkert/go-ddd/internal/application/query"
 	"github.com/sklinkert/go-ddd/internal/domain/entities"
 	"github.com/sklinkert/go-ddd/internal/domain/repositories"
 )
@@ -54,16 +55,34 @@ func (s *ProductService) CreateProduct(productCommand *command.CreateProductComm
 	}
 
 	result := command.CreateProductCommandResult{
-		Result: mapper.NewProductResultFromEntity(validatedProduct),
+		Result: mapper.NewProductResultFromValidatedEntity(validatedProduct),
 	}
 
 	return &result, nil
 }
 
-func (s *ProductService) FindAllProducts() ([]*entities.Product, error) {
-	return s.productRepository.FindAll()
+func (s *ProductService) FindAllProducts() (*query.ProductQueryListResult, error) {
+	storedProducts, err := s.productRepository.FindAll()
+	if err != nil {
+		return nil, err
+	}
+
+	var queryListResult query.ProductQueryListResult
+	for _, product := range storedProducts {
+		queryListResult.Result = append(queryListResult.Result, mapper.NewProductResultFromEntity(product))
+	}
+
+	return &queryListResult, nil
 }
 
-func (s *ProductService) FindProductById(id uuid.UUID) (*entities.Product, error) {
-	return s.productRepository.FindById(id)
+func (s *ProductService) FindProductById(id uuid.UUID) (*query.ProductQueryResult, error) {
+	storedProduct, err := s.productRepository.FindById(id)
+	if err != nil {
+		return nil, err
+	}
+
+	var queryResult query.ProductQueryResult
+	queryResult.Result = mapper.NewProductResultFromEntity(storedProduct)
+
+	return &queryResult, nil
 }

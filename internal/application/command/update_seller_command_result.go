@@ -1,5 +1,7 @@
 package command
 
+import "github.com/sklinkert/go-ddd/internal/application/common"
+
 type UpdateSellerCommandResult struct {
-	Result SellerResult
+	Result common.SellerResult
 }

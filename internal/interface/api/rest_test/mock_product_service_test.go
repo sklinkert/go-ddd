@@ -4,6 +4,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/sklinkert/go-ddd/internal/application/command"
 	"github.com/sklinkert/go-ddd/internal/application/mapper"
+	"github.com/sklinkert/go-ddd/internal/application/query"
 	"github.com/sklinkert/go-ddd/internal/domain/entities"
 	"github.com/stretchr/testify/mock"
 )
@@ -37,17 +38,29 @@ func (m *MockProductService) CreateProduct(productCommand *command.CreateProduct
 	}
 
 	var result command.CreateProductCommandResult
-	result.Result = mapper.NewProductResultFromEntity(validatedProduct)
+	result.Result = mapper.NewProductResultFromValidatedEntity(validatedProduct)
 
 	return &result, args.Error(1)
 }
 
-func (m *MockProductService) FindAllProducts() ([]*entities.Product, error) {
+func (m *MockProductService) FindAllProducts() (*query.ProductQueryListResult, error) {
 	args := m.Called()
-	return args.Get(0).([]*entities.Product), args.Error(1)
+
+	productQueryListResult := &query.ProductQueryListResult{}
+
+	for _, product := range args.Get(0).([]*entities.Product) {
+		productQueryListResult.Result = append(productQueryListResult.Result, mapper.NewProductResultFromEntity(product))
+	}
+
+	return productQueryListResult, args.Error(1)
 }
 
-func (m *MockProductService) FindProductById(id uuid.UUID) (*entities.Product, error) {
+func (m *MockProductService) FindProductById(id uuid.UUID) (*query.ProductQueryResult, error) {
 	args := m.Called(id)
-	return args.Get(0).(*entities.Product), args.Error(1)
+
+	productQueryResult := &query.ProductQueryResult{
+		Result: mapper.NewProductResultFromEntity(args.Get(0).(*entities.Product)),
+	}
+
+	return productQueryResult, args.Error(1)
 }

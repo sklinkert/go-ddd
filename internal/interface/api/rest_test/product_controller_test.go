@@ -5,7 +5,9 @@ import (
 	"encoding/json"
 	"github.com/google/uuid"
 	"github.com/sklinkert/go-ddd/internal/application/command"
+	"github.com/sklinkert/go-ddd/internal/application/common"
 	"github.com/sklinkert/go-ddd/internal/domain/entities"
+	"github.com/sklinkert/go-ddd/internal/interface/api/rest/dto/response"
 	"github.com/stretchr/testify/mock"
 	"net/http"
 	"net/http/httptest"
@@ -22,14 +24,14 @@ func TestCreateProduct(t *testing.T) {
 	mockService := new(MockProductService)
 	reqBody := map[string]interface{}{"Name": "TestProduct", "Price": 9.99, "SellerId": "123e4567-e89b-12d3-a456-426614174000"}
 	reqBodyBytes, _ := json.Marshal(reqBody)
-	req := httptest.NewRequest(http.MethodPost, "/products", bytes.NewReader(reqBodyBytes))
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/products", bytes.NewReader(reqBodyBytes))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
 	ctrl := rest.NewProductController(e, mockService)
 
 	createProductCommandResult := &command.CreateProductCommandResult{
-		Result: command.ProductResult{
+		Result: &common.ProductResult{
 			Id:    uuid.New(),
 			Name:  "TestProduct",
 			Price: 9.99,
@@ -77,21 +79,31 @@ func TestGetAllProducts(t *testing.T) {
 		},
 	}
 
-	req := httptest.NewRequest(http.MethodGet, "/expectedProducts", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/products", nil)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
 
 	ctrl := rest.NewProductController(e, mockService)
 	mockService.On("FindAllProducts").Return(expectedProducts, nil)
 
+	var expectedListResponse response.ListProductsResponse
+	for _, product := range expectedProducts {
+		expectedListResponse.Products = append(expectedListResponse.Products,
+			&response.ProductResponse{
+				Id:    product.ID.String(),
+				Name:  product.Name,
+				Price: product.Price,
+			})
+	}
+
 	// Assertions
 	if assert.NoError(t, ctrl.GetAllProductsController(c)) {
 		assert.Equal(t, http.StatusOK, rec.Code)
 
-		var responseProducts []*entities.Product
-		err := json.Unmarshal(rec.Body.Bytes(), &responseProducts)
+		var receivedListResponse response.ListProductsResponse
+		err := json.Unmarshal(rec.Body.Bytes(), &receivedListResponse)
 		if assert.NoError(t, err) {
-			assert.ElementsMatch(t, expectedProducts, responseProducts)
+			assert.ElementsMatch(t, expectedListResponse.Products, receivedListResponse.Products)
 		}
 	}
 }

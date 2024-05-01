@@ -6,6 +6,7 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/sklinkert/go-ddd/internal/application/interfaces"
 	"github.com/sklinkert/go-ddd/internal/interface/api/rest/dto/request"
+	"github.com/sklinkert/go-ddd/internal/interface/api/rest/mapper"
 	"net/http"
 )
 
@@ -49,7 +50,9 @@ func (pc *ProductController) CreateProductController(c echo.Context) error {
 		})
 	}
 
-	return c.JSON(http.StatusCreated, result.Result)
+	response := mapper.ToProductResponse(result.Result)
+
+	return c.JSON(http.StatusCreated, response)
 }
 
 func (pc *ProductController) GetAllProductsController(c echo.Context) error {
@@ -60,7 +63,9 @@ func (pc *ProductController) GetAllProductsController(c echo.Context) error {
 		})
 	}
 
-	return c.JSON(http.StatusOK, products)
+	response := mapper.ToProductListResponse(products.Result)
+
+	return c.JSON(http.StatusOK, response)
 }
 
 func (pc *ProductController) GetProductByIdController(c echo.Context) error {
@@ -84,5 +89,7 @@ func (pc *ProductController) GetProductByIdController(c echo.Context) error {
 		})
 	}
 
-	return c.JSON(http.StatusOK, product)
+	response := mapper.ToProductResponse(product.Result)
+
+	return c.JSON(http.StatusOK, response)
 }
