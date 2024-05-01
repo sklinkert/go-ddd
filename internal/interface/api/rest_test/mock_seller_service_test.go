@@ -6,6 +6,7 @@ import (
 	"github.com/sklinkert/go-ddd/internal/application/command"
 	"github.com/sklinkert/go-ddd/internal/application/interfaces"
 	"github.com/sklinkert/go-ddd/internal/application/mapper"
+	"github.com/sklinkert/go-ddd/internal/application/query"
 	"github.com/sklinkert/go-ddd/internal/domain/entities"
 )
 
@@ -31,22 +32,24 @@ func (m *MockSellerService) CreateSeller(seller *command.CreateSellerCommand) (*
 
 	m.sellers[validatedSeller.ID] = validatedSeller
 
-	result.Result = mapper.NewSellerResultFromEntity(validatedSeller.Seller)
+	result.Result = mapper.NewSellerResultFromEntity(&validatedSeller.Seller)
 
 	return &result, nil
 }
 
-func (m *MockSellerService) FindAllSellers() ([]*entities.Seller, error) {
-	var allSellers []*entities.Seller
+func (m *MockSellerService) FindAllSellers() (*query.SellerQueryListResult, error) {
+	var allSellers query.SellerQueryListResult
 	for _, v := range m.sellers {
-		allSellers = append(allSellers, &v.Seller)
+		allSellers.Result = append(allSellers.Result, mapper.NewSellerResultFromEntity(&v.Seller))
 	}
-	return allSellers, nil
+	return &allSellers, nil
 }
 
-func (m *MockSellerService) FindSellerById(id uuid.UUID) (*entities.Seller, error) {
+func (m *MockSellerService) FindSellerById(id uuid.UUID) (*query.SellerQueryResult, error) {
 	if seller, exists := m.sellers[id]; exists {
-		return &seller.Seller, nil
+		return &query.SellerQueryResult{
+			Result: mapper.NewSellerResultFromEntity(&seller.Seller),
+		}, nil
 	}
 	return nil, errors.New("seller not found")
 }
@@ -55,7 +58,7 @@ func (m *MockSellerService) UpdateSeller(updateCommand *command.UpdateSellerComm
 	if _, exists := m.sellers[updateCommand.ID]; exists {
 		m.sellers[updateCommand.ID].Name = updateCommand.Name
 		return &command.UpdateSellerCommandResult{
-			Result: mapper.NewSellerResultFromEntity(m.sellers[updateCommand.ID].Seller),
+			Result: mapper.NewSellerResultFromEntity(&m.sellers[updateCommand.ID].Seller),
 		}, nil
 	}
 	return nil, errors.New("seller not found")

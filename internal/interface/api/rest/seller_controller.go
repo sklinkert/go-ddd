@@ -4,6 +4,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/sklinkert/go-ddd/internal/application/interfaces"
+	"github.com/sklinkert/go-ddd/internal/interface/api/rest/dto/mapper"
 	"github.com/sklinkert/go-ddd/internal/interface/api/rest/dto/request"
 	"net/http"
 )
@@ -49,7 +50,9 @@ func (sc *SellerController) CreateSellerController(c echo.Context) error {
 		})
 	}
 
-	return c.JSON(http.StatusCreated, commandResult.Result)
+	response := mapper.ToSellerResponse(commandResult.Result)
+
+	return c.JSON(http.StatusCreated, response)
 }
 
 func (sc *SellerController) GetAllSellersController(c echo.Context) error {
@@ -60,7 +63,9 @@ func (sc *SellerController) GetAllSellersController(c echo.Context) error {
 		})
 	}
 
-	return c.JSON(http.StatusOK, sellers)
+	response := mapper.ToSellerListResponse(sellers.Result)
+
+	return c.JSON(http.StatusOK, response)
 }
 
 func (sc *SellerController) GetSellerByIdController(c echo.Context) error {
@@ -88,7 +93,9 @@ func (sc *SellerController) GetSellerByIdController(c echo.Context) error {
 		})
 	}
 
-	return c.JSON(http.StatusOK, seller)
+	response := mapper.ToSellerResponse(seller.Result)
+
+	return c.JSON(http.StatusOK, response)
 }
 
 func (sc *SellerController) PutSellerController(c echo.Context) error {
@@ -114,7 +121,9 @@ func (sc *SellerController) PutSellerController(c echo.Context) error {
 		})
 	}
 
-	return c.JSON(http.StatusOK, commandResult)
+	response := mapper.ToSellerResponse(commandResult.Result)
+
+	return c.JSON(http.StatusOK, response)
 }
 
 func (sc *SellerController) DeleteSellerController(c echo.Context) error {

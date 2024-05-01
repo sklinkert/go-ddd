@@ -3,6 +3,6 @@ package common
 import "github.com/google/uuid"
 
 type SellerResult struct {
-	ID   uuid.UUID
+	Id   uuid.UUID
 	Name string
 }

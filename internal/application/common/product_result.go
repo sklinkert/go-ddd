@@ -6,5 +6,5 @@ type ProductResult struct {
 	Id     uuid.UUID
 	Name   string
 	Price  float64
-	Seller SellerResult
+	Seller *SellerResult
 }

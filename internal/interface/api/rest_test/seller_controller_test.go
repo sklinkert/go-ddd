@@ -9,6 +9,7 @@ import (
 	"github.com/sklinkert/go-ddd/internal/domain/entities"
 	"github.com/sklinkert/go-ddd/internal/interface/api/rest"
 	"github.com/sklinkert/go-ddd/internal/interface/api/rest/dto/request"
+	"github.com/sklinkert/go-ddd/internal/interface/api/rest/dto/response"
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
@@ -53,7 +54,7 @@ func TestPutSeller(t *testing.T) {
 	assert.NoError(t, err)
 
 	updateRequest := request.UpdateSellerRequest{
-		ID:   createdSeller.Result.ID,
+		ID:   createdSeller.Result.Id,
 		Name: "updatedName",
 	}
 
@@ -71,11 +72,11 @@ func TestPutSeller(t *testing.T) {
 	// Assert
 	assert.Equal(t, http.StatusOK, rec.Code)
 
-	var updatedSeller command.UpdateSellerCommandResult
-	err = json.Unmarshal(rec.Body.Bytes(), &updatedSeller)
+	var receivedResponse response.SellerResponse
+	err = json.Unmarshal(rec.Body.Bytes(), &receivedResponse)
 	assert.NoError(t, err)
 
-	assert.Equal(t, updateRequest.Name, updatedSeller.Result.Name)
+	assert.Equal(t, updateRequest.Name, receivedResponse.Name)
 }
 
 func TestDeleteSeller(t *testing.T) {
@@ -86,7 +87,7 @@ func TestDeleteSeller(t *testing.T) {
 	createdSeller, err := mockService.CreateSeller(&command.CreateSellerCommand{Name: "TestSeller"})
 	assert.NoError(t, err)
 
-	req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/v1/sellers/%s", createdSeller.Result.ID), nil)
+	req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/v1/sellers/%s", createdSeller.Result.Id), nil)
 	rec := httptest.NewRecorder()
 	c := echo.New().NewContext(req, rec)
 
@@ -107,7 +108,7 @@ func TestGetSellerById(t *testing.T) {
 	createdSeller, err := mockService.CreateSeller(&command.CreateSellerCommand{Name: "TestSeller"})
 	assert.NoError(t, err)
 
-	req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/sellers/%s", createdSeller.Result.ID), nil)
+	req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/sellers/%s", createdSeller.Result.Id), nil)
 	rec := httptest.NewRecorder()
 	c := echo.New().NewContext(req, rec)
 
@@ -119,11 +120,11 @@ func TestGetSellerById(t *testing.T) {
 	// Assert
 	assert.Equal(t, http.StatusOK, rec.Code)
 
-	var fetchedSeller entities.Seller
+	var fetchedSeller response.SellerResponse
 	err = json.Unmarshal(rec.Body.Bytes(), &fetchedSeller)
 	assert.NoError(t, err)
 
-	assert.Equal(t, createdSeller.Result.ID, fetchedSeller.ID)
+	assert.Equal(t, createdSeller.Result.Id.String(), fetchedSeller.Id)
 	assert.Equal(t, createdSeller.Result.Name, fetchedSeller.Name)
 }
 
@@ -150,9 +151,9 @@ func TestGetAllSellers(t *testing.T) {
 	// Assert
 	assert.Equal(t, http.StatusOK, rec.Code)
 
-	var sellers []*entities.Seller
+	var sellers response.ListSellersResponse
 	err = json.Unmarshal(rec.Body.Bytes(), &sellers)
 	assert.NoError(t, err)
 
-	assert.Equal(t, 2, len(sellers))
+	assert.Equal(t, 2, len(sellers.Sellers))
 }

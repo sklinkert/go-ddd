@@ -6,6 +6,7 @@ import (
 	"github.com/sklinkert/go-ddd/internal/application/command"
 	"github.com/sklinkert/go-ddd/internal/application/interfaces"
 	"github.com/sklinkert/go-ddd/internal/application/mapper"
+	"github.com/sklinkert/go-ddd/internal/application/query"
 	"github.com/sklinkert/go-ddd/internal/domain/entities"
 	"github.com/sklinkert/go-ddd/internal/domain/repositories"
 )
@@ -34,20 +35,38 @@ func (s *SellerService) CreateSeller(sellerCommand *command.CreateSellerCommand)
 	}
 
 	result := command.CreateSellerCommandResult{
-		Result: mapper.NewSellerResultFromEntity(validatedSeller.Seller),
+		Result: mapper.NewSellerResultFromValidatedEntity(validatedSeller),
 	}
 
 	return &result, nil
 }
 
 // FindAllSellers fetches all sellers
-func (s *SellerService) FindAllSellers() ([]*entities.Seller, error) {
-	return s.repo.FindAll()
+func (s *SellerService) FindAllSellers() (*query.SellerQueryListResult, error) {
+	storedSellers, err := s.repo.FindAll()
+	if err != nil {
+		return nil, err
+	}
+
+	var queryResult query.SellerQueryListResult
+	for _, seller := range storedSellers {
+		queryResult.Result = append(queryResult.Result, mapper.NewSellerResultFromEntity(seller))
+	}
+
+	return &queryResult, nil
 }
 
 // FindSellerById fetches a specific seller by ID
-func (s *SellerService) FindSellerById(id uuid.UUID) (*entities.Seller, error) {
-	return s.repo.FindById(id)
+func (s *SellerService) FindSellerById(id uuid.UUID) (*query.SellerQueryResult, error) {
+	storedSeller, err := s.repo.FindById(id)
+	if err != nil {
+		return nil, err
+	}
+
+	var queryResult query.SellerQueryResult
+	queryResult.Result = mapper.NewSellerResultFromEntity(storedSeller)
+
+	return &queryResult, nil
 }
 
 // UpdateSeller updates a seller
@@ -76,7 +95,7 @@ func (s *SellerService) UpdateSeller(updateCommand *command.UpdateSellerCommand)
 	}
 
 	result := command.UpdateSellerCommandResult{
-		Result: mapper.NewSellerResultFromEntity(*seller),
+		Result: mapper.NewSellerResultFromEntity(seller),
 	}
 
 	return &result, nil

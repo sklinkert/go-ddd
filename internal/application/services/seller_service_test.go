@@ -85,8 +85,8 @@ func TestSellerService_GetAllSellers(t *testing.T) {
 		t.Errorf("Unexpected error: %s", err)
 	}
 
-	if len(sellers) != 2 {
-		t.Errorf("Expected 2 sellers, but got %d", len(sellers))
+	if len(sellers.Result) != 2 {
+		t.Errorf("Expected 2 sellers, but got %d", len(sellers.Result))
 	}
 }
 
@@ -95,15 +95,15 @@ func TestSellerService_GetSellerById(t *testing.T) {
 	service := NewSellerService(repo)
 
 	createdSellerResult, _ := service.CreateSeller(getCreateSellerCommand("John Doe"))
-	sellerID := createdSellerResult.Result.ID
+	sellerID := createdSellerResult.Result.Id
 
 	foundSeller, err := service.FindSellerById(sellerID)
 	if err != nil {
 		t.Errorf("Unexpected error: %s", err)
 	}
 
-	if foundSeller.Name != "John Doe" {
-		t.Errorf("Expected seller name 'John Doe', but got %s", foundSeller.Name)
+	if foundSeller.Result.Name != "John Doe" {
+		t.Errorf("Expected seller name 'John Doe', but got %s", foundSeller.Result.Name)
 	}
 
 	_, err = service.FindSellerById(uuid.New()) // some non-existent ID
@@ -117,7 +117,7 @@ func TestSellerService_UpdateSeller(t *testing.T) {
 	service := NewSellerService(repo)
 
 	createdSellerResult, _ := service.CreateSeller(getCreateSellerCommand("John Doe"))
-	sellerID := createdSellerResult.Result.ID
+	sellerID := createdSellerResult.Result.Id
 
 	var updatableSeller = entities.Seller{
 		ID:   sellerID,
@@ -133,8 +133,8 @@ func TestSellerService_UpdateSeller(t *testing.T) {
 	}
 
 	updatedSeller, _ := service.FindSellerById(sellerID)
-	if updatedSeller.Name != "Doe Johnny" {
-		t.Errorf("Expected seller name 'Johnny Doe', but got %s", updatedSeller.Name)
+	if updatedSeller.Result.Name != "Doe Johnny" {
+		t.Errorf("Expected seller name 'Johnny Doe', but got %s", updatedSeller.Result.Name)
 	}
 }
 

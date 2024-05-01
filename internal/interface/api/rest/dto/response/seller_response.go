@@ -1,10 +1,10 @@
 package response
 
 type SellerResponse struct {
-	ID   string `json:"ID"`
-	Name string `json:"Name"`
+	Id   string
+	Name string
 }
 
 type ListSellersResponse struct {
-	Sellers []*SellerResponse `json:"Sellers"`
+	Sellers []*SellerResponse
 }

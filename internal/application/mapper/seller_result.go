@@ -5,9 +5,17 @@ import (
 	"github.com/sklinkert/go-ddd/internal/domain/entities"
 )
 
-func NewSellerResultFromEntity(seller entities.Seller) common.SellerResult {
-	return common.SellerResult{
-		ID:   seller.ID,
+func NewSellerResultFromValidatedEntity(seller *entities.ValidatedSeller) *common.SellerResult {
+	return NewSellerResultFromEntity(&seller.Seller)
+}
+
+func NewSellerResultFromEntity(seller *entities.Seller) *common.SellerResult {
+	if seller == nil {
+		return nil
+	}
+
+	return &common.SellerResult{
+		Id:   seller.ID,
 		Name: seller.Name,
 	}
 }
