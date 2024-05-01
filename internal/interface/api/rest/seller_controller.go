@@ -4,7 +4,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/sklinkert/go-ddd/internal/application/interfaces"
-	"github.com/sklinkert/go-ddd/internal/interface/api/rest/request"
+	"github.com/sklinkert/go-ddd/internal/interface/api/rest/dto/request"
 	"net/http"
 )
 

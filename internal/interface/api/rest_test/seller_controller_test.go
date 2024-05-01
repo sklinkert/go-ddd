@@ -8,7 +8,7 @@ import (
 	"github.com/sklinkert/go-ddd/internal/application/command"
 	"github.com/sklinkert/go-ddd/internal/domain/entities"
 	"github.com/sklinkert/go-ddd/internal/interface/api/rest"
-	"github.com/sklinkert/go-ddd/internal/interface/api/rest/request"
+	"github.com/sklinkert/go-ddd/internal/interface/api/rest/dto/request"
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
