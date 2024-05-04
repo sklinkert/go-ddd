@@ -15,7 +15,7 @@ func NewProductResultFromEntity(product *entities.Product) *common.ProductResult
 	}
 
 	return &common.ProductResult{
-		Id:        product.ID,
+		Id:        product.Id,
 		Name:      product.Name,
 		Price:     product.Price,
 		Seller:    NewSellerResultFromEntity(&product.Seller),

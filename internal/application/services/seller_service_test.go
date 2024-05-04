@@ -29,10 +29,10 @@ func (m *MockSellerRepository) FindAll() ([]*entities.Seller, error) {
 
 func (m *MockSellerRepository) FindById(id uuid.UUID) (*entities.Seller, error) {
 	for _, s := range m.sellers {
-		if s.ID == id {
+		if s.Id == id {
 			return &s.Seller, nil
 		} else {
-			fmt.Printf("ID: %s - %s\n", s.ID, id)
+			fmt.Printf("Id: %s - %s\n", s.Id, id)
 		}
 	}
 	return nil, errors.New("seller not found")
@@ -40,7 +40,7 @@ func (m *MockSellerRepository) FindById(id uuid.UUID) (*entities.Seller, error) 
 
 func (m *MockSellerRepository) Delete(id uuid.UUID) error {
 	for index, s := range m.sellers {
-		if s.ID == id {
+		if s.Id == id {
 			m.sellers = append(m.sellers[:index], m.sellers[index+1:]...)
 			return nil
 		}
@@ -50,7 +50,7 @@ func (m *MockSellerRepository) Delete(id uuid.UUID) error {
 
 func (m *MockSellerRepository) Update(seller *entities.ValidatedSeller) (*entities.Seller, error) {
 	for index, s := range m.sellers {
-		if s.ID == seller.ID {
+		if s.Id == seller.Id {
 			m.sellers[index] = seller
 			return &seller.Seller, nil
 		}
@@ -106,7 +106,7 @@ func TestSellerService_GetSellerById(t *testing.T) {
 		t.Errorf("Expected seller name 'John Doe', but got %s", foundSeller.Result.Name)
 	}
 
-	_, err = service.FindSellerById(uuid.New()) // some non-existent ID
+	_, err = service.FindSellerById(uuid.New()) // some non-existent Id
 	if err == nil {
 		t.Error("Expected error for non-existent seller, but got none")
 	}
@@ -120,7 +120,7 @@ func TestSellerService_UpdateSeller(t *testing.T) {
 	sellerID := createdSellerResult.Result.Id
 
 	var updatableSeller = entities.Seller{
-		ID:   sellerID,
+		Id:   sellerID,
 		Name: "Doe Johnny",
 	}
 

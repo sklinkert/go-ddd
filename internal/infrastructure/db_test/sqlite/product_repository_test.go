@@ -62,7 +62,7 @@ func TestGormProductRepository_FindById(t *testing.T) {
 	validProduct, _ := entities.NewValidatedProduct(product)
 	repo.Create(validProduct)
 
-	foundProduct, err := repo.FindById(validProduct.ID)
+	foundProduct, err := repo.FindById(validProduct.Id)
 	if err != nil || foundProduct.Name != "TestProduct" {
 		t.Error("Error fetching or product mismatch")
 	}
@@ -90,7 +90,7 @@ func TestGormProductRepository_Update(t *testing.T) {
 		t.Errorf("Unexpected error during update: %s", err)
 	}
 
-	updatedProduct, _ := repo.FindById(validProduct.ID)
+	updatedProduct, _ := repo.FindById(validProduct.Id)
 	if updatedProduct.Name != "UpdatedProduct" {
 		t.Error("UpdateName failed or fetched wrong product")
 	}
@@ -127,12 +127,12 @@ func TestGormProductRepository_Delete(t *testing.T) {
 	validProduct, _ := entities.NewValidatedProduct(product)
 	repo.Create(validProduct)
 
-	err := repo.Delete(validProduct.ID)
+	err := repo.Delete(validProduct.Id)
 	if err != nil {
 		t.Errorf("Unexpected error during delete: %s", err)
 	}
 
-	_, err = repo.FindById(validProduct.ID)
+	_, err = repo.FindById(validProduct.Id)
 	if err == nil {
 		t.Error("Product should have been deleted, but was found")
 	}

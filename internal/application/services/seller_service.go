@@ -56,7 +56,7 @@ func (s *SellerService) FindAllSellers() (*query.SellerQueryListResult, error) {
 	return &queryResult, nil
 }
 
-// FindSellerById fetches a specific seller by ID
+// FindSellerById fetches a specific seller by Id
 func (s *SellerService) FindSellerById(id uuid.UUID) (*query.SellerQueryResult, error) {
 	storedSeller, err := s.repo.FindById(id)
 	if err != nil {

@@ -30,7 +30,7 @@ func (m *MockSellerService) CreateSeller(seller *command.CreateSellerCommand) (*
 		return nil, err
 	}
 
-	m.sellers[validatedSeller.ID] = validatedSeller
+	m.sellers[validatedSeller.Id] = validatedSeller
 
 	result.Result = mapper.NewSellerResultFromEntity(&validatedSeller.Seller)
 

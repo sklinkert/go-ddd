@@ -24,7 +24,7 @@ func (repo *GormProductRepository) Create(product *entities.ValidatedProduct) (*
 	}
 
 	// Read row from DB to never return different data than persisted
-	return repo.FindById(dbProduct.ID)
+	return repo.FindById(dbProduct.Id)
 }
 
 func (repo *GormProductRepository) FindById(id uuid.UUID) (*entities.Product, error) {
@@ -53,13 +53,13 @@ func (repo *GormProductRepository) FindAll() ([]*entities.Product, error) {
 
 func (repo *GormProductRepository) Update(product *entities.ValidatedProduct) (*entities.Product, error) {
 	dbProduct := toDBProduct(product)
-	err := repo.db.Model(&Product{}).Where("id = ?", dbProduct.ID).Updates(dbProduct).Error
+	err := repo.db.Model(&Product{}).Where("id = ?", dbProduct.Id).Updates(dbProduct).Error
 	if err != nil {
 		return nil, err
 	}
 
 	// Read row from DB to never return different data than persisted
-	return repo.FindById(dbProduct.ID)
+	return repo.FindById(dbProduct.Id)
 }
 
 func (repo *GormProductRepository) Delete(id uuid.UUID) error {

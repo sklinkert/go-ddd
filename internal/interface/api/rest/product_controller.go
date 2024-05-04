@@ -39,7 +39,7 @@ func (pc *ProductController) CreateProductController(c echo.Context) error {
 	productCommand, err := createProductRequest.ToCreateProductCommand()
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{
-			"error": "Invalid product ID format",
+			"error": "Invalid product Id format",
 		})
 	}
 
@@ -72,7 +72,7 @@ func (pc *ProductController) GetProductByIdController(c echo.Context) error {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{
-			"error": "Invalid product ID format",
+			"error": "Invalid product Id format",
 		})
 	}
 

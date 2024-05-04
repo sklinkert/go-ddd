@@ -12,7 +12,7 @@ func TestNewSeller(t *testing.T) {
 		t.Errorf("Expected seller name to be 'Example Seller', but got %s", seller.Name)
 	}
 
-	if seller.ID == (uuid.UUID{}) {
-		t.Error("Expected seller ID to be set, but got zero value")
+	if seller.Id == (uuid.UUID{}) {
+		t.Error("Expected seller Id to be set, but got zero value")
 	}
 }

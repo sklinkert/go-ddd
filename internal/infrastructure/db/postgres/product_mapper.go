@@ -8,18 +8,18 @@ func toDBProduct(product *entities.ValidatedProduct) *Product {
 	var p = &Product{
 		Name:      product.Name,
 		Price:     product.Price,
-		SellerID:  product.Seller.ID, // Ensure Seller is non-nil when mapping
+		SellerID:  product.Seller.Id, // Ensure Seller is non-nil when mapping
 		CreatedAt: product.CreatedAt,
 		UpdatedAt: product.UpdatedAt,
 	}
-	p.ID = product.ID
+	p.Id = product.Id
 
 	return p
 }
 
 func fromDBProduct(dbProduct *Product) *entities.Product {
 	var seller = &entities.Seller{
-		ID:        dbProduct.Seller.ID,
+		Id:        dbProduct.Seller.Id,
 		Name:      dbProduct.Seller.Name,
 		CreatedAt: dbProduct.Seller.CreatedAt,
 		UpdatedAt: dbProduct.Seller.UpdatedAt,
@@ -32,7 +32,7 @@ func fromDBProduct(dbProduct *Product) *entities.Product {
 		CreatedAt: dbProduct.CreatedAt,
 		UpdatedAt: dbProduct.UpdatedAt,
 	}
-	p.ID = dbProduct.ID
+	p.Id = dbProduct.Id
 
 	return p
 }

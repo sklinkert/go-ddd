@@ -51,7 +51,7 @@ func TestCreateProduct(t *testing.T) {
 	}
 
 	// Remove fields from responseBody that are not present in reqBody
-	// For example, remove ID and Seller fields
+	// For example, remove Id and Seller fields
 	delete(responseBody, "Id")
 	delete(responseBody, "Seller")
 	delete(reqBody, "SellerId")
@@ -71,11 +71,11 @@ func TestGetAllProducts(t *testing.T) {
 
 	expectedProducts := []*entities.Product{
 		{
-			ID:    uuid.New(),
+			Id:    uuid.New(),
 			Name:  "TestProduct1",
 			Price: 9.99,
 		}, {
-			ID:    uuid.New(),
+			Id:    uuid.New(),
 			Name:  "TestProduct2",
 			Price: 14.99,
 		},
@@ -92,7 +92,7 @@ func TestGetAllProducts(t *testing.T) {
 	for _, product := range expectedProducts {
 		expectedListResponse.Products = append(expectedListResponse.Products,
 			&response.ProductResponse{
-				Id:    product.ID.String(),
+				Id:    product.Id.String(),
 				Name:  product.Name,
 				Price: product.Price,
 			})

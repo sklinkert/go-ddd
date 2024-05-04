@@ -22,7 +22,7 @@ func (repo *GormSellerRepository) Create(seller *entities.ValidatedSeller) (*ent
 		return nil, err
 	}
 
-	return repo.FindById(dbSeller.ID)
+	return repo.FindById(dbSeller.Id)
 }
 
 func (repo *GormSellerRepository) FindById(id uuid.UUID) (*entities.Seller, error) {
@@ -50,12 +50,12 @@ func (repo *GormSellerRepository) FindAll() ([]*entities.Seller, error) {
 func (repo *GormSellerRepository) Update(seller *entities.ValidatedSeller) (*entities.Seller, error) {
 	dbSeller := toDBSeller(seller)
 
-	err := repo.db.Model(&Seller{}).Where("id = ?", dbSeller.ID).Updates(dbSeller).Error
+	err := repo.db.Model(&Seller{}).Where("id = ?", dbSeller.Id).Updates(dbSeller).Error
 	if err != nil {
 		return nil, err
 	}
 
-	return repo.FindById(dbSeller.ID)
+	return repo.FindById(dbSeller.Id)
 }
 
 func (repo *GormSellerRepository) Delete(id uuid.UUID) error {

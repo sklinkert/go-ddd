@@ -6,7 +6,7 @@ import (
 )
 
 type UpdateSellerRequest struct {
-	ID   uuid.UUID `json:"ID"`
+	ID   uuid.UUID `json:"Id"`
 	Name string    `json:"Name"`
 }
 

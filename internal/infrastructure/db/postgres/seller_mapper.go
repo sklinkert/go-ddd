@@ -9,7 +9,7 @@ func toDBSeller(seller *entities.ValidatedSeller) *Seller {
 	s := &Seller{
 		Name: seller.Name,
 	}
-	s.ID = seller.ID
+	s.Id = seller.Id
 
 	return s
 }
@@ -19,7 +19,7 @@ func fromDBSeller(dbSeller *Seller) *entities.Seller {
 	s := &entities.Seller{
 		Name: dbSeller.Name,
 	}
-	s.ID = dbSeller.ID
+	s.Id = dbSeller.Id
 
 	return s
 }

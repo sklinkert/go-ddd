@@ -6,7 +6,7 @@ import (
 )
 
 type Product struct {
-	ID        uuid.UUID `gorm:"primaryKey"`
+	Id        uuid.UUID `gorm:"primaryKey"`
 	Name      string
 	Price     float64
 	SellerID  uuid.UUID `gorm:"index"`
@@ -16,7 +16,7 @@ type Product struct {
 }
 
 type Seller struct {
-	ID        uuid.UUID `gorm:"primaryKey"`
+	Id        uuid.UUID `gorm:"primaryKey"`
 	Name      string
 	CreatedAt time.Time
 	UpdatedAt time.Time

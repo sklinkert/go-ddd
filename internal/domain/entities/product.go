@@ -7,7 +7,7 @@ import (
 )
 
 type Product struct {
-	ID        uuid.UUID
+	Id        uuid.UUID
 	Name      string
 	Price     float64
 	Seller    Seller
@@ -31,7 +31,7 @@ func (p *Product) validate() error {
 
 func NewProduct(name string, price float64, seller ValidatedSeller) *Product {
 	return &Product{
-		ID:        uuid.New(),
+		Id:        uuid.New(),
 		Name:      name,
 		Price:     price,
 		Seller:    seller.Seller,

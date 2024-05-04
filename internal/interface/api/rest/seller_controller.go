@@ -39,7 +39,7 @@ func (sc *SellerController) CreateSellerController(c echo.Context) error {
 	sellerCommand, err := createSellerRequest.ToCreateSellerCommand()
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{
-			"error": "Invalid seller ID format",
+			"error": "Invalid seller Id format",
 		})
 	}
 
@@ -69,14 +69,14 @@ func (sc *SellerController) GetAllSellersController(c echo.Context) error {
 }
 
 func (sc *SellerController) GetSellerByIdController(c echo.Context) error {
-	// Hack: split the ID from the URL
+	// Hack: split the Id from the URL
 	// For some reason c.Param("id") doesn't work here
 	idRaw := c.Request().URL.Path[len("/api/v1/sellers/"):]
 
 	id, err := uuid.Parse(idRaw)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{
-			"error": "Invalid seller ID format",
+			"error": "Invalid seller Id format",
 		})
 	}
 
@@ -110,7 +110,7 @@ func (sc *SellerController) PutSellerController(c echo.Context) error {
 	updateSellerCommand, err := updateSellerRequest.ToUpdateSellerCommand()
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{
-			"error": "Invalid seller ID format",
+			"error": "Invalid seller Id format",
 		})
 	}
 
@@ -127,14 +127,14 @@ func (sc *SellerController) PutSellerController(c echo.Context) error {
 }
 
 func (sc *SellerController) DeleteSellerController(c echo.Context) error {
-	// Hack: split the ID from the URL
+	// Hack: split the Id from the URL
 	// For some reason c.Param("id") doesn't work here
 	idRaw := c.Request().URL.Path[len("/api/v1/sellers/"):]
 
 	id, err := uuid.Parse(idRaw)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{
-			"error": "Invalid seller ID format",
+			"error": "Invalid seller Id format",
 		})
 	}
 
