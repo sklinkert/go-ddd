@@ -33,3 +33,17 @@ func NewProduct(name string, price float64, seller ValidatedSeller) *Product {
 		UpdatedAt: time.Now(),
 	}
 }
+
+func (p *Product) UpdateName(name string) error {
+	p.Name = name
+	p.UpdatedAt = time.Now()
+
+	return p.validate()
+}
+
+func (p *Product) UpdatePrice(price float64) error {
+	p.Price = price
+	p.UpdatedAt = time.Now()
+
+	return p.validate()
+}
