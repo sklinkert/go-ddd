@@ -92,7 +92,7 @@ func TestGormProductRepository_Update(t *testing.T) {
 
 	updatedProduct, _ := repo.FindById(validProduct.ID)
 	if updatedProduct.Name != "UpdatedProduct" {
-		t.Error("Update failed or fetched wrong product")
+		t.Error("UpdateName failed or fetched wrong product")
 	}
 }
 

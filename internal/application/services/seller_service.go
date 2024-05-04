@@ -80,7 +80,7 @@ func (s *SellerService) UpdateSeller(updateCommand *command.UpdateSellerCommand)
 		return nil, errors.New("seller not found")
 	}
 
-	if err := seller.Update(updateCommand.Name); err != nil {
+	if err := seller.UpdateName(updateCommand.Name); err != nil {
 		return nil, err
 	}
 

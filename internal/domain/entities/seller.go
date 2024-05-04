@@ -30,8 +30,9 @@ func (s *Seller) validate() error {
 	return nil
 }
 
-func (s *Seller) Update(name string) error {
+func (s *Seller) UpdateName(name string) error {
 	s.Name = name
 	s.UpdatedAt = time.Now()
+
 	return s.validate()
 }

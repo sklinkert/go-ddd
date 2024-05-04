@@ -73,7 +73,7 @@ func TestSellerRepositoryUpdate(t *testing.T) {
 	_, err := repo.Create(validatedSeller)
 	assert.NoError(t, err)
 
-	// Update name and validate
+	// UpdateName name and validate
 	validatedSeller.Seller.Name = "Johnny"
 	_, err = repo.Update(validatedSeller)
 	assert.Nil(t, err)
