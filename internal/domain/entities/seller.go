@@ -24,7 +24,10 @@ func NewSeller(name string) *Seller {
 
 func (s *Seller) validate() error {
 	if s.Name == "" {
-		return errors.New("invalid seller details")
+		return errors.New("name must not be empty")
+	}
+	if s.CreatedAt.After(s.UpdatedAt) {
+		return errors.New("created_at must be before updated_at")
 	}
 
 	return nil

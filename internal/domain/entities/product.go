@@ -16,8 +16,14 @@ type Product struct {
 }
 
 func (p *Product) validate() error {
-	if p.Name == "" || p.Price <= 0 {
-		return errors.New("invalid product details")
+	if p.Name == "" {
+		return errors.New("name must not be empty")
+	}
+	if p.Price <= 0 {
+		return errors.New("price must be greater than 0")
+	}
+	if p.CreatedAt.After(p.UpdatedAt) {
+		return errors.New("created_at must be before updated_at")
 	}
 
 	return nil
