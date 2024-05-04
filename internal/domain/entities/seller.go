@@ -8,17 +8,17 @@ import (
 
 type Seller struct {
 	Id        uuid.UUID
-	Name      string
 	CreatedAt time.Time
 	UpdatedAt time.Time
+	Name      string
 }
 
 func NewSeller(name string) *Seller {
 	return &Seller{
 		Id:        uuid.New(),
-		Name:      name,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
+		Name:      name,
 	}
 }
 
