@@ -14,6 +14,8 @@ Domain-Driven Design is a methodology and design pattern used to build complex e
 
 ## Repository Structure
 
+![ddd-diagram-onion.png](ddd-diagram-onion.png)
+
 - `domain`: The heart of the software, representing business logic and rules.
     - `entities`: Fundamental objects within our system, like `Product` and `Seller`. Contains basic validation logic.
 - `application`: Contains use-case specific operations that interact with the domain layer.
