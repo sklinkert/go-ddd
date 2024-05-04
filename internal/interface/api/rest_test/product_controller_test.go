@@ -55,6 +55,8 @@ func TestCreateProduct(t *testing.T) {
 	delete(responseBody, "Id")
 	delete(responseBody, "Seller")
 	delete(reqBody, "SellerId")
+	delete(responseBody, "CreatedAt")
+	delete(responseBody, "UpdatedAt")
 
 	// Assertions
 	assert.Equal(t, http.StatusCreated, rec.Code)

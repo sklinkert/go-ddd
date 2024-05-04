@@ -7,6 +7,7 @@ import (
 	"github.com/sklinkert/go-ddd/internal/application/query"
 	"github.com/sklinkert/go-ddd/internal/domain/entities"
 	"github.com/stretchr/testify/mock"
+	"time"
 )
 
 type MockProductService struct {
@@ -16,9 +17,13 @@ type MockProductService struct {
 func (m *MockProductService) CreateProduct(productCommand *command.CreateProductCommand) (*command.CreateProductCommandResult, error) {
 	args := m.Called(productCommand)
 
+	var now = time.Now()
+
 	var seller = &entities.Seller{
-		ID:   productCommand.SellerID,
-		Name: "Test Seller",
+		ID:        productCommand.SellerID,
+		Name:      "Test Seller",
+		CreatedAt: now,
+		UpdatedAt: now,
 	}
 
 	var validatedSeller, err = entities.NewValidatedSeller(seller)

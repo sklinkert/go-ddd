@@ -7,8 +7,10 @@ import (
 
 func ToSellerResponse(product *common.SellerResult) *response.SellerResponse {
 	return &response.SellerResponse{
-		Id:   product.Id.String(),
-		Name: product.Name,
+		Id:        product.Id.String(),
+		Name:      product.Name,
+		CreatedAt: product.CreatedAt,
+		UpdatedAt: product.UpdatedAt,
 	}
 }
 

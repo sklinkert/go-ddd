@@ -1,8 +1,13 @@
 package common
 
-import "github.com/google/uuid"
+import (
+	"github.com/google/uuid"
+	"time"
+)
 
 type SellerResult struct {
-	Id   uuid.UUID
-	Name string
+	Id        uuid.UUID
+	Name      string
+	CreatedAt time.Time
+	UpdatedAt time.Time
 }
