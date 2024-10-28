@@ -8,11 +8,11 @@ import (
 type CreateProductRequest struct {
 	Name     string  `json:"Name"`
 	Price    float64 `json:"Price"`
-	SellerID string  `json:"SellerId"`
+	SellerId string  `json:"SellerId"`
 }
 
 func (req *CreateProductRequest) ToCreateProductCommand() (*command.CreateProductCommand, error) {
-	sellerId, err := uuid.Parse(req.SellerID)
+	sellerId, err := uuid.Parse(req.SellerId)
 	if err != nil {
 		return nil, err
 	}
@@ -20,6 +20,6 @@ func (req *CreateProductRequest) ToCreateProductCommand() (*command.CreateProduc
 	return &command.CreateProductCommand{
 		Name:     req.Name,
 		Price:    req.Price,
-		SellerID: sellerId,
+		SellerId: sellerId,
 	}, nil
 }

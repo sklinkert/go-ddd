@@ -54,7 +54,7 @@ func TestPutSeller(t *testing.T) {
 	assert.NoError(t, err)
 
 	updateRequest := request.UpdateSellerRequest{
-		ID:   createdSeller.Result.Id,
+		Id:   createdSeller.Result.Id,
 		Name: "updatedName",
 	}
 

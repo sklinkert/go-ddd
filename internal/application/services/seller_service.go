@@ -71,7 +71,7 @@ func (s *SellerService) FindSellerById(id uuid.UUID) (*query.SellerQueryResult, 
 
 // UpdateSeller updates a seller
 func (s *SellerService) UpdateSeller(updateCommand *command.UpdateSellerCommand) (*command.UpdateSellerCommandResult, error) {
-	seller, err := s.repo.FindById(updateCommand.ID)
+	seller, err := s.repo.FindById(updateCommand.Id)
 	if err != nil {
 		return nil, err
 	}

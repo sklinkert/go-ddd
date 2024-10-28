@@ -20,7 +20,7 @@ func (m *MockProductService) CreateProduct(productCommand *command.CreateProduct
 	var now = time.Now()
 
 	var seller = &entities.Seller{
-		Id:        productCommand.SellerID,
+		Id:        productCommand.SellerId,
 		Name:      "Test Seller",
 		CreatedAt: now,
 		UpdatedAt: now,

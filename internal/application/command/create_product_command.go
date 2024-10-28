@@ -8,10 +8,10 @@ import (
 type CreateProductCommand struct {
 	// TODO: Implement idempotency key
 
-	ID       uuid.UUID
+	Id       uuid.UUID
 	Name     string
 	Price    float64
-	SellerID uuid.UUID
+	SellerId uuid.UUID
 }
 
 type CreateProductCommandResult struct {

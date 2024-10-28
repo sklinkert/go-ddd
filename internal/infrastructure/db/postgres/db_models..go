@@ -9,8 +9,8 @@ type Product struct {
 	Id        uuid.UUID `gorm:"primaryKey"`
 	Name      string
 	Price     float64
-	SellerID  uuid.UUID `gorm:"index"`
-	Seller    Seller    `gorm:"foreignKey:SellerID"`
+	SellerId  uuid.UUID `gorm:"index"`
+	Seller    Seller    `gorm:"foreignKey:SellerId"`
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }

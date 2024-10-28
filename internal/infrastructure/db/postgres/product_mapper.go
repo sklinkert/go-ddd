@@ -8,7 +8,7 @@ func toDBProduct(product *entities.ValidatedProduct) *Product {
 	var p = &Product{
 		Name:      product.Name,
 		Price:     product.Price,
-		SellerID:  product.Seller.Id, // Ensure Seller is non-nil when mapping
+		SellerId:  product.Seller.Id, // Ensure Seller is non-nil when mapping
 		CreatedAt: product.CreatedAt,
 		UpdatedAt: product.UpdatedAt,
 	}

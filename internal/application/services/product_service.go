@@ -24,7 +24,7 @@ func NewProductService(
 }
 
 func (s *ProductService) CreateProduct(productCommand *command.CreateProductCommand) (*command.CreateProductCommandResult, error) {
-	storedSeller, err := s.sellerRepository.FindById(productCommand.SellerID)
+	storedSeller, err := s.sellerRepository.FindById(productCommand.SellerId)
 	if err != nil {
 		return nil, err
 	}

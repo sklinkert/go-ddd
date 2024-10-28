@@ -117,22 +117,22 @@ func TestSellerService_UpdateSeller(t *testing.T) {
 	service := NewSellerService(repo)
 
 	createdSellerResult, _ := service.CreateSeller(getCreateSellerCommand("John Doe"))
-	sellerID := createdSellerResult.Result.Id
+	sellerId := createdSellerResult.Result.Id
 
 	var updatableSeller = entities.Seller{
-		Id:   sellerID,
+		Id:   sellerId,
 		Name: "Doe Johnny",
 	}
 
 	_, err := service.UpdateSeller(&command.UpdateSellerCommand{
-		ID:   sellerID,
+		Id:   sellerId,
 		Name: updatableSeller.Name,
 	})
 	if err != nil {
 		t.Errorf("Unexpected error: %s", err)
 	}
 
-	updatedSeller, _ := service.FindSellerById(sellerID)
+	updatedSeller, _ := service.FindSellerById(sellerId)
 	if updatedSeller.Result.Name != "Doe Johnny" {
 		t.Errorf("Expected seller name 'Johnny Doe', but got %s", updatedSeller.Result.Name)
 	}

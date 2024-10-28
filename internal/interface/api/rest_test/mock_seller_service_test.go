@@ -55,10 +55,10 @@ func (m *MockSellerService) FindSellerById(id uuid.UUID) (*query.SellerQueryResu
 }
 
 func (m *MockSellerService) UpdateSeller(updateCommand *command.UpdateSellerCommand) (*command.UpdateSellerCommandResult, error) {
-	if _, exists := m.sellers[updateCommand.ID]; exists {
-		m.sellers[updateCommand.ID].Name = updateCommand.Name
+	if _, exists := m.sellers[updateCommand.Id]; exists {
+		m.sellers[updateCommand.Id].Name = updateCommand.Name
 		return &command.UpdateSellerCommandResult{
-			Result: mapper.NewSellerResultFromEntity(&m.sellers[updateCommand.ID].Seller),
+			Result: mapper.NewSellerResultFromEntity(&m.sellers[updateCommand.Id].Seller),
 		}, nil
 	}
 	return nil, errors.New("seller not found")

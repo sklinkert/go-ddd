@@ -133,7 +133,7 @@ func getCreateProductCommand(product *entities.Product) *command.CreateProductCo
 	return &command.CreateProductCommand{
 		Name:     product.Name,
 		Price:    product.Price,
-		SellerID: product.Seller.Id,
+		SellerId: product.Seller.Id,
 	}
 }
 
