@@ -1,9 +1,6 @@
 # github.com/davecgh/go-spew v1.1.1
 ## explicit
 github.com/davecgh/go-spew/spew
-# github.com/golang-jwt/jwt v3.2.2+incompatible
-## explicit
-github.com/golang-jwt/jwt
 # github.com/google/uuid v1.6.0
 ## explicit
 github.com/google/uuid
@@ -44,7 +41,7 @@ github.com/jinzhu/inflection
 github.com/jinzhu/now
 # github.com/kr/text v0.2.0
 ## explicit
-# github.com/labstack/echo/v4 v4.12.0
+# github.com/labstack/echo/v4 v4.13.0
 ## explicit; go 1.18
 github.com/labstack/echo/v4
 github.com/labstack/echo/v4/middleware
