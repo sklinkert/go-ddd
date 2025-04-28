@@ -45,8 +45,9 @@ Domain-Driven Design is a methodology and design pattern used to build complex e
 ## Best Practices
 
 - Don't return validated entities from read methods in the repository. Instead, return the domain entity type directly.
-  - Validations might change in the future, and you don't want to change all the data in your database.
-  - Otherwise, you won't be able to read data from the database that was written with a different validation logic.
+  - Validations will change over time. You don't want to migrate all the data in your database. Instead, you should guarantee you can always load historical data, regardless of how your validation logic has evolved.
+  - Otherwise, you won't be able to read data from the database that was written with a different validation logic. You will have to handle errors at runtime.
+  - Push validation to the write side-creation (NewX) and update methods - where you must enforce invariants anyway.
 - Don't put default values (e.g current timestamp or ID) in the database. Set them in the domain layer (factory!) for several reasons:
   - It's quite dangerous to have two sources of truth.
   - It's easier to test the domain layer.
