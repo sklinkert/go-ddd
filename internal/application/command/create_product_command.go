@@ -6,12 +6,11 @@ import (
 )
 
 type CreateProductCommand struct {
-	// TODO: Implement idempotency key
-
-	Id       uuid.UUID
-	Name     string
-	Price    float64
-	SellerId uuid.UUID
+	IdempotencyKey string
+	Id             uuid.UUID
+	Name           string
+	Price          float64
+	SellerId       uuid.UUID
 }
 
 type CreateProductCommandResult struct {

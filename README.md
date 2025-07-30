@@ -1,6 +1,6 @@
 # Go-DDD: Domain Driven Design Template in Golang
 
-Welcome to `go-ddd`, a reference implementation/template repository demonstrating the [Domain Driven Design (DDD)](https://en.wikipedia.org/wiki/Domain-driven_design) approach in Golang. This project aims to help developers and architects understand the DDD structure, especially in the context of Go, and how it can lead to cleaner, more maintainable, and scalable codebases.
+Welcome to `go-ddd`, a reference implementation/template repository demonstrating the [Domain Driven Design (DDD)](https://en.wikipedia.org/wiki/Domain-driven_design) and CQRS (Command Query Responsibility Segregation) approach in Golang. This project aims to help developers and architects understand the DDD structure, especially in the context of Go, and how it can lead to cleaner, enterprise-ready, maintainable, and scalable codebases.
 
 ## Overview
 
@@ -58,6 +58,28 @@ Domain-Driven Design is a methodology and design pattern used to build complex e
   - `find` methods can return null or an empty list.
   - `get` methods must return a value. If the value is not found, throw an error.
 - Deletion: Always use soft deletion. Create a `deleted_at` column in your database and set it to the current timestamp when deleting an entity. This way, you can always restore the entity if needed.
+
+## CQRS and Idempotency
+
+### Command Query Responsibility Segregation (CQRS)
+CQRS separates read operations (queries) from write operations (commands) in your application. In this codebase:
+- **Commands** modify state (CreateSellerCommand, CreateProductCommand, UpdateSellerCommand)
+- **Queries** retrieve data without side effects (FindAllSellers, FindSellerById)
+
+This separation enables different optimization strategies:
+- **Write optimization**: Commands can use normalized schemas, ACID transactions, and strong consistency
+- **Read optimization**: Queries can use denormalized views, caching, read replicas, or even different databases (e.g., PostgreSQL for writes, Elasticsearch for reads)
+- **Scalability**: Read and write workloads can be scaled independently based on actual usage patterns
+- **Performance**: Complex queries don't impact write performance, and write locks don't block read operations
+
+### Idempotency Keys
+Idempotency ensures that multiple identical requests have the same effect as a single request. This is crucial for handling network failures and retries in distributed systems. Implementation:
+- Each command accepts an optional `idempotency_key` in the request
+- The application layer checks if this key has been processed before
+- If yes, it returns the cached response without re-executing business logic
+- If no, it executes the command and stores the response for future requests
+
+This prevents duplicate entities from being created when clients retry failed requests.
 
 ## Getting Started
 

@@ -60,7 +60,8 @@ func (m *MockSellerRepository) Update(seller *entities.ValidatedSeller) (*entiti
 
 func TestSellerService_CreateSeller(t *testing.T) {
 	repo := &MockSellerRepository{}
-	service := NewSellerService(repo)
+	idempotencyRepo := NewMockIdempotencyRepository()
+	service := NewSellerService(repo, idempotencyRepo)
 
 	_, err := service.CreateSeller(getCreateSellerCommand("John Doe"))
 	if err != nil {
@@ -74,7 +75,8 @@ func TestSellerService_CreateSeller(t *testing.T) {
 
 func TestSellerService_GetAllSellers(t *testing.T) {
 	repo := &MockSellerRepository{}
-	service := NewSellerService(repo)
+	idempotencyRepo := NewMockIdempotencyRepository()
+	service := NewSellerService(repo, idempotencyRepo)
 
 	// Add two sellers
 	_, _ = service.CreateSeller(getCreateSellerCommand("John Doe"))
@@ -92,7 +94,8 @@ func TestSellerService_GetAllSellers(t *testing.T) {
 
 func TestSellerService_GetSellerById(t *testing.T) {
 	repo := &MockSellerRepository{}
-	service := NewSellerService(repo)
+	idempotencyRepo := NewMockIdempotencyRepository()
+	service := NewSellerService(repo, idempotencyRepo)
 
 	createdSellerResult, _ := service.CreateSeller(getCreateSellerCommand("John Doe"))
 	sellerID := createdSellerResult.Result.Id
@@ -114,7 +117,8 @@ func TestSellerService_GetSellerById(t *testing.T) {
 
 func TestSellerService_UpdateSeller(t *testing.T) {
 	repo := &MockSellerRepository{}
-	service := NewSellerService(repo)
+	idempotencyRepo := NewMockIdempotencyRepository()
+	service := NewSellerService(repo, idempotencyRepo)
 
 	createdSellerResult, _ := service.CreateSeller(getCreateSellerCommand("John Doe"))
 	sellerId := createdSellerResult.Result.Id

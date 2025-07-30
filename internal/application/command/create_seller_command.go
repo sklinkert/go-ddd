@@ -3,9 +3,8 @@ package command
 import "github.com/sklinkert/go-ddd/internal/application/common"
 
 type CreateSellerCommand struct {
-	// TODO: Implement idempotency key
-
-	Name string
+	IdempotencyKey string
+	Name           string
 }
 
 type CreateSellerCommandResult struct {

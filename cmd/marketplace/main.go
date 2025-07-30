@@ -24,9 +24,10 @@ func main() {
 
 	productRepo := postgres2.NewGormProductRepository(gormDB)
 	sellerRepo := postgres2.NewGormSellerRepository(gormDB)
+	idempotencyRepo := postgres2.NewIdempotencyRepository(gormDB)
 
-	productService := services.NewProductService(productRepo, sellerRepo)
-	sellerService := services.NewSellerService(sellerRepo)
+	productService := services.NewProductService(productRepo, sellerRepo, idempotencyRepo)
+	sellerService := services.NewSellerService(sellerRepo, idempotencyRepo)
 
 	e := echo.New()
 	rest.NewProductController(e, productService)

@@ -6,13 +6,15 @@ import (
 )
 
 type UpdateSellerRequest struct {
-	Id   uuid.UUID `json:"Id"`
-	Name string    `json:"Name"`
+	IdempotencyKey string    `json:"idempotency_key"`
+	Id             uuid.UUID `json:"Id"`
+	Name           string    `json:"Name"`
 }
 
 func (req *UpdateSellerRequest) ToUpdateSellerCommand() (*command.UpdateSellerCommand, error) {
 	return &command.UpdateSellerCommand{
-		Id:   req.Id,
-		Name: req.Name,
+		IdempotencyKey: req.IdempotencyKey,
+		Id:             req.Id,
+		Name:           req.Name,
 	}, nil
 }

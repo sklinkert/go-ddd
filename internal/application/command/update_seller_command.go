@@ -6,10 +6,9 @@ import (
 )
 
 type UpdateSellerCommand struct {
-	// TODO: Implement idempotency key
-
-	Id   uuid.UUID
-	Name string
+	IdempotencyKey string
+	Id             uuid.UUID
+	Name           string
 }
 
 type UpdateSellerCommandResult struct {

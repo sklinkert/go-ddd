@@ -1,6 +1,7 @@
 package services
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"github.com/google/uuid"
@@ -57,10 +58,39 @@ func (m *MockProductRepository) FindById(id uuid.UUID) (*entities.Product, error
 	return nil, errors.New("product not found")
 }
 
+// MockIdempotencyRepository is a mock implementation of the IdempotencyRepository interface
+type MockIdempotencyRepository struct {
+	records map[string]*entities.IdempotencyRecord
+}
+
+func NewMockIdempotencyRepository() *MockIdempotencyRepository {
+	return &MockIdempotencyRepository{
+		records: make(map[string]*entities.IdempotencyRecord),
+	}
+}
+
+func (m *MockIdempotencyRepository) FindByKey(ctx context.Context, key string) (*entities.IdempotencyRecord, error) {
+	if record, exists := m.records[key]; exists {
+		return record, nil
+	}
+	return nil, nil
+}
+
+func (m *MockIdempotencyRepository) Create(ctx context.Context, record *entities.IdempotencyRecord) (*entities.IdempotencyRecord, error) {
+	m.records[record.Key] = record
+	return record, nil
+}
+
+func (m *MockIdempotencyRepository) Update(ctx context.Context, record *entities.IdempotencyRecord) (*entities.IdempotencyRecord, error) {
+	m.records[record.Key] = record
+	return record, nil
+}
+
 func TestProductService_CreateProduct(t *testing.T) {
 	productRepo := &MockProductRepository{}
 	sellerRepo := &MockSellerRepository{}
-	service := NewProductService(productRepo, sellerRepo)
+	idempotencyRepo := NewMockIdempotencyRepository()
+	service := NewProductService(productRepo, sellerRepo, idempotencyRepo)
 
 	// Create seller
 	seller := createPersistedSeller(t, sellerRepo)
@@ -81,7 +111,8 @@ func TestProductService_CreateProduct(t *testing.T) {
 func TestProductService_GetAllProducts(t *testing.T) {
 	productRepo := &MockProductRepository{}
 	sellerRepo := &MockSellerRepository{}
-	service := NewProductService(productRepo, sellerRepo)
+	idempotencyRepo := NewMockIdempotencyRepository()
+	service := NewProductService(productRepo, sellerRepo, idempotencyRepo)
 
 	// Create seller
 	seller := createPersistedSeller(t, sellerRepo)
@@ -103,7 +134,8 @@ func TestProductService_GetAllProducts(t *testing.T) {
 func TestProductService_FindProductById(t *testing.T) {
 	productRepo := &MockProductRepository{}
 	sellerRepo := &MockSellerRepository{}
-	service := NewProductService(productRepo, sellerRepo)
+	idempotencyRepo := NewMockIdempotencyRepository()
+	service := NewProductService(productRepo, sellerRepo, idempotencyRepo)
 
 	// Create seller
 	seller := createPersistedSeller(t, sellerRepo)

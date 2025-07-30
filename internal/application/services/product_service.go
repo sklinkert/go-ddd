@@ -1,6 +1,8 @@
 package services
 
 import (
+	"context"
+	"encoding/json"
 	"errors"
 	"github.com/google/uuid"
 	"github.com/sklinkert/go-ddd/internal/application/command"
@@ -14,16 +16,48 @@ import (
 type ProductService struct {
 	productRepository repositories.ProductRepository
 	sellerRepository  repositories.SellerRepository
+	idempotencyRepo   repositories.IdempotencyRepository
 }
 
 func NewProductService(
 	productRepository repositories.ProductRepository,
 	sellerRepository repositories.SellerRepository,
+	idempotencyRepo repositories.IdempotencyRepository,
 ) interfaces.ProductService {
-	return &ProductService{productRepository: productRepository, sellerRepository: sellerRepository}
+	return &ProductService{
+		productRepository: productRepository,
+		sellerRepository:  sellerRepository,
+		idempotencyRepo:   idempotencyRepo,
+	}
 }
 
 func (s *ProductService) CreateProduct(productCommand *command.CreateProductCommand) (*command.CreateProductCommandResult, error) {
+	ctx := context.Background()
+
+	// Check idempotency key
+	if productCommand.IdempotencyKey != "" {
+		existingRecord, err := s.idempotencyRepo.FindByKey(ctx, productCommand.IdempotencyKey)
+		if err != nil {
+			return nil, err
+		}
+
+		if existingRecord != nil {
+			// Return cached response
+			var result command.CreateProductCommandResult
+			if err := json.Unmarshal([]byte(existingRecord.Response), &result); err != nil {
+				return nil, err
+			}
+			return &result, nil
+		}
+	}
+
+	// Create idempotency record
+	var idempotencyRecord *entities.IdempotencyRecord
+	if productCommand.IdempotencyKey != "" {
+		requestJSON, _ := json.Marshal(productCommand)
+		idempotencyRecord = entities.NewIdempotencyRecord(productCommand.IdempotencyKey, string(requestJSON))
+	}
+
 	storedSeller, err := s.sellerRepository.FindById(productCommand.SellerId)
 	if err != nil {
 		return nil, err
@@ -56,6 +90,17 @@ func (s *ProductService) CreateProduct(productCommand *command.CreateProductComm
 
 	result := command.CreateProductCommandResult{
 		Result: mapper.NewProductResultFromValidatedEntity(validatedProduct),
+	}
+
+	// Store response in idempotency record
+	if idempotencyRecord != nil {
+		responseJSON, _ := json.Marshal(result)
+		idempotencyRecord.SetResponse(string(responseJSON), 200)
+		_, err = s.idempotencyRepo.Create(ctx, idempotencyRecord)
+		if err != nil {
+			// Log error but don't fail the operation
+			// In production, you might want to handle this differently
+		}
 	}
 
 	return &result, nil
