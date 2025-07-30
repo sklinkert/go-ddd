@@ -127,7 +127,7 @@ gopkg.in/yaml.v3
 # gorm.io/driver/postgres v1.6.0
 ## explicit; go 1.20
 gorm.io/driver/postgres
-# gorm.io/driver/sqlite v1.5.7
+# gorm.io/driver/sqlite v1.6.0
 ## explicit; go 1.20
 gorm.io/driver/sqlite
 # gorm.io/gorm v1.30.1
