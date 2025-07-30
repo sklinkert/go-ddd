@@ -81,6 +81,16 @@ Idempotency ensures that multiple identical requests have the same effect as a s
 
 This prevents duplicate entities from being created when clients retry failed requests.
 
+## Tech Stack
+
+This project uses the following key dependencies:
+
+- **GORM** (`gorm.io/gorm`) - ORM library for database operations
+- **SQLite** (`gorm.io/driver/sqlite`) - Default database (with PostgreSQL support via `gorm.io/driver/postgres`)
+- **Echo** (`github.com/labstack/echo/v4`) - HTTP web framework
+- **UUID** (`github.com/google/uuid`) - UUID generation
+- **Testify** (`github.com/stretchr/testify`) - Testing toolkit
+
 ## Getting Started
 
 1. Clone this repository:
