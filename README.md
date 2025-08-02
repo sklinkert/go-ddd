@@ -12,6 +12,10 @@ Domain-Driven Design is a methodology and design pattern used to build complex e
 - **Isolation of Domain Logic**: The domain logic is separate from the infrastructure and application layers, promoting SOLID principles.
 - **Scalability**: Allows for easier microservices architecture transitions.
 
+## Documentation
+
+📚 **[Comprehensive DDD & CQRS Principles Guide](DDD_CQRS_PRINCIPLES.md)** - Learn how to apply these patterns to any business domain.
+
 ## Repository Structure
 
 ![ddd-diagram-onion.png](ddd-diagram-onion.png)
