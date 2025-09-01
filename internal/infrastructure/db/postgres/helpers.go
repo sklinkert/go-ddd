@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	"fmt"
 	"github.com/jackc/pgx/v5/pgtype"
 	"time"
 )
@@ -20,7 +21,8 @@ func timeFromTimestamptz(ts pgtype.Timestamptz) time.Time {
 
 func numericFromFloat64(f float64) pgtype.Numeric {
 	var n pgtype.Numeric
-	n.Scan(f)
+	// Convert float64 to string first, then scan
+	n.Scan(fmt.Sprintf("%.2f", f))
 	return n
 }
 
