@@ -85,12 +85,70 @@ Idempotency ensures that multiple identical requests have the same effect as a s
 
 This prevents duplicate entities from being created when clients retry failed requests.
 
+## Database Migrations
+
+This project uses [golang-migrate](https://github.com/golang-migrate/migrate) for database schema management. Migrations are stored in the `migrations/` directory with sequential version numbers.
+
+### Migration Files Structure
+```
+migrations/
+├── 000001_initial_schema.up.sql    # Creates initial tables
+└── 000001_initial_schema.down.sql  # Rollback for initial schema
+```
+
+### Running Migrations
+
+#### Using the built-in utility:
+```bash
+# Apply all pending migrations
+go run migrate.go -database-url "postgres://user:pass@localhost/db?sslmode=disable" -command up
+
+# Rollback last migration
+go run migrate.go -database-url "postgres://user:pass@localhost/db?sslmode=disable" -command down -steps 1
+
+# Check current version
+go run migrate.go -database-url "postgres://user:pass@localhost/db?sslmode=disable" -command version
+
+# Force to specific version (use with caution)
+go run migrate.go -database-url "postgres://user:pass@localhost/db?sslmode=disable" -command force -version 1
+```
+
+#### Using the CLI tool directly:
+```bash
+# Install the CLI tool
+go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
+
+# Apply all pending migrations
+migrate -path migrations -database "postgres://user:pass@localhost/db?sslmode=disable" up
+
+# Rollback last migration
+migrate -path migrations -database "postgres://user:pass@localhost/db?sslmode=disable" down 1
+```
+
+### Creating New Migrations
+```bash
+# Create a new migration
+migrate create -ext sql -dir migrations -seq add_user_email_column
+```
+
+This will create two files:
+- `000002_add_user_email_column.up.sql` - Forward migration
+- `000002_add_user_email_column.down.sql` - Rollback migration
+
+### Migration Best Practices
+- Always create both `up` and `down` migrations
+- Test migrations on a copy of production data
+- Keep migrations small and focused
+- Never modify existing migration files once they've been applied in production
+- Use descriptive names for migration files
+
 ## Tech Stack
 
 This project uses the following key dependencies:
 
-- **GORM** (`gorm.io/gorm`) - ORM library for database operations
-- **SQLite** (`gorm.io/driver/sqlite`) - Default database (with PostgreSQL support via `gorm.io/driver/postgres`)
+- **golang-migrate** (`github.com/golang-migrate/migrate/v4`) - Database migration tool
+- **sqlc** - Type-safe SQL code generation for PostgreSQL
+- **pgx/v5** (`github.com/jackc/pgx/v5`) - PostgreSQL driver and toolkit
 - **Echo** (`github.com/labstack/echo/v4`) - HTTP web framework
 - **UUID** (`github.com/google/uuid`) - UUID generation
 - **Testify** (`github.com/stretchr/testify`) - Testing toolkit
@@ -102,7 +160,33 @@ This project uses the following key dependencies:
 git clone https://github.com/sklinkert/go-ddd.git
 cd go-ddd
 go mod download
-go run ./...
+```
+
+2. Install sqlc (for development):
+```bash
+go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
+```
+
+3. Generate database code (if you modify SQL queries):
+```bash
+sqlc generate
+```
+
+4. Set up your PostgreSQL database and run migrations:
+```bash
+# Set your database connection URL
+export DATABASE_URL="postgres://user:password@localhost/dbname?sslmode=disable"
+
+# Run migrations using the built-in utility
+go run migrate.go -command up
+
+# Or use the CLI tool directly
+migrate -path migrations -database $DATABASE_URL up
+```
+
+5. Run the application:
+```bash
+go run ./cmd/marketplace
 ```
 
 ### Contributions

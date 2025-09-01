@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"github.com/google/uuid"
 	"github.com/sklinkert/go-ddd/internal/application/command"
 	"github.com/sklinkert/go-ddd/internal/application/interfaces"
 	"github.com/sklinkert/go-ddd/internal/application/mapper"
@@ -14,8 +13,8 @@ import (
 )
 
 type SellerService struct {
-	repo             repositories.SellerRepository
-	idempotencyRepo  repositories.IdempotencyRepository
+	repo            repositories.SellerRepository
+	idempotencyRepo repositories.IdempotencyRepository
 }
 
 // NewSellerService - Constructor for the service
@@ -85,13 +84,13 @@ func (s *SellerService) CreateSeller(sellerCommand *command.CreateSellerCommand)
 }
 
 // FindAllSellers fetches all sellers
-func (s *SellerService) FindAllSellers() (*query.SellerQueryListResult, error) {
+func (s *SellerService) FindAllSellers() (*query.GetAllSellersQueryResult, error) {
 	storedSellers, err := s.repo.FindAll()
 	if err != nil {
 		return nil, err
 	}
 
-	var queryResult query.SellerQueryListResult
+	var queryResult query.GetAllSellersQueryResult
 	for _, seller := range storedSellers {
 		queryResult.Result = append(queryResult.Result, mapper.NewSellerResultFromEntity(seller))
 	}
@@ -100,13 +99,13 @@ func (s *SellerService) FindAllSellers() (*query.SellerQueryListResult, error) {
 }
 
 // FindSellerById fetches a specific seller by Id
-func (s *SellerService) FindSellerById(id uuid.UUID) (*query.SellerQueryResult, error) {
-	storedSeller, err := s.repo.FindById(id)
+func (s *SellerService) FindSellerById(sellerQuery *query.GetSellerByIdQuery) (*query.GetSellerByIdQueryResult, error) {
+	storedSeller, err := s.repo.FindById(sellerQuery.Id)
 	if err != nil {
 		return nil, err
 	}
 
-	var queryResult query.SellerQueryResult
+	var queryResult query.GetSellerByIdQueryResult
 	queryResult.Result = mapper.NewSellerResultFromEntity(storedSeller)
 
 	return &queryResult, nil
@@ -181,6 +180,63 @@ func (s *SellerService) UpdateSeller(updateCommand *command.UpdateSellerCommand)
 	return &result, nil
 }
 
-func (s *SellerService) DeleteSeller(id uuid.UUID) error {
-	return s.repo.Delete(id)
+func (s *SellerService) DeleteSeller(sellerCommand *command.DeleteSellerCommand) (*command.DeleteSellerCommandResult, error) {
+	ctx := context.Background()
+
+	// Check idempotency key
+	if sellerCommand.IdempotencyKey != "" {
+		existingRecord, err := s.idempotencyRepo.FindByKey(ctx, sellerCommand.IdempotencyKey)
+		if err != nil {
+			return nil, err
+		}
+
+		if existingRecord != nil {
+			// Return cached response
+			var result command.DeleteSellerCommandResult
+			if err := json.Unmarshal([]byte(existingRecord.Response), &result); err != nil {
+				return nil, err
+			}
+			return &result, nil
+		}
+	}
+
+	// Create idempotency record
+	var idempotencyRecord *entities.IdempotencyRecord
+	if sellerCommand.IdempotencyKey != "" {
+		requestJSON, _ := json.Marshal(sellerCommand)
+		idempotencyRecord = entities.NewIdempotencyRecord(sellerCommand.IdempotencyKey, string(requestJSON))
+	}
+
+	// Check if seller exists
+	existingSeller, err := s.repo.FindById(sellerCommand.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	if existingSeller == nil {
+		return nil, errors.New("seller not found")
+	}
+
+	// Delete seller
+	err = s.repo.Delete(sellerCommand.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	result := command.DeleteSellerCommandResult{
+		Success: true,
+	}
+
+	// Store response in idempotency record
+	if idempotencyRecord != nil {
+		responseJSON, _ := json.Marshal(result)
+		idempotencyRecord.SetResponse(string(responseJSON), 200)
+		_, err = s.idempotencyRepo.Create(ctx, idempotencyRecord)
+		if err != nil {
+			// Log error but don't fail the operation
+			// In production, you might want to handle this differently
+		}
+	}
+
+	return &result, nil
 }

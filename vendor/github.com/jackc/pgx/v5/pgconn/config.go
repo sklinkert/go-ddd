@@ -51,6 +51,8 @@ type Config struct {
 	KerberosSpn     string
 	Fallbacks       []*FallbackConfig
 
+	SSLNegotiation string // sslnegotiation=postgres or sslnegotiation=direct
+
 	// ValidateConnect is called during a connection attempt after a successful authentication with the PostgreSQL server.
 	// It can be used to validate that the server is acceptable. If this returns an error the connection is closed and the next
 	// fallback config is tried. This allows implementing high availability behavior such as libpq does with target_session_attrs.
@@ -198,9 +200,11 @@ func NetworkAddress(host string, port uint16) (network, address string) {
 //	PGSSLKEY
 //	PGSSLROOTCERT
 //	PGSSLPASSWORD
+//	PGOPTIONS
 //	PGAPPNAME
 //	PGCONNECT_TIMEOUT
 //	PGTARGETSESSIONATTRS
+//	PGTZ
 //
 // See http://www.postgresql.org/docs/11/static/libpq-envars.html for details on the meaning of environment variables.
 //
@@ -318,6 +322,7 @@ func ParseConfigWithOptions(connString string, options ParseConfigOptions) (*Con
 		"sslkey":               {},
 		"sslcert":              {},
 		"sslrootcert":          {},
+		"sslnegotiation":       {},
 		"sslpassword":          {},
 		"sslsni":               {},
 		"krbspn":               {},
@@ -386,6 +391,7 @@ func ParseConfigWithOptions(connString string, options ParseConfigOptions) (*Con
 	config.Port = fallbacks[0].Port
 	config.TLSConfig = fallbacks[0].TLSConfig
 	config.Fallbacks = fallbacks[1:]
+	config.SSLNegotiation = settings["sslnegotiation"]
 
 	passfile, err := pgpassfile.ReadPassfile(settings["passfile"])
 	if err == nil {
@@ -449,9 +455,12 @@ func parseEnvSettings() map[string]string {
 		"PGSSLSNI":             "sslsni",
 		"PGSSLROOTCERT":        "sslrootcert",
 		"PGSSLPASSWORD":        "sslpassword",
+		"PGSSLNEGOTIATION":     "sslnegotiation",
 		"PGTARGETSESSIONATTRS": "target_session_attrs",
 		"PGSERVICE":            "service",
 		"PGSERVICEFILE":        "servicefile",
+		"PGTZ":                 "timezone",
+		"PGOPTIONS":            "options",
 	}
 
 	for envname, realname := range nameMap {
@@ -467,14 +476,17 @@ func parseEnvSettings() map[string]string {
 func parseURLSettings(connString string) (map[string]string, error) {
 	settings := make(map[string]string)
 
-	url, err := url.Parse(connString)
+	parsedURL, err := url.Parse(connString)
 	if err != nil {
+		if urlErr := new(url.Error); errors.As(err, &urlErr) {
+			return nil, urlErr.Err
+		}
 		return nil, err
 	}
 
-	if url.User != nil {
-		settings["user"] = url.User.Username()
-		if password, present := url.User.Password(); present {
+	if parsedURL.User != nil {
+		settings["user"] = parsedURL.User.Username()
+		if password, present := parsedURL.User.Password(); present {
 			settings["password"] = password
 		}
 	}
@@ -482,7 +494,7 @@ func parseURLSettings(connString string) (map[string]string, error) {
 	// Handle multiple host:port's in url.Host by splitting them into host,host,host and port,port,port.
 	var hosts []string
 	var ports []string
-	for _, host := range strings.Split(url.Host, ",") {
+	for _, host := range strings.Split(parsedURL.Host, ",") {
 		if host == "" {
 			continue
 		}
@@ -508,7 +520,7 @@ func parseURLSettings(connString string) (map[string]string, error) {
 		settings["port"] = strings.Join(ports, ",")
 	}
 
-	database := strings.TrimLeft(url.Path, "/")
+	database := strings.TrimLeft(parsedURL.Path, "/")
 	if database != "" {
 		settings["database"] = database
 	}
@@ -517,7 +529,7 @@ func parseURLSettings(connString string) (map[string]string, error) {
 		"dbname": "database",
 	}
 
-	for k, v := range url.Query() {
+	for k, v := range parsedURL.Query() {
 		if k2, present := nameMap[k]; present {
 			k = k2
 		}
@@ -643,6 +655,7 @@ func configTLS(settings map[string]string, thisHost string, parseConfigOptions P
 	sslkey := settings["sslkey"]
 	sslpassword := settings["sslpassword"]
 	sslsni := settings["sslsni"]
+	sslnegotiation := settings["sslnegotiation"]
 
 	// Match libpq default behavior
 	if sslmode == "" {
@@ -653,6 +666,43 @@ func configTLS(settings map[string]string, thisHost string, parseConfigOptions P
 	}
 
 	tlsConfig := &tls.Config{}
+
+	if sslnegotiation == "direct" {
+		tlsConfig.NextProtos = []string{"postgresql"}
+		if sslmode == "prefer" {
+			sslmode = "require"
+		}
+	}
+
+	if sslrootcert != "" {
+		var caCertPool *x509.CertPool
+
+		if sslrootcert == "system" {
+			var err error
+
+			caCertPool, err = x509.SystemCertPool()
+			if err != nil {
+				return nil, fmt.Errorf("unable to load system certificate pool: %w", err)
+			}
+
+			sslmode = "verify-full"
+		} else {
+			caCertPool = x509.NewCertPool()
+
+			caPath := sslrootcert
+			caCert, err := os.ReadFile(caPath)
+			if err != nil {
+				return nil, fmt.Errorf("unable to read CA file: %w", err)
+			}
+
+			if !caCertPool.AppendCertsFromPEM(caCert) {
+				return nil, errors.New("unable to add CA to cert pool")
+			}
+		}
+
+		tlsConfig.RootCAs = caCertPool
+		tlsConfig.ClientCAs = caCertPool
+	}
 
 	switch sslmode {
 	case "disable":
@@ -709,23 +759,6 @@ func configTLS(settings map[string]string, thisHost string, parseConfigOptions P
 		tlsConfig.ServerName = host
 	default:
 		return nil, errors.New("sslmode is invalid")
-	}
-
-	if sslrootcert != "" {
-		caCertPool := x509.NewCertPool()
-
-		caPath := sslrootcert
-		caCert, err := os.ReadFile(caPath)
-		if err != nil {
-			return nil, fmt.Errorf("unable to read CA file: %w", err)
-		}
-
-		if !caCertPool.AppendCertsFromPEM(caCert) {
-			return nil, errors.New("unable to add CA to cert pool")
-		}
-
-		tlsConfig.RootCAs = caCertPool
-		tlsConfig.ClientCAs = caCertPool
 	}
 
 	if (sslcert != "" && sslkey == "") || (sslcert == "" && sslkey != "") {
@@ -845,12 +878,12 @@ func makeConnectTimeoutDialFunc(timeout time.Duration) DialFunc {
 // ValidateConnectTargetSessionAttrsReadWrite is a ValidateConnectFunc that implements libpq compatible
 // target_session_attrs=read-write.
 func ValidateConnectTargetSessionAttrsReadWrite(ctx context.Context, pgConn *PgConn) error {
-	result := pgConn.ExecParams(ctx, "show transaction_read_only", nil, nil, nil, nil).Read()
-	if result.Err != nil {
-		return result.Err
+	result, err := pgConn.Exec(ctx, "show transaction_read_only").ReadAll()
+	if err != nil {
+		return err
 	}
 
-	if string(result.Rows[0][0]) == "on" {
+	if string(result[0].Rows[0][0]) == "on" {
 		return errors.New("read only connection")
 	}
 
@@ -860,12 +893,12 @@ func ValidateConnectTargetSessionAttrsReadWrite(ctx context.Context, pgConn *PgC
 // ValidateConnectTargetSessionAttrsReadOnly is a ValidateConnectFunc that implements libpq compatible
 // target_session_attrs=read-only.
 func ValidateConnectTargetSessionAttrsReadOnly(ctx context.Context, pgConn *PgConn) error {
-	result := pgConn.ExecParams(ctx, "show transaction_read_only", nil, nil, nil, nil).Read()
-	if result.Err != nil {
-		return result.Err
+	result, err := pgConn.Exec(ctx, "show transaction_read_only").ReadAll()
+	if err != nil {
+		return err
 	}
 
-	if string(result.Rows[0][0]) != "on" {
+	if string(result[0].Rows[0][0]) != "on" {
 		return errors.New("connection is not read only")
 	}
 
@@ -875,12 +908,12 @@ func ValidateConnectTargetSessionAttrsReadOnly(ctx context.Context, pgConn *PgCo
 // ValidateConnectTargetSessionAttrsStandby is a ValidateConnectFunc that implements libpq compatible
 // target_session_attrs=standby.
 func ValidateConnectTargetSessionAttrsStandby(ctx context.Context, pgConn *PgConn) error {
-	result := pgConn.ExecParams(ctx, "select pg_is_in_recovery()", nil, nil, nil, nil).Read()
-	if result.Err != nil {
-		return result.Err
+	result, err := pgConn.Exec(ctx, "select pg_is_in_recovery()").ReadAll()
+	if err != nil {
+		return err
 	}
 
-	if string(result.Rows[0][0]) != "t" {
+	if string(result[0].Rows[0][0]) != "t" {
 		return errors.New("server is not in hot standby mode")
 	}
 
@@ -890,12 +923,12 @@ func ValidateConnectTargetSessionAttrsStandby(ctx context.Context, pgConn *PgCon
 // ValidateConnectTargetSessionAttrsPrimary is a ValidateConnectFunc that implements libpq compatible
 // target_session_attrs=primary.
 func ValidateConnectTargetSessionAttrsPrimary(ctx context.Context, pgConn *PgConn) error {
-	result := pgConn.ExecParams(ctx, "select pg_is_in_recovery()", nil, nil, nil, nil).Read()
-	if result.Err != nil {
-		return result.Err
+	result, err := pgConn.Exec(ctx, "select pg_is_in_recovery()").ReadAll()
+	if err != nil {
+		return err
 	}
 
-	if string(result.Rows[0][0]) == "t" {
+	if string(result[0].Rows[0][0]) == "t" {
 		return errors.New("server is in standby mode")
 	}
 
@@ -905,12 +938,12 @@ func ValidateConnectTargetSessionAttrsPrimary(ctx context.Context, pgConn *PgCon
 // ValidateConnectTargetSessionAttrsPreferStandby is a ValidateConnectFunc that implements libpq compatible
 // target_session_attrs=prefer-standby.
 func ValidateConnectTargetSessionAttrsPreferStandby(ctx context.Context, pgConn *PgConn) error {
-	result := pgConn.ExecParams(ctx, "select pg_is_in_recovery()", nil, nil, nil, nil).Read()
-	if result.Err != nil {
-		return result.Err
+	result, err := pgConn.Exec(ctx, "select pg_is_in_recovery()").ReadAll()
+	if err != nil {
+		return err
 	}
 
-	if string(result.Rows[0][0]) != "t" {
+	if string(result[0].Rows[0][0]) != "t" {
 		return &NotPreferredError{err: errors.New("server is not in hot standby mode")}
 	}
 

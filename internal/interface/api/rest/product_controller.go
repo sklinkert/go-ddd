@@ -5,6 +5,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/sklinkert/go-ddd/internal/application/interfaces"
+	"github.com/sklinkert/go-ddd/internal/application/query"
 	"github.com/sklinkert/go-ddd/internal/interface/api/rest/dto/mapper"
 	"github.com/sklinkert/go-ddd/internal/interface/api/rest/dto/request"
 	"net/http"
@@ -76,7 +77,7 @@ func (pc *ProductController) GetProductByIdController(c echo.Context) error {
 		})
 	}
 
-	product, err := pc.service.FindProductById(id)
+	product, err := pc.service.FindProductById(&query.GetProductByIdQuery{Id: id})
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{
 			"error": "Failed to fetch product",

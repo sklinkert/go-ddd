@@ -31,7 +31,7 @@ func (p *Product) validate() error {
 
 func NewProduct(name string, price float64, seller ValidatedSeller) *Product {
 	return &Product{
-		Id:        uuid.New(),
+		Id:        uuid.Must(uuid.NewV7()),
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 		Name:      name,

@@ -152,17 +152,23 @@ Services orchestrate:
 
 ### 1. Repository Implementation
 ```go
-type GormEntityRepository struct {
-    db *gorm.DB
+type SqlcEntityRepository struct {
+    queries *db.Queries
 }
 
-func (repo *GormEntityRepository) Create(entity *ValidatedEntity) (*Entity, error) {
-    dbModel := toDBModel(entity)
-    if err := repo.db.Create(dbModel).Error; err != nil {
+func (repo *SqlcEntityRepository) Create(entity *ValidatedEntity) (*Entity, error) {
+    ctx := context.Background()
+    dbEntity, err := repo.queries.CreateEntity(ctx, db.CreateEntityParams{
+        ID:        entity.Id,
+        Name:      entity.Name,
+        CreatedAt: timestamptzFromTime(entity.CreatedAt),
+        UpdatedAt: timestamptzFromTime(entity.UpdatedAt),
+    })
+    if err != nil {
         return nil, err
     }
     // Always read after write
-    return repo.FindById(dbModel.Id)
+    return repo.FindById(dbEntity.ID)
 }
 ```
 
@@ -201,14 +207,30 @@ type CreateEntityCommandResult struct {
 Queries retrieve data without side effects:
 
 ```go
-type EntityQueryResult struct {
+// For queries with parameters
+type GetEntityByIdQuery struct {
+    Id uuid.UUID
+}
+
+type GetEntityByIdQueryResult struct {
     Result *EntityResult
 }
 
-type EntityQueryListResult struct {
-    Result []*EntityResult
+// For simple parameterless queries, use direct method calls
+func (s *EntityService) FindAllEntities() (*EntityQueryListResult, error) {
+    // Simple queries don't need query objects
+}
+
+// For complex queries with filters/parameters, use query objects  
+func (s *EntityService) FindEntitiesByCategory(query *GetEntitiesByCategoryQuery) (*EntityQueryListResult, error) {
+    // Complex queries benefit from query objects
 }
 ```
+
+**Query Object Guidelines:**
+- Use query objects for queries with parameters or complex filters
+- Simple parameterless queries (like FindAll) can use direct method calls
+- This avoids unnecessary empty struct instantiation
 
 ### Benefits of CQRS
 1. **Optimized Read/Write Models**: Different models for different purposes
@@ -267,16 +289,8 @@ func NewEntity(businessAttribute string) *Entity {
 ### 3. Read After Write
 Always return fresh data from the database after modifications to ensure consistency.
 
-### 4. Soft Deletion
-Use timestamps instead of hard deletes to maintain data history:
-```go
-type Entity struct {
-    // ...
-    DeletedAt *time.Time
-}
-```
 
-### 5. Historical Data Compatibility
+### 4. Historical Data Compatibility
 - Don't validate on read operations
 - Allow loading of data created with old business rules
 - Validate only on write operations
