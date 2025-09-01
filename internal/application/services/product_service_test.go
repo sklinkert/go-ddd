@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/sklinkert/go-ddd/internal/application/command"
+	"github.com/sklinkert/go-ddd/internal/application/query"
 	"github.com/sklinkert/go-ddd/internal/domain/entities"
 	"testing"
 )
@@ -146,7 +147,7 @@ func TestProductService_FindProductById(t *testing.T) {
 		t.Errorf("Unexpected error: %s", err)
 	}
 
-	foundProduct, err := service.FindProductById(result.Result.Id)
+	foundProduct, err := service.FindProductById(&query.GetProductByIdQuery{Id: result.Result.Id})
 	if err != nil {
 		t.Fatalf("Unexpected error: %s", err)
 	}
@@ -155,7 +156,7 @@ func TestProductService_FindProductById(t *testing.T) {
 		t.Errorf("Expected product name 'Example', but got %s", foundProduct.Result.Name)
 	}
 
-	_, err = service.FindProductById(uuid.New()) // some non-existent Id
+	_, err = service.FindProductById(&query.GetProductByIdQuery{Id: uuid.New()}) // some non-existent Id
 	if err == nil {
 		t.Error("Expected error for non-existent product, but got none")
 	}

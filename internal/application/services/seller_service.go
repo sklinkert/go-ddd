@@ -84,7 +84,7 @@ func (s *SellerService) CreateSeller(sellerCommand *command.CreateSellerCommand)
 }
 
 // FindAllSellers fetches all sellers
-func (s *SellerService) FindAllSellers(sellerQuery *query.GetAllSellersQuery) (*query.GetAllSellersQueryResult, error) {
+func (s *SellerService) FindAllSellers() (*query.GetAllSellersQueryResult, error) {
 	storedSellers, err := s.repo.FindAll()
 	if err != nil {
 		return nil, err

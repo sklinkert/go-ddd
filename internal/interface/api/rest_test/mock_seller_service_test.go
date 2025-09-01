@@ -37,17 +37,17 @@ func (m *MockSellerService) CreateSeller(seller *command.CreateSellerCommand) (*
 	return &result, nil
 }
 
-func (m *MockSellerService) FindAllSellers() (*query.SellerQueryListResult, error) {
-	var allSellers query.SellerQueryListResult
+func (m *MockSellerService) FindAllSellers() (*query.GetAllSellersQueryResult, error) {
+	var allSellers query.GetAllSellersQueryResult
 	for _, v := range m.sellers {
 		allSellers.Result = append(allSellers.Result, mapper.NewSellerResultFromEntity(&v.Seller))
 	}
 	return &allSellers, nil
 }
 
-func (m *MockSellerService) FindSellerById(id uuid.UUID) (*query.SellerQueryResult, error) {
-	if seller, exists := m.sellers[id]; exists {
-		return &query.SellerQueryResult{
+func (m *MockSellerService) FindSellerById(sellerQuery *query.GetSellerByIdQuery) (*query.GetSellerByIdQueryResult, error) {
+	if seller, exists := m.sellers[sellerQuery.Id]; exists {
+		return &query.GetSellerByIdQueryResult{
 			Result: mapper.NewSellerResultFromEntity(&seller.Seller),
 		}, nil
 	}
@@ -64,10 +64,10 @@ func (m *MockSellerService) UpdateSeller(updateCommand *command.UpdateSellerComm
 	return nil, errors.New("seller not found")
 }
 
-func (m *MockSellerService) DeleteSeller(id uuid.UUID) error {
-	if _, exists := m.sellers[id]; exists {
-		delete(m.sellers, id)
-		return nil
+func (m *MockSellerService) DeleteSeller(deleteCommand *command.DeleteSellerCommand) (*command.DeleteSellerCommandResult, error) {
+	if _, exists := m.sellers[deleteCommand.Id]; exists {
+		delete(m.sellers, deleteCommand.Id)
+		return &command.DeleteSellerCommandResult{Success: true}, nil
 	}
-	return errors.New("seller not found")
+	return nil, errors.New("seller not found")
 }

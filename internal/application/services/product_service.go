@@ -105,7 +105,7 @@ func (s *ProductService) CreateProduct(productCommand *command.CreateProductComm
 	return &result, nil
 }
 
-func (s *ProductService) FindAllProducts(productQuery *query.GetAllProductsQuery) (*query.GetAllProductsQueryResult, error) {
+func (s *ProductService) FindAllProducts() (*query.GetAllProductsQueryResult, error) {
 	storedProducts, err := s.productRepository.FindAll()
 	if err != nil {
 		return nil, err

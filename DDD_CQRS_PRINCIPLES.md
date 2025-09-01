@@ -207,14 +207,30 @@ type CreateEntityCommandResult struct {
 Queries retrieve data without side effects:
 
 ```go
-type EntityQueryResult struct {
+// For queries with parameters
+type GetEntityByIdQuery struct {
+    Id uuid.UUID
+}
+
+type GetEntityByIdQueryResult struct {
     Result *EntityResult
 }
 
-type EntityQueryListResult struct {
-    Result []*EntityResult
+// For simple parameterless queries, use direct method calls
+func (s *EntityService) FindAllEntities() (*EntityQueryListResult, error) {
+    // Simple queries don't need query objects
+}
+
+// For complex queries with filters/parameters, use query objects  
+func (s *EntityService) FindEntitiesByCategory(query *GetEntitiesByCategoryQuery) (*EntityQueryListResult, error) {
+    // Complex queries benefit from query objects
 }
 ```
+
+**Query Object Guidelines:**
+- Use query objects for queries with parameters or complex filters
+- Simple parameterless queries (like FindAll) can use direct method calls
+- This avoids unnecessary empty struct instantiation
 
 ### Benefits of CQRS
 1. **Optimized Read/Write Models**: Different models for different purposes

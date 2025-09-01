@@ -57,7 +57,7 @@ func (pc *ProductController) CreateProductController(c echo.Context) error {
 }
 
 func (pc *ProductController) GetAllProductsController(c echo.Context) error {
-	products, err := pc.service.FindAllProducts(&query.GetAllProductsQuery{})
+	products, err := pc.service.FindAllProducts()
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{
 			"error": "Failed to fetch products",

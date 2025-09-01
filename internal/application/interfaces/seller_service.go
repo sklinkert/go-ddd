@@ -7,7 +7,7 @@ import (
 
 type SellerService interface {
 	CreateSeller(sellerCommand *command.CreateSellerCommand) (*command.CreateSellerCommandResult, error)
-	FindAllSellers(query *query.GetAllSellersQuery) (*query.GetAllSellersQueryResult, error)
+	FindAllSellers() (*query.GetAllSellersQueryResult, error)
 	FindSellerById(query *query.GetSellerByIdQuery) (*query.GetSellerByIdQueryResult, error)
 	UpdateSeller(updateCommand *command.UpdateSellerCommand) (*command.UpdateSellerCommandResult, error)
 	DeleteSeller(sellerCommand *command.DeleteSellerCommand) (*command.DeleteSellerCommandResult, error)
