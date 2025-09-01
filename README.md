@@ -89,11 +89,12 @@ This prevents duplicate entities from being created when clients retry failed re
 
 This project uses the following key dependencies:
 
-- **GORM** (`gorm.io/gorm`) - ORM library for database operations
-- **SQLite** (`gorm.io/driver/sqlite`) - Default database (with PostgreSQL support via `gorm.io/driver/postgres`)
+- **sqlc** - Type-safe SQL code generation for PostgreSQL
+- **pgx/v5** (`github.com/jackc/pgx/v5`) - PostgreSQL driver and toolkit
 - **Echo** (`github.com/labstack/echo/v4`) - HTTP web framework
 - **UUID** (`github.com/google/uuid`) - UUID generation
 - **Testify** (`github.com/stretchr/testify`) - Testing toolkit
+- **GORM** (`gorm.io/gorm`) - ORM library for SQLite testing (tests only)
 
 ## Getting Started
 
@@ -102,7 +103,26 @@ This project uses the following key dependencies:
 git clone https://github.com/sklinkert/go-ddd.git
 cd go-ddd
 go mod download
-go run ./...
+```
+
+2. Install sqlc (for development):
+```bash
+go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
+```
+
+3. Generate database code (if you modify SQL queries):
+```bash
+sqlc generate
+```
+
+4. Set up your PostgreSQL database and run the schema:
+```bash
+psql -d your_database -f sql/schema/001_initial_schema.sql
+```
+
+5. Run the application:
+```bash
+go run ./cmd/marketplace
 ```
 
 ### Contributions

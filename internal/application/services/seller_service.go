@@ -14,8 +14,8 @@ import (
 )
 
 type SellerService struct {
-	repo             repositories.SellerRepository
-	idempotencyRepo  repositories.IdempotencyRepository
+	repo            repositories.SellerRepository
+	idempotencyRepo repositories.IdempotencyRepository
 }
 
 // NewSellerService - Constructor for the service
