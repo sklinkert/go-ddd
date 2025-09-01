@@ -103,7 +103,7 @@ func applySchema(ctx context.Context, conn *pgx.Conn) error {
 		projectRoot = parent
 	}
 
-	schemaPath := filepath.Join(projectRoot, "sql", "schema", "001_initial_schema.sql")
+	schemaPath := filepath.Join(projectRoot, "migrations", "000001_initial_schema.up.sql")
 
 	schemaBytes, err := os.ReadFile(schemaPath)
 	if err != nil {
