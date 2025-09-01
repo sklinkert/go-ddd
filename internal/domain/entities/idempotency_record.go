@@ -7,7 +7,7 @@ import (
 )
 
 type IdempotencyRecord struct {
-	ID         uuid.UUID
+	Id         uuid.UUID
 	Key        string
 	Request    string
 	Response   string
@@ -17,7 +17,7 @@ type IdempotencyRecord struct {
 
 func NewIdempotencyRecord(key string, request string) *IdempotencyRecord {
 	return &IdempotencyRecord{
-		ID:        uuid.New(),
+		Id:        uuid.Must(uuid.NewV7()),
 		Key:       key,
 		Request:   request,
 		CreatedAt: time.Now(),

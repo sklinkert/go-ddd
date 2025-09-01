@@ -15,7 +15,7 @@ func TestNewIdempotencyRecord(t *testing.T) {
 	record := NewIdempotencyRecord(key, request)
 
 	// Assertions
-	assert.NotEqual(t, uuid.Nil, record.ID)
+	assert.NotEqual(t, uuid.Nil, record.Id)
 	assert.Equal(t, key, record.Key)
 	assert.Equal(t, request, record.Request)
 	assert.Equal(t, "", record.Response)  // Should be empty initially
@@ -86,7 +86,7 @@ func TestIdempotencyRecord_ImmutableFields(t *testing.T) {
 	request := `{"test": "immutable"}`
 
 	record := NewIdempotencyRecord(key, request)
-	originalID := record.ID
+	originalID := record.Id
 	originalKey := record.Key
 	originalRequest := record.Request
 	originalCreatedAt := record.CreatedAt
@@ -96,7 +96,7 @@ func TestIdempotencyRecord_ImmutableFields(t *testing.T) {
 	record.SetResponse(`{"status": "second"}`, 201)
 
 	// Verify immutable fields haven't changed
-	assert.Equal(t, originalID, record.ID)
+	assert.Equal(t, originalID, record.Id)
 	assert.Equal(t, originalKey, record.Key)
 	assert.Equal(t, originalRequest, record.Request)
 	assert.Equal(t, originalCreatedAt, record.CreatedAt)
@@ -116,8 +116,8 @@ func TestIdempotencyRecord_UniqueIDs(t *testing.T) {
 		records[i] = record
 
 		// Check for duplicate IDs
-		assert.False(t, ids[record.ID], "Duplicate ID found: %s", record.ID)
-		ids[record.ID] = true
+		assert.False(t, ids[record.Id], "Duplicate ID found: %s", record.Id)
+		ids[record.Id] = true
 	}
 
 	// All IDs should be unique

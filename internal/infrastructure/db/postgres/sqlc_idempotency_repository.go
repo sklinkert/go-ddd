@@ -28,7 +28,7 @@ func (r *SqlcIdempotencyRepository) FindByKey(ctx context.Context, key string) (
 	}
 
 	return &entities.IdempotencyRecord{
-		ID:         dbRecord.ID,
+		Id:         dbRecord.ID,
 		Key:        dbRecord.Key,
 		Request:    dbRecord.Request,
 		Response:   dbRecord.Response,
@@ -39,7 +39,7 @@ func (r *SqlcIdempotencyRepository) FindByKey(ctx context.Context, key string) (
 
 func (r *SqlcIdempotencyRepository) Create(ctx context.Context, record *entities.IdempotencyRecord) (*entities.IdempotencyRecord, error) {
 	createdRecord, err := r.queries.CreateIdempotencyRecord(ctx, db.CreateIdempotencyRecordParams{
-		ID:         record.ID,
+		ID:         record.Id,
 		Key:        record.Key,
 		Request:    record.Request,
 		Response:   record.Response,
@@ -51,7 +51,7 @@ func (r *SqlcIdempotencyRepository) Create(ctx context.Context, record *entities
 	}
 
 	return &entities.IdempotencyRecord{
-		ID:         createdRecord.ID,
+		Id:         createdRecord.ID,
 		Key:        createdRecord.Key,
 		Request:    createdRecord.Request,
 		Response:   createdRecord.Response,
@@ -62,7 +62,7 @@ func (r *SqlcIdempotencyRepository) Create(ctx context.Context, record *entities
 
 func (r *SqlcIdempotencyRepository) Update(ctx context.Context, record *entities.IdempotencyRecord) (*entities.IdempotencyRecord, error) {
 	updatedRecord, err := r.queries.UpdateIdempotencyRecord(ctx, db.UpdateIdempotencyRecordParams{
-		ID:         record.ID,
+		ID:         record.Id,
 		Request:    record.Request,
 		Response:   record.Response,
 		StatusCode: int32(record.StatusCode),
@@ -72,7 +72,7 @@ func (r *SqlcIdempotencyRepository) Update(ctx context.Context, record *entities
 	}
 
 	return &entities.IdempotencyRecord{
-		ID:         updatedRecord.ID,
+		Id:         updatedRecord.ID,
 		Key:        updatedRecord.Key,
 		Request:    updatedRecord.Request,
 		Response:   updatedRecord.Response,

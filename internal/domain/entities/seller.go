@@ -15,7 +15,7 @@ type Seller struct {
 
 func NewSeller(name string) *Seller {
 	return &Seller{
-		Id:        uuid.New(),
+		Id:        uuid.Must(uuid.NewV7()),
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 		Name:      name,

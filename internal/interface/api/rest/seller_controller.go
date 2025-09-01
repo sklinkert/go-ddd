@@ -3,7 +3,9 @@ package rest
 import (
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
+	"github.com/sklinkert/go-ddd/internal/application/command"
 	"github.com/sklinkert/go-ddd/internal/application/interfaces"
+	"github.com/sklinkert/go-ddd/internal/application/query"
 	"github.com/sklinkert/go-ddd/internal/interface/api/rest/dto/mapper"
 	"github.com/sklinkert/go-ddd/internal/interface/api/rest/dto/request"
 	"net/http"
@@ -56,7 +58,7 @@ func (sc *SellerController) CreateSellerController(c echo.Context) error {
 }
 
 func (sc *SellerController) GetAllSellersController(c echo.Context) error {
-	sellers, err := sc.service.FindAllSellers()
+	sellers, err := sc.service.FindAllSellers(&query.GetAllSellersQuery{})
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{
 			"error": "Failed to fetch sellers",
@@ -80,7 +82,7 @@ func (sc *SellerController) GetSellerByIdController(c echo.Context) error {
 		})
 	}
 
-	seller, err := sc.service.FindSellerById(id)
+	seller, err := sc.service.FindSellerById(&query.GetSellerByIdQuery{Id: id})
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{
 			"error": "Failed to fetch seller",
@@ -138,7 +140,7 @@ func (sc *SellerController) DeleteSellerController(c echo.Context) error {
 		})
 	}
 
-	err = sc.service.DeleteSeller(id)
+	_, err = sc.service.DeleteSeller(&command.DeleteSellerCommand{Id: id})
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{
 			"error": "Failed to delete seller",

@@ -273,16 +273,8 @@ func NewEntity(businessAttribute string) *Entity {
 ### 3. Read After Write
 Always return fresh data from the database after modifications to ensure consistency.
 
-### 4. Soft Deletion
-Use timestamps instead of hard deletes to maintain data history:
-```go
-type Entity struct {
-    // ...
-    DeletedAt *time.Time
-}
-```
 
-### 5. Historical Data Compatibility
+### 4. Historical Data Compatibility
 - Don't validate on read operations
 - Allow loading of data created with old business rules
 - Validate only on write operations

@@ -33,7 +33,7 @@ func TestSqlcIdempotencyRepository_Create(t *testing.T) {
 	assert.Equal(t, record.Request, createdRecord.Request)
 	assert.Equal(t, record.Response, createdRecord.Response)
 	assert.Equal(t, record.StatusCode, createdRecord.StatusCode)
-	assert.NotEqual(t, uuid.Nil, createdRecord.ID)
+	assert.NotEqual(t, uuid.Nil, createdRecord.Id)
 	assert.False(t, createdRecord.CreatedAt.IsZero())
 }
 
@@ -57,7 +57,7 @@ func TestSqlcIdempotencyRepository_FindByKey(t *testing.T) {
 	// Assertions
 	require.NoError(t, err)
 	require.NotNil(t, foundRecord)
-	assert.Equal(t, createdRecord.ID, foundRecord.ID)
+	assert.Equal(t, createdRecord.Id, foundRecord.Id)
 	assert.Equal(t, createdRecord.Key, foundRecord.Key)
 	assert.Equal(t, createdRecord.Request, foundRecord.Request)
 	assert.Equal(t, createdRecord.Response, foundRecord.Response)
@@ -102,7 +102,7 @@ func TestSqlcIdempotencyRepository_Update(t *testing.T) {
 	// Assertions
 	require.NoError(t, err)
 	require.NotNil(t, updatedRecord)
-	assert.Equal(t, createdRecord.ID, updatedRecord.ID)
+	assert.Equal(t, createdRecord.Id, updatedRecord.Id)
 	assert.Equal(t, createdRecord.Key, updatedRecord.Key)
 	assert.Equal(t, createdRecord.Request, updatedRecord.Request)
 	assert.Equal(t, `{"id": "456", "name": "updated product"}`, updatedRecord.Response)
@@ -119,7 +119,7 @@ func TestSqlcIdempotencyRepository_Update_NotFound(t *testing.T) {
 
 	// Try to update non-existent record
 	nonExistentRecord := &entities.IdempotencyRecord{
-		ID:         uuid.New(),
+		Id:         uuid.New(),
 		Key:        "non-existent-key",
 		Request:    `{"test": "data"}`,
 		Response:   `{"result": "fail"}`,
@@ -252,7 +252,7 @@ func TestSqlcIdempotencyRepository_Integration_Workflow(t *testing.T) {
 	finalRecord, err := repo.FindByKey(ctx, key)
 	require.NoError(t, err)
 	require.NotNil(t, finalRecord)
-	assert.Equal(t, updatedRecord.ID, finalRecord.ID)
+	assert.Equal(t, updatedRecord.Id, finalRecord.Id)
 	assert.Equal(t, updatedRecord.Key, finalRecord.Key)
 	assert.Equal(t, updatedRecord.Request, finalRecord.Request)
 	assert.Equal(t, updatedRecord.Response, finalRecord.Response)
