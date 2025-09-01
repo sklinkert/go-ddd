@@ -22,12 +22,6 @@ github.com/jackc/pgx/v5/pgconn/ctxwatch
 github.com/jackc/pgx/v5/pgconn/internal/bgreader
 github.com/jackc/pgx/v5/pgproto3
 github.com/jackc/pgx/v5/pgtype
-# github.com/jinzhu/inflection v1.0.0
-## explicit
-github.com/jinzhu/inflection
-# github.com/jinzhu/now v1.1.5
-## explicit; go 1.12
-github.com/jinzhu/now
 # github.com/kr/text v0.2.0
 ## explicit
 # github.com/labstack/echo/v4 v4.13.4
@@ -45,9 +39,6 @@ github.com/mattn/go-colorable
 # github.com/mattn/go-isatty v0.0.20
 ## explicit; go 1.15
 github.com/mattn/go-isatty
-# github.com/mattn/go-sqlite3 v1.14.22
-## explicit; go 1.19
-github.com/mattn/go-sqlite3
 # github.com/pmezard/go-difflib v1.0.0
 ## explicit
 github.com/pmezard/go-difflib/difflib
@@ -105,17 +96,3 @@ golang.org/x/time/rate
 # gopkg.in/yaml.v3 v3.0.1
 ## explicit
 gopkg.in/yaml.v3
-# gorm.io/driver/sqlite v1.6.0
-## explicit; go 1.20
-gorm.io/driver/sqlite
-# gorm.io/gorm v1.30.1
-## explicit; go 1.18
-gorm.io/gorm
-gorm.io/gorm/callbacks
-gorm.io/gorm/clause
-gorm.io/gorm/internal/lru
-gorm.io/gorm/internal/stmt_store
-gorm.io/gorm/logger
-gorm.io/gorm/migrator
-gorm.io/gorm/schema
-gorm.io/gorm/utils

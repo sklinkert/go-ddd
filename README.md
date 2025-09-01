@@ -94,7 +94,6 @@ This project uses the following key dependencies:
 - **Echo** (`github.com/labstack/echo/v4`) - HTTP web framework
 - **UUID** (`github.com/google/uuid`) - UUID generation
 - **Testify** (`github.com/stretchr/testify`) - Testing toolkit
-- **GORM** (`gorm.io/gorm`) - ORM library for SQLite testing (tests only)
 
 ## Getting Started
 

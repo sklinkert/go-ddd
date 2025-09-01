@@ -152,17 +152,23 @@ Services orchestrate:
 
 ### 1. Repository Implementation
 ```go
-type GormEntityRepository struct {
-    db *gorm.DB
+type SqlcEntityRepository struct {
+    queries *db.Queries
 }
 
-func (repo *GormEntityRepository) Create(entity *ValidatedEntity) (*Entity, error) {
-    dbModel := toDBModel(entity)
-    if err := repo.db.Create(dbModel).Error; err != nil {
+func (repo *SqlcEntityRepository) Create(entity *ValidatedEntity) (*Entity, error) {
+    ctx := context.Background()
+    dbEntity, err := repo.queries.CreateEntity(ctx, db.CreateEntityParams{
+        ID:        entity.Id,
+        Name:      entity.Name,
+        CreatedAt: timestamptzFromTime(entity.CreatedAt),
+        UpdatedAt: timestamptzFromTime(entity.UpdatedAt),
+    })
+    if err != nil {
         return nil, err
     }
     // Always read after write
-    return repo.FindById(dbModel.Id)
+    return repo.FindById(dbEntity.ID)
 }
 ```
 
