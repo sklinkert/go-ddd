@@ -15,7 +15,7 @@ import (
 const createSeller = `-- name: CreateSeller :one
 INSERT INTO sellers (id, name, created_at, updated_at)
 VALUES ($1, $2, $3, $4)
-RETURNING id, name, created_at, updated_at
+RETURNING id, name, created_at, updated_at, deleted_at
 `
 
 type CreateSellerParams struct {
@@ -38,12 +38,13 @@ func (q *Queries) CreateSeller(ctx context.Context, arg CreateSellerParams) (Sel
 		&i.Name,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.DeletedAt,
 	)
 	return i, err
 }
 
 const deleteSeller = `-- name: DeleteSeller :exec
-DELETE FROM sellers WHERE id = $1
+UPDATE sellers SET deleted_at = NOW() WHERE id = $1
 `
 
 func (q *Queries) DeleteSeller(ctx context.Context, id uuid.UUID) error {
@@ -54,18 +55,26 @@ func (q *Queries) DeleteSeller(ctx context.Context, id uuid.UUID) error {
 const getAllSellers = `-- name: GetAllSellers :many
 SELECT id, name, created_at, updated_at
 FROM sellers
+WHERE deleted_at IS NULL
 ORDER BY created_at DESC
 `
 
-func (q *Queries) GetAllSellers(ctx context.Context) ([]Seller, error) {
+type GetAllSellersRow struct {
+	ID        uuid.UUID          `db:"id" json:"id"`
+	Name      string             `db:"name" json:"name"`
+	CreatedAt pgtype.Timestamptz `db:"created_at" json:"created_at"`
+	UpdatedAt pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
+}
+
+func (q *Queries) GetAllSellers(ctx context.Context) ([]GetAllSellersRow, error) {
 	rows, err := q.db.Query(ctx, getAllSellers)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []Seller{}
+	items := []GetAllSellersRow{}
 	for rows.Next() {
-		var i Seller
+		var i GetAllSellersRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.Name,
@@ -85,12 +94,19 @@ func (q *Queries) GetAllSellers(ctx context.Context) ([]Seller, error) {
 const getSellerById = `-- name: GetSellerById :one
 SELECT id, name, created_at, updated_at
 FROM sellers
-WHERE id = $1
+WHERE id = $1 AND deleted_at IS NULL
 `
 
-func (q *Queries) GetSellerById(ctx context.Context, id uuid.UUID) (Seller, error) {
+type GetSellerByIdRow struct {
+	ID        uuid.UUID          `db:"id" json:"id"`
+	Name      string             `db:"name" json:"name"`
+	CreatedAt pgtype.Timestamptz `db:"created_at" json:"created_at"`
+	UpdatedAt pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
+}
+
+func (q *Queries) GetSellerById(ctx context.Context, id uuid.UUID) (GetSellerByIdRow, error) {
 	row := q.db.QueryRow(ctx, getSellerById, id)
-	var i Seller
+	var i GetSellerByIdRow
 	err := row.Scan(
 		&i.ID,
 		&i.Name,

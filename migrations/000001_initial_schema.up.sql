@@ -6,7 +6,8 @@ CREATE TABLE sellers (
     id UUID PRIMARY KEY,
     name TEXT NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL,
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    deleted_at TIMESTAMP WITH TIME ZONE
 );
 
 -- Products table
@@ -16,7 +17,8 @@ CREATE TABLE products (
     price DECIMAL(10,2) NOT NULL,
     seller_id UUID NOT NULL REFERENCES sellers(id),
     created_at TIMESTAMP WITH TIME ZONE NOT NULL,
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    deleted_at TIMESTAMP WITH TIME ZONE
 );
 
 -- Idempotency records table
@@ -32,3 +34,5 @@ CREATE TABLE idempotency_records (
 -- Indexes
 CREATE INDEX idx_products_seller_id ON products(seller_id);
 CREATE UNIQUE INDEX idx_idempotency_key ON idempotency_records(key);
+CREATE INDEX idx_sellers_deleted_at ON sellers(deleted_at);
+CREATE INDEX idx_products_deleted_at ON products(deleted_at);

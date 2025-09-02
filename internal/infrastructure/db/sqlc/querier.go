@@ -17,10 +17,10 @@ type Querier interface {
 	DeleteProduct(ctx context.Context, id uuid.UUID) error
 	DeleteSeller(ctx context.Context, id uuid.UUID) error
 	GetAllProducts(ctx context.Context) ([]GetAllProductsRow, error)
-	GetAllSellers(ctx context.Context) ([]Seller, error)
+	GetAllSellers(ctx context.Context) ([]GetAllSellersRow, error)
 	GetIdempotencyRecordByKey(ctx context.Context, key string) (IdempotencyRecord, error)
 	GetProductById(ctx context.Context, id uuid.UUID) (GetProductByIdRow, error)
-	GetSellerById(ctx context.Context, id uuid.UUID) (Seller, error)
+	GetSellerById(ctx context.Context, id uuid.UUID) (GetSellerByIdRow, error)
 	UpdateIdempotencyRecord(ctx context.Context, arg UpdateIdempotencyRecordParams) (IdempotencyRecord, error)
 	UpdateProduct(ctx context.Context, arg UpdateProductParams) error
 	UpdateSeller(ctx context.Context, arg UpdateSellerParams) error
