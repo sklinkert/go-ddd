@@ -42,7 +42,7 @@ func (repo *SqlcSellerRepository) FindById(id uuid.UUID) (*entities.Seller, erro
 		return nil, err
 	}
 
-	return fromSqlcSeller(&dbSeller), nil
+	return fromSqlcSellerRow(&dbSeller), nil
 }
 
 func (repo *SqlcSellerRepository) FindAll() ([]*entities.Seller, error) {
@@ -55,7 +55,7 @@ func (repo *SqlcSellerRepository) FindAll() ([]*entities.Seller, error) {
 
 	sellers := make([]*entities.Seller, len(dbSellers))
 	for i, dbSeller := range dbSellers {
-		sellers[i] = fromSqlcSeller(&dbSeller)
+		sellers[i] = fromSqlcSellerAllRow(&dbSeller)
 	}
 
 	return sellers, nil
@@ -82,6 +82,26 @@ func (repo *SqlcSellerRepository) Delete(id uuid.UUID) error {
 }
 
 func fromSqlcSeller(dbSeller *db.Seller) *entities.Seller {
+	seller := &entities.Seller{
+		Name:      dbSeller.Name,
+		CreatedAt: timeFromTimestamptz(dbSeller.CreatedAt),
+		UpdatedAt: timeFromTimestamptz(dbSeller.UpdatedAt),
+	}
+	seller.Id = dbSeller.ID
+	return seller
+}
+
+func fromSqlcSellerRow(dbSeller *db.GetSellerByIdRow) *entities.Seller {
+	seller := &entities.Seller{
+		Name:      dbSeller.Name,
+		CreatedAt: timeFromTimestamptz(dbSeller.CreatedAt),
+		UpdatedAt: timeFromTimestamptz(dbSeller.UpdatedAt),
+	}
+	seller.Id = dbSeller.ID
+	return seller
+}
+
+func fromSqlcSellerAllRow(dbSeller *db.GetAllSellersRow) *entities.Seller {
 	seller := &entities.Seller{
 		Name:      dbSeller.Name,
 		CreatedAt: timeFromTimestamptz(dbSeller.CreatedAt),

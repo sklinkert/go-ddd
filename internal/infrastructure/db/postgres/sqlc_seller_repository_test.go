@@ -254,9 +254,13 @@ func TestSqlcSellerRepository_Delete_WithExistingProducts(t *testing.T) {
 	_, err = productRepo.Create(validatedProduct)
 	require.NoError(t, err)
 
-	// Try to delete the seller - should fail due to foreign key constraint
+	// Try to delete the seller - should succeed with soft delete
 	err = sellerRepo.Delete(createdSeller.Id)
-	assert.Error(t, err) // Should fail due to foreign key constraint
+	assert.NoError(t, err) // Soft delete should succeed even with related products
+
+	// Verify the seller is soft deleted (not returned in queries)
+	_, err = sellerRepo.FindById(createdSeller.Id)
+	assert.Error(t, err) // Should not find soft-deleted seller
 }
 
 func TestSqlcSellerRepository_Create_EmptyName(t *testing.T) {

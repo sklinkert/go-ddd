@@ -295,6 +295,56 @@ Always return fresh data from the database after modifications to ensure consist
 - Allow loading of data created with old business rules
 - Validate only on write operations
 
+### 5. Soft Delete Pattern
+Implement soft deletes at the infrastructure layer without polluting domain entities:
+
+**Domain Layer (Pure):**
+```go
+type Entity struct {
+    Id        uuid.UUID
+    Name      string
+    CreatedAt time.Time
+    UpdatedAt time.Time
+    // No DeletedAt field - keep domain pure
+}
+```
+
+**Infrastructure Layer (Database):**
+```sql
+-- Database table includes deleted_at
+CREATE TABLE entities (
+    id UUID PRIMARY KEY,
+    name TEXT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    deleted_at TIMESTAMP WITH TIME ZONE  -- Only in database
+);
+
+-- Delete operation becomes an UPDATE
+-- name: DeleteEntity :exec
+UPDATE entities SET deleted_at = NOW() WHERE id = $1;
+
+-- All SELECT queries filter out soft-deleted records
+-- name: GetEntityById :one
+SELECT id, name, created_at, updated_at
+FROM entities
+WHERE id = $1 AND deleted_at IS NULL;
+```
+
+**Benefits:**
+- Domain entities remain focused on business logic
+- Soft delete is an infrastructure concern, not a business rule
+- Data recovery is possible without domain knowledge
+- Audit trails are maintained at the database level
+- Foreign key relationships remain intact
+
+**Implementation Guidelines:**
+1. Add `deleted_at` column only in database schema
+2. Update DELETE operations to set `deleted_at = NOW()`
+3. Add `WHERE deleted_at IS NULL` to all SELECT queries
+4. Repository implementations remain unchanged
+5. Domain layer is completely unaware of soft delete mechanism
+
 ## Applying These Principles
 
 ### Step 1: Identify Your Domain
