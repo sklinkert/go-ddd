@@ -1,16 +1,33 @@
-# Go-DDD: Domain Driven Design Template in Golang
+# Go-DDD: Build Domain-Driven Go Services Fast
 
-Welcome to `go-ddd`, a reference implementation/template repository demonstrating the [Domain Driven Design (DDD)](https://en.wikipedia.org/wiki/Domain-driven_design) and CQRS (Command Query Responsibility Segregation) approach in Golang. This project aims to help developers and architects understand the DDD structure, especially in the context of Go, and how it can lead to cleaner, enterprise-ready, maintainable, and scalable codebases.
+`go-ddd` jump-starts production-grade Go backends that keep business rules, infrastructure, and delivery code cleanly separated. Out of the box you get opinionated DDD building blocks, CQRS command and query flows, idempotent write paths, and tooling to keep schema and code in lockstep.
 
-## Overview
+## Why This Template
 
-Domain-Driven Design is a methodology and design pattern used to build complex enterprise software by connecting the implementation to an evolving model. `go-ddd` showcases this by setting up a simple marketplace where `Sellers` can sell `Products`.
+- **Model-first defaults** – Onion architecture keeps the domain pure while application services orchestrate infrastructure concerns.
+- **Battle-tested patterns** – Commands, queries, repositories, and soft deletes mirror patterns used in real-world enterprise applications.
+- **Idempotent pipelines** – Retry-safe command handlers prevent duplicate writes and highlight resilient workflows.
+- **Migration discipline** – SQL migrations, `migrate.go`, and `sqlc` make schema evolution explicit and reproducible.
 
-### Why DDD?
+## What You Get
 
-- **Ubiquitous Language**: Promotes a common language between developers and stakeholders.
-- **Isolation of Domain Logic**: The domain logic is separate from the infrastructure and application layers, promoting SOLID principles.
-- **Scalability**: Allows for easier microservices architecture transitions.
+- Marketplace example that demonstrates aggregates (Seller, Product), cross-module interactions, and validation rules.
+- Layered modules under `internal/` for `domain`, `application`, `infrastructure`, `interface`, plus `testhelpers` for fixture reuse.
+- Executable entrypoint at `cmd/marketplace/main.go` ready to wire adapters or frameworks of your choice.
+- Database assets in `migrations/` and `sql/` plus generated data access via `sqlc`.
+
+## Tech Stack Essentials
+
+- **Go 1.24** with idiomatic patterns and testify-powered tests.
+- **Echo v4** HTTP stack for REST endpoints.
+- **pgx/v5** and `sqlc` for type-safe PostgreSQL access.
+- **golang-migrate** handling SQL schema migrations
+- **Testcontainers** integration to provision disposable Postgres instances during tests.
+- **google/uuid** helpers for deterministic ID generation inside the domain.
+
+## Design Principles in Action
+
+Domain-Driven Design connects implementation to an evolving model. `go-ddd` showcases this by modelling a simple marketplace where `Sellers` manage `Products`, exercising aggregates, value objects, and validation flows.
 
 ## Documentation
 
@@ -141,17 +158,6 @@ This will create two files:
 - Keep migrations small and focused
 - Never modify existing migration files once they've been applied in production
 - Use descriptive names for migration files
-
-## Tech Stack
-
-This project uses the following key dependencies:
-
-- **golang-migrate** (`github.com/golang-migrate/migrate/v4`) - Database migration tool
-- **sqlc** - Type-safe SQL code generation for PostgreSQL
-- **pgx/v5** (`github.com/jackc/pgx/v5`) - PostgreSQL driver and toolkit
-- **Echo** (`github.com/labstack/echo/v4`) - HTTP web framework
-- **UUID** (`github.com/google/uuid`) - UUID generation
-- **Testify** (`github.com/stretchr/testify`) - Testing toolkit
 
 ## Getting Started
 
