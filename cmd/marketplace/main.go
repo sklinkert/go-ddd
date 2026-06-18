@@ -62,21 +62,29 @@ func main() {
 	rest.NewSellerController(e, sellerService)
 
 	// Start the server in the background so we can wait for shutdown signals.
+	srvErr := make(chan error, 1)
 	go func() {
 		if err := e.Start(port); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			logger.Error("server stopped unexpectedly", slog.Any("error", err))
-			stop()
+			srvErr <- err
 		}
 	}()
 	logger.Info("server started", slog.String("addr", port))
 
-	<-ctx.Done()
-	logger.Info("shutdown signal received; draining in-flight requests")
+	// Either the server fails to start (exit nonzero so supervisors notice),
+	// or we receive a shutdown signal and drain gracefully.
+	select {
+	case err := <-srvErr:
+		logger.Error("server failed to start", slog.Any("error", err))
+		os.Exit(1)
+	case <-ctx.Done():
+		logger.Info("shutdown signal received; draining in-flight requests")
+	}
 
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	if err := e.Shutdown(shutdownCtx); err != nil {
 		logger.Error("graceful shutdown failed", slog.Any("error", err))
+		os.Exit(1)
 	}
 }
 
