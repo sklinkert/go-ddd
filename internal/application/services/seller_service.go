@@ -27,9 +27,7 @@ func NewSellerService(repo repositories.SellerRepository, idempotencyRepo reposi
 }
 
 // CreateSeller saves a new seller
-func (s *SellerService) CreateSeller(sellerCommand *command.CreateSellerCommand) (*command.CreateSellerCommandResult, error) {
-	ctx := context.Background()
-
+func (s *SellerService) CreateSeller(ctx context.Context, sellerCommand *command.CreateSellerCommand) (*command.CreateSellerCommandResult, error) {
 	// Check idempotency key
 	if sellerCommand.IdempotencyKey != "" {
 		existingRecord, err := s.idempotencyRepo.FindByKey(ctx, sellerCommand.IdempotencyKey)
@@ -48,11 +46,7 @@ func (s *SellerService) CreateSeller(sellerCommand *command.CreateSellerCommand)
 	}
 
 	// Create idempotency record
-	var idempotencyRecord *entities.IdempotencyRecord
-	if sellerCommand.IdempotencyKey != "" {
-		requestJSON, _ := json.Marshal(sellerCommand)
-		idempotencyRecord = entities.NewIdempotencyRecord(sellerCommand.IdempotencyKey, string(requestJSON))
-	}
+	idempotencyRecord := newIdempotencyRecord(ctx, sellerCommand.IdempotencyKey, sellerCommand)
 
 	var newSeller = entities.NewSeller(sellerCommand.Name)
 
@@ -61,7 +55,7 @@ func (s *SellerService) CreateSeller(sellerCommand *command.CreateSellerCommand)
 		return nil, err
 	}
 
-	_, err = s.repo.Create(validatedSeller)
+	_, err = s.repo.Create(ctx, validatedSeller)
 	if err != nil {
 		return nil, err
 	}
@@ -70,21 +64,14 @@ func (s *SellerService) CreateSeller(sellerCommand *command.CreateSellerCommand)
 		Result: mapper.NewSellerResultFromValidatedEntity(validatedSeller),
 	}
 
-	// Store response in idempotency record
-	if idempotencyRecord != nil {
-		responseJSON, _ := json.Marshal(result)
-		idempotencyRecord.SetResponse(string(responseJSON), 200)
-		// Best-effort write: a failed idempotency record must not fail the
-		// operation. Proper structured logging is added in the hardening PR.
-		_, _ = s.idempotencyRepo.Create(ctx, idempotencyRecord)
-	}
+	storeIdempotencyResponse(ctx, s.idempotencyRepo, idempotencyRecord, result)
 
 	return &result, nil
 }
 
 // FindAllSellers fetches all sellers
-func (s *SellerService) FindAllSellers() (*query.GetAllSellersQueryResult, error) {
-	storedSellers, err := s.repo.FindAll()
+func (s *SellerService) FindAllSellers(ctx context.Context) (*query.GetAllSellersQueryResult, error) {
+	storedSellers, err := s.repo.FindAll(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -98,10 +85,15 @@ func (s *SellerService) FindAllSellers() (*query.GetAllSellersQueryResult, error
 }
 
 // FindSellerById fetches a specific seller by Id
-func (s *SellerService) FindSellerById(sellerQuery *query.GetSellerByIdQuery) (*query.GetSellerByIdQueryResult, error) {
-	storedSeller, err := s.repo.FindById(sellerQuery.Id)
+func (s *SellerService) FindSellerById(ctx context.Context, sellerQuery *query.GetSellerByIdQuery) (*query.GetSellerByIdQueryResult, error) {
+	storedSeller, err := s.repo.FindById(ctx, sellerQuery.Id)
 	if err != nil {
 		return nil, err
+	}
+
+	// Not found: let the caller translate this into a 404.
+	if storedSeller == nil {
+		return nil, nil
 	}
 
 	var queryResult query.GetSellerByIdQueryResult
@@ -111,9 +103,7 @@ func (s *SellerService) FindSellerById(sellerQuery *query.GetSellerByIdQuery) (*
 }
 
 // UpdateSeller updates a seller
-func (s *SellerService) UpdateSeller(updateCommand *command.UpdateSellerCommand) (*command.UpdateSellerCommandResult, error) {
-	ctx := context.Background()
-
+func (s *SellerService) UpdateSeller(ctx context.Context, updateCommand *command.UpdateSellerCommand) (*command.UpdateSellerCommandResult, error) {
 	// Check idempotency key
 	if updateCommand.IdempotencyKey != "" {
 		existingRecord, err := s.idempotencyRepo.FindByKey(ctx, updateCommand.IdempotencyKey)
@@ -132,13 +122,9 @@ func (s *SellerService) UpdateSeller(updateCommand *command.UpdateSellerCommand)
 	}
 
 	// Create idempotency record
-	var idempotencyRecord *entities.IdempotencyRecord
-	if updateCommand.IdempotencyKey != "" {
-		requestJSON, _ := json.Marshal(updateCommand)
-		idempotencyRecord = entities.NewIdempotencyRecord(updateCommand.IdempotencyKey, string(requestJSON))
-	}
+	idempotencyRecord := newIdempotencyRecord(ctx, updateCommand.IdempotencyKey, updateCommand)
 
-	seller, err := s.repo.FindById(updateCommand.Id)
+	seller, err := s.repo.FindById(ctx, updateCommand.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -156,7 +142,7 @@ func (s *SellerService) UpdateSeller(updateCommand *command.UpdateSellerCommand)
 		return nil, err
 	}
 
-	_, err = s.repo.Update(validatedUpdatedSeller)
+	_, err = s.repo.Update(ctx, validatedUpdatedSeller)
 	if err != nil {
 		return nil, err
 	}
@@ -165,21 +151,12 @@ func (s *SellerService) UpdateSeller(updateCommand *command.UpdateSellerCommand)
 		Result: mapper.NewSellerResultFromEntity(seller),
 	}
 
-	// Store response in idempotency record
-	if idempotencyRecord != nil {
-		responseJSON, _ := json.Marshal(result)
-		idempotencyRecord.SetResponse(string(responseJSON), 200)
-		// Best-effort write: a failed idempotency record must not fail the
-		// operation. Proper structured logging is added in the hardening PR.
-		_, _ = s.idempotencyRepo.Create(ctx, idempotencyRecord)
-	}
+	storeIdempotencyResponse(ctx, s.idempotencyRepo, idempotencyRecord, result)
 
 	return &result, nil
 }
 
-func (s *SellerService) DeleteSeller(sellerCommand *command.DeleteSellerCommand) (*command.DeleteSellerCommandResult, error) {
-	ctx := context.Background()
-
+func (s *SellerService) DeleteSeller(ctx context.Context, sellerCommand *command.DeleteSellerCommand) (*command.DeleteSellerCommandResult, error) {
 	// Check idempotency key
 	if sellerCommand.IdempotencyKey != "" {
 		existingRecord, err := s.idempotencyRepo.FindByKey(ctx, sellerCommand.IdempotencyKey)
@@ -198,14 +175,10 @@ func (s *SellerService) DeleteSeller(sellerCommand *command.DeleteSellerCommand)
 	}
 
 	// Create idempotency record
-	var idempotencyRecord *entities.IdempotencyRecord
-	if sellerCommand.IdempotencyKey != "" {
-		requestJSON, _ := json.Marshal(sellerCommand)
-		idempotencyRecord = entities.NewIdempotencyRecord(sellerCommand.IdempotencyKey, string(requestJSON))
-	}
+	idempotencyRecord := newIdempotencyRecord(ctx, sellerCommand.IdempotencyKey, sellerCommand)
 
 	// Check if seller exists
-	existingSeller, err := s.repo.FindById(sellerCommand.Id)
+	existingSeller, err := s.repo.FindById(ctx, sellerCommand.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -215,7 +188,7 @@ func (s *SellerService) DeleteSeller(sellerCommand *command.DeleteSellerCommand)
 	}
 
 	// Delete seller
-	err = s.repo.Delete(sellerCommand.Id)
+	err = s.repo.Delete(ctx, sellerCommand.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -224,14 +197,7 @@ func (s *SellerService) DeleteSeller(sellerCommand *command.DeleteSellerCommand)
 		Success: true,
 	}
 
-	// Store response in idempotency record
-	if idempotencyRecord != nil {
-		responseJSON, _ := json.Marshal(result)
-		idempotencyRecord.SetResponse(string(responseJSON), 200)
-		// Best-effort write: a failed idempotency record must not fail the
-		// operation. Proper structured logging is added in the hardening PR.
-		_, _ = s.idempotencyRepo.Create(ctx, idempotencyRecord)
-	}
+	storeIdempotencyResponse(ctx, s.idempotencyRepo, idempotencyRecord, result)
 
 	return &result, nil
 }

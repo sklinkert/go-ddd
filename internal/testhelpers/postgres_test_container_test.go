@@ -13,7 +13,7 @@ func TestSetupTestDB(t *testing.T) {
 	testDB := SetupTestDB(t)
 	require.NotNil(t, testDB)
 	require.NotNil(t, testDB.Container)
-	require.NotNil(t, testDB.Conn)
+	require.NotNil(t, testDB.Pool)
 	require.NotNil(t, testDB.Queries)
 
 	// Defer cleanup
@@ -21,7 +21,7 @@ func TestSetupTestDB(t *testing.T) {
 
 	// Verify database connection is working
 	ctx := context.Background()
-	err := testDB.Conn.Ping(ctx)
+	err := testDB.Pool.Ping(ctx)
 	assert.NoError(t, err)
 }
 
@@ -33,14 +33,14 @@ func TestPostgresTestContainer_TruncateTables(t *testing.T) {
 	ctx := context.Background()
 
 	// Insert test seller
-	_, err := testDB.Conn.Exec(ctx, `
+	_, err := testDB.Pool.Exec(ctx, `
 		INSERT INTO sellers (id, name, created_at, updated_at) 
 		VALUES (gen_random_uuid(), 'Test Seller', NOW(), NOW())
 	`)
 	require.NoError(t, err)
 
 	// Insert test product
-	_, err = testDB.Conn.Exec(ctx, `
+	_, err = testDB.Pool.Exec(ctx, `
 		INSERT INTO products (id, name, price, seller_id, created_at, updated_at)
 		VALUES (gen_random_uuid(), 'Test Product', 99.99, 
 				(SELECT id FROM sellers LIMIT 1), NOW(), NOW())
@@ -48,7 +48,7 @@ func TestPostgresTestContainer_TruncateTables(t *testing.T) {
 	require.NoError(t, err)
 
 	// Insert test idempotency record
-	_, err = testDB.Conn.Exec(ctx, `
+	_, err = testDB.Pool.Exec(ctx, `
 		INSERT INTO idempotency_records (id, key, request, response, status_code, created_at)
 		VALUES (gen_random_uuid(), 'test-key', '{"test": "data"}', '{"result": "success"}', 200, NOW())
 	`)
@@ -56,15 +56,15 @@ func TestPostgresTestContainer_TruncateTables(t *testing.T) {
 
 	// Verify data exists
 	var count int
-	err = testDB.Conn.QueryRow(ctx, "SELECT COUNT(*) FROM sellers").Scan(&count)
+	err = testDB.Pool.QueryRow(ctx, "SELECT COUNT(*) FROM sellers").Scan(&count)
 	require.NoError(t, err)
 	assert.Greater(t, count, 0)
 
-	err = testDB.Conn.QueryRow(ctx, "SELECT COUNT(*) FROM products").Scan(&count)
+	err = testDB.Pool.QueryRow(ctx, "SELECT COUNT(*) FROM products").Scan(&count)
 	require.NoError(t, err)
 	assert.Greater(t, count, 0)
 
-	err = testDB.Conn.QueryRow(ctx, "SELECT COUNT(*) FROM idempotency_records").Scan(&count)
+	err = testDB.Pool.QueryRow(ctx, "SELECT COUNT(*) FROM idempotency_records").Scan(&count)
 	require.NoError(t, err)
 	assert.Greater(t, count, 0)
 
@@ -72,15 +72,15 @@ func TestPostgresTestContainer_TruncateTables(t *testing.T) {
 	testDB.TruncateTables(t)
 
 	// Verify all tables are empty
-	err = testDB.Conn.QueryRow(ctx, "SELECT COUNT(*) FROM sellers").Scan(&count)
+	err = testDB.Pool.QueryRow(ctx, "SELECT COUNT(*) FROM sellers").Scan(&count)
 	require.NoError(t, err)
 	assert.Equal(t, 0, count)
 
-	err = testDB.Conn.QueryRow(ctx, "SELECT COUNT(*) FROM products").Scan(&count)
+	err = testDB.Pool.QueryRow(ctx, "SELECT COUNT(*) FROM products").Scan(&count)
 	require.NoError(t, err)
 	assert.Equal(t, 0, count)
 
-	err = testDB.Conn.QueryRow(ctx, "SELECT COUNT(*) FROM idempotency_records").Scan(&count)
+	err = testDB.Pool.QueryRow(ctx, "SELECT COUNT(*) FROM idempotency_records").Scan(&count)
 	require.NoError(t, err)
 	assert.Equal(t, 0, count)
 }
@@ -91,7 +91,7 @@ func TestPostgresTestContainer_Close(t *testing.T) {
 
 	// Verify connection is working before close
 	ctx := context.Background()
-	err := testDB.Conn.Ping(ctx)
+	err := testDB.Pool.Ping(ctx)
 	assert.NoError(t, err)
 
 	// Close should not panic and should properly clean up
@@ -110,13 +110,13 @@ func TestMultipleTestContainers(t *testing.T) {
 
 	// Both should be functional
 	ctx := context.Background()
-	err := testDB1.Conn.Ping(ctx)
+	err := testDB1.Pool.Ping(ctx)
 	assert.NoError(t, err)
 
-	err = testDB2.Conn.Ping(ctx)
+	err = testDB2.Pool.Ping(ctx)
 	assert.NoError(t, err)
 
 	// They should be independent
 	assert.NotEqual(t, testDB1.Container, testDB2.Container)
-	assert.NotEqual(t, testDB1.Conn, testDB2.Conn)
+	assert.NotEqual(t, testDB1.Pool, testDB2.Pool)
 }

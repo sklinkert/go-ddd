@@ -2,8 +2,10 @@ package postgres
 
 import (
 	"context"
+	"errors"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 
 	"github.com/sklinkert/go-ddd/internal/domain/entities"
 	"github.com/sklinkert/go-ddd/internal/domain/repositories"
@@ -18,9 +20,7 @@ func NewSqlcProductRepository(queries *db.Queries) repositories.ProductRepositor
 	return &SqlcProductRepository{queries: queries}
 }
 
-func (repo *SqlcProductRepository) Create(product *entities.ValidatedProduct) (*entities.Product, error) {
-	ctx := context.Background()
-
+func (repo *SqlcProductRepository) Create(ctx context.Context, product *entities.ValidatedProduct) (*entities.Product, error) {
 	createdProduct, err := repo.queries.CreateProduct(ctx, db.CreateProductParams{
 		ID:        product.Id,
 		Name:      product.Name,
@@ -33,23 +33,24 @@ func (repo *SqlcProductRepository) Create(product *entities.ValidatedProduct) (*
 		return nil, err
 	}
 
-	return repo.FindById(createdProduct.ID)
+	return repo.FindById(ctx, createdProduct.ID)
 }
 
-func (repo *SqlcProductRepository) FindById(id uuid.UUID) (*entities.Product, error) {
-	ctx := context.Background()
-
+func (repo *SqlcProductRepository) FindById(ctx context.Context, id uuid.UUID) (*entities.Product, error) {
 	row, err := repo.queries.GetProductById(ctx, id)
 	if err != nil {
+		// A missing row is not an error: return (nil, nil) so callers can
+		// translate it into a 404 instead of a 500.
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, nil
+		}
 		return nil, err
 	}
 
 	return fromSqlcProductRow(&row), nil
 }
 
-func (repo *SqlcProductRepository) FindAll() ([]*entities.Product, error) {
-	ctx := context.Background()
-
+func (repo *SqlcProductRepository) FindAll(ctx context.Context) ([]*entities.Product, error) {
 	rows, err := repo.queries.GetAllProducts(ctx)
 	if err != nil {
 		return nil, err
@@ -63,10 +64,8 @@ func (repo *SqlcProductRepository) FindAll() ([]*entities.Product, error) {
 	return products, nil
 }
 
-func (repo *SqlcProductRepository) Update(product *entities.ValidatedProduct) (*entities.Product, error) {
-	ctx := context.Background()
-
-	err := repo.queries.UpdateProduct(ctx, db.UpdateProductParams{
+func (repo *SqlcProductRepository) Update(ctx context.Context, product *entities.ValidatedProduct) (*entities.Product, error) {
+	rows, err := repo.queries.UpdateProduct(ctx, db.UpdateProductParams{
 		ID:        product.Id,
 		Name:      product.Name,
 		Price:     numericFromFloat64(product.Price),
@@ -76,12 +75,15 @@ func (repo *SqlcProductRepository) Update(product *entities.ValidatedProduct) (*
 	if err != nil {
 		return nil, err
 	}
+	if rows == 0 {
+		// Nothing matched: the product does not exist (or is soft-deleted).
+		return nil, pgx.ErrNoRows
+	}
 
-	return repo.FindById(product.Id)
+	return repo.FindById(ctx, product.Id)
 }
 
-func (repo *SqlcProductRepository) Delete(id uuid.UUID) error {
-	ctx := context.Background()
+func (repo *SqlcProductRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	return repo.queries.DeleteProduct(ctx, id)
 }
 
