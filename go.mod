@@ -1,6 +1,8 @@
 module github.com/sklinkert/go-ddd
 
-go 1.25.0
+go 1.26.0
+
+toolchain go1.26.2
 
 require (
 	github.com/golang-migrate/migrate/v4 v4.19.1

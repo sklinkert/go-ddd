@@ -1,8 +1,9 @@
 package common
 
 import (
-	"github.com/google/uuid"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 type SellerResult struct {

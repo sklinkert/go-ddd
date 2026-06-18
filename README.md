@@ -18,12 +18,13 @@
 
 ## Tech Stack Essentials
 
-- **Go 1.24** with idiomatic patterns and testify-powered tests.
+- **Go 1.26** with idiomatic patterns and testify-powered tests.
 - **Echo v4** HTTP stack for REST endpoints.
 - **pgx/v5** and `sqlc` for type-safe PostgreSQL access.
 - **golang-migrate** handling SQL schema migrations
 - **Testcontainers** integration to provision disposable Postgres instances during tests.
 - **google/uuid** helpers for deterministic ID generation inside the domain.
+- **golangci-lint** for static analysis, plus a `Makefile`, `Dockerfile`, and `docker-compose.yml` for a one-command local stack.
 
 ## Design Principles in Action
 
@@ -161,6 +162,20 @@ This will create two files:
 
 ## Getting Started
 
+> Requires **Go 1.26+**. Run `make help` to see all available targets.
+
+### Quickstart with Docker Compose
+
+Bring up Postgres, apply migrations, and start the API in one command:
+
+```bash
+make docker-up        # docker compose up --build
+# API is now available on http://localhost:8080
+make docker-down      # tear everything down
+```
+
+### Local development
+
 1. Clone this repository:
 ```bash
 git clone https://github.com/sklinkert/go-ddd.git
@@ -192,7 +207,20 @@ migrate -path migrations -database $DATABASE_URL up
 
 5. Run the application:
 ```bash
-go run ./cmd/marketplace
+make run            # or: go run ./cmd/marketplace
+# Override the database via the DATABASE_URL env var (libpq DSN or postgres:// URL).
+```
+
+### Common Make targets
+
+```bash
+make build        # build the server binary into ./bin
+make test         # run all tests with the race detector (needs Docker)
+make test-unit    # run only tests that don't require Docker
+make lint         # run golangci-lint
+make fmt          # format the code (gofmt + goimports)
+make migrate-up   # apply migrations against $DATABASE_URL
+make sqlc         # regenerate sqlc code
 ```
 
 ### Contributions

@@ -1,8 +1,9 @@
 package entities
 
 import (
-	"github.com/google/uuid"
 	"testing"
+
+	"github.com/google/uuid"
 )
 
 func TestNewSeller(t *testing.T) {

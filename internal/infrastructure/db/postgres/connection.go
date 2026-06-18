@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+
 	"github.com/jackc/pgx/v5"
 	db "github.com/sklinkert/go-ddd/internal/infrastructure/db/sqlc"
 )
