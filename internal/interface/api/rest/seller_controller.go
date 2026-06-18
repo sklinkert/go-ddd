@@ -46,7 +46,7 @@ func (sc *SellerController) CreateSellerController(c echo.Context) error {
 		})
 	}
 
-	commandResult, err := sc.service.CreateSeller(sellerCommand)
+	commandResult, err := sc.service.CreateSeller(c.Request().Context(), sellerCommand)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{
 			"error": "Failed to create seller",
@@ -59,7 +59,7 @@ func (sc *SellerController) CreateSellerController(c echo.Context) error {
 }
 
 func (sc *SellerController) GetAllSellersController(c echo.Context) error {
-	sellers, err := sc.service.FindAllSellers()
+	sellers, err := sc.service.FindAllSellers(c.Request().Context())
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{
 			"error": "Failed to fetch sellers",
@@ -72,18 +72,14 @@ func (sc *SellerController) GetAllSellersController(c echo.Context) error {
 }
 
 func (sc *SellerController) GetSellerByIdController(c echo.Context) error {
-	// Hack: split the Id from the URL
-	// For some reason c.Param("id") doesn't work here
-	idRaw := c.Request().URL.Path[len("/api/v1/sellers/"):]
-
-	id, err := uuid.Parse(idRaw)
+	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{
 			"error": "Invalid seller Id format",
 		})
 	}
 
-	seller, err := sc.service.FindSellerById(&query.GetSellerByIdQuery{Id: id})
+	seller, err := sc.service.FindSellerById(c.Request().Context(), &query.GetSellerByIdQuery{Id: id})
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{
 			"error": "Failed to fetch seller",
@@ -117,7 +113,7 @@ func (sc *SellerController) PutSellerController(c echo.Context) error {
 		})
 	}
 
-	commandResult, err := sc.service.UpdateSeller(updateSellerCommand)
+	commandResult, err := sc.service.UpdateSeller(c.Request().Context(), updateSellerCommand)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{
 			"error": "Failed to update seller",
@@ -130,18 +126,14 @@ func (sc *SellerController) PutSellerController(c echo.Context) error {
 }
 
 func (sc *SellerController) DeleteSellerController(c echo.Context) error {
-	// Hack: split the Id from the URL
-	// For some reason c.Param("id") doesn't work here
-	idRaw := c.Request().URL.Path[len("/api/v1/sellers/"):]
-
-	id, err := uuid.Parse(idRaw)
+	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{
 			"error": "Invalid seller Id format",
 		})
 	}
 
-	_, err = sc.service.DeleteSeller(&command.DeleteSellerCommand{Id: id})
+	_, err = sc.service.DeleteSeller(c.Request().Context(), &command.DeleteSellerCommand{Id: id})
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{
 			"error": "Failed to delete seller",

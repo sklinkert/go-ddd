@@ -1,8 +1,8 @@
 package services
 
 import (
+	"context"
 	"errors"
-	"fmt"
 	"testing"
 
 	"github.com/google/uuid"
@@ -16,12 +16,12 @@ type MockSellerRepository struct {
 	sellers []*entities.ValidatedSeller
 }
 
-func (m *MockSellerRepository) Create(seller *entities.ValidatedSeller) (*entities.Seller, error) {
+func (m *MockSellerRepository) Create(ctx context.Context, seller *entities.ValidatedSeller) (*entities.Seller, error) {
 	m.sellers = append(m.sellers, seller)
 	return &seller.Seller, nil
 }
 
-func (m *MockSellerRepository) FindAll() ([]*entities.Seller, error) {
+func (m *MockSellerRepository) FindAll(ctx context.Context) ([]*entities.Seller, error) {
 	var sellers []*entities.Seller
 	for _, s := range m.sellers {
 		sellers = append(sellers, &s.Seller)
@@ -29,18 +29,16 @@ func (m *MockSellerRepository) FindAll() ([]*entities.Seller, error) {
 	return sellers, nil
 }
 
-func (m *MockSellerRepository) FindById(id uuid.UUID) (*entities.Seller, error) {
+func (m *MockSellerRepository) FindById(ctx context.Context, id uuid.UUID) (*entities.Seller, error) {
 	for _, s := range m.sellers {
 		if s.Id == id {
 			return &s.Seller, nil
-		} else {
-			fmt.Printf("Id: %s - %s\n", s.Id, id)
 		}
 	}
-	return nil, errors.New("seller not found")
+	return nil, nil
 }
 
-func (m *MockSellerRepository) Delete(id uuid.UUID) error {
+func (m *MockSellerRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	for index, s := range m.sellers {
 		if s.Id == id {
 			m.sellers = append(m.sellers[:index], m.sellers[index+1:]...)
@@ -50,7 +48,7 @@ func (m *MockSellerRepository) Delete(id uuid.UUID) error {
 	return errors.New("seller not found for deletion")
 }
 
-func (m *MockSellerRepository) Update(seller *entities.ValidatedSeller) (*entities.Seller, error) {
+func (m *MockSellerRepository) Update(ctx context.Context, seller *entities.ValidatedSeller) (*entities.Seller, error) {
 	for index, s := range m.sellers {
 		if s.Id == seller.Id {
 			m.sellers[index] = seller
@@ -65,7 +63,7 @@ func TestSellerService_CreateSeller(t *testing.T) {
 	idempotencyRepo := NewMockIdempotencyRepository()
 	service := NewSellerService(repo, idempotencyRepo)
 
-	_, err := service.CreateSeller(getCreateSellerCommand("John Doe"))
+	_, err := service.CreateSeller(context.Background(), getCreateSellerCommand("John Doe"))
 	if err != nil {
 		t.Errorf("Unexpected error: %s", err)
 	}
@@ -81,10 +79,10 @@ func TestSellerService_GetAllSellers(t *testing.T) {
 	service := NewSellerService(repo, idempotencyRepo)
 
 	// Add two sellers
-	_, _ = service.CreateSeller(getCreateSellerCommand("John Doe"))
-	_, _ = service.CreateSeller(getCreateSellerCommand("Jane Doe"))
+	_, _ = service.CreateSeller(context.Background(), getCreateSellerCommand("John Doe"))
+	_, _ = service.CreateSeller(context.Background(), getCreateSellerCommand("Jane Doe"))
 
-	sellers, err := service.FindAllSellers()
+	sellers, err := service.FindAllSellers(context.Background())
 	if err != nil {
 		t.Errorf("Unexpected error: %s", err)
 	}
@@ -99,10 +97,10 @@ func TestSellerService_GetSellerById(t *testing.T) {
 	idempotencyRepo := NewMockIdempotencyRepository()
 	service := NewSellerService(repo, idempotencyRepo)
 
-	createdSellerResult, _ := service.CreateSeller(getCreateSellerCommand("John Doe"))
+	createdSellerResult, _ := service.CreateSeller(context.Background(), getCreateSellerCommand("John Doe"))
 	sellerID := createdSellerResult.Result.Id
 
-	foundSeller, err := service.FindSellerById(&query.GetSellerByIdQuery{Id: sellerID})
+	foundSeller, err := service.FindSellerById(context.Background(), &query.GetSellerByIdQuery{Id: sellerID})
 	if err != nil {
 		t.Errorf("Unexpected error: %s", err)
 	}
@@ -111,9 +109,12 @@ func TestSellerService_GetSellerById(t *testing.T) {
 		t.Errorf("Expected seller name 'John Doe', but got %s", foundSeller.Result.Name)
 	}
 
-	_, err = service.FindSellerById(&query.GetSellerByIdQuery{Id: uuid.New()}) // some non-existent Id
-	if err == nil {
-		t.Error("Expected error for non-existent seller, but got none")
+	notFound, err := service.FindSellerById(context.Background(), &query.GetSellerByIdQuery{Id: uuid.New()}) // some non-existent Id
+	if err != nil {
+		t.Errorf("Unexpected error: %s", err)
+	}
+	if notFound != nil {
+		t.Error("Expected nil result for non-existent seller, but got one")
 	}
 }
 
@@ -122,7 +123,7 @@ func TestSellerService_UpdateSeller(t *testing.T) {
 	idempotencyRepo := NewMockIdempotencyRepository()
 	service := NewSellerService(repo, idempotencyRepo)
 
-	createdSellerResult, _ := service.CreateSeller(getCreateSellerCommand("John Doe"))
+	createdSellerResult, _ := service.CreateSeller(context.Background(), getCreateSellerCommand("John Doe"))
 	sellerId := createdSellerResult.Result.Id
 
 	var updatableSeller = entities.Seller{
@@ -130,7 +131,7 @@ func TestSellerService_UpdateSeller(t *testing.T) {
 		Name: "Doe Johnny",
 	}
 
-	_, err := service.UpdateSeller(&command.UpdateSellerCommand{
+	_, err := service.UpdateSeller(context.Background(), &command.UpdateSellerCommand{
 		Id:   sellerId,
 		Name: updatableSeller.Name,
 	})
@@ -138,7 +139,7 @@ func TestSellerService_UpdateSeller(t *testing.T) {
 		t.Errorf("Unexpected error: %s", err)
 	}
 
-	updatedSeller, _ := service.FindSellerById(&query.GetSellerByIdQuery{Id: sellerId})
+	updatedSeller, _ := service.FindSellerById(context.Background(), &query.GetSellerByIdQuery{Id: sellerId})
 	if updatedSeller.Result.Name != "Doe Johnny" {
 		t.Errorf("Expected seller name 'Johnny Doe', but got %s", updatedSeller.Result.Name)
 	}

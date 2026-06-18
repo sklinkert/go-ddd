@@ -18,10 +18,10 @@ JOIN sellers s ON p.seller_id = s.id
 WHERE p.deleted_at IS NULL AND s.deleted_at IS NULL
 ORDER BY p.created_at DESC;
 
--- name: UpdateProduct :exec
-UPDATE products 
+-- name: UpdateProduct :execrows
+UPDATE products
 SET name = $2, price = $3, seller_id = $4, updated_at = $5
-WHERE id = $1;
+WHERE id = $1 AND deleted_at IS NULL;
 
 -- name: DeleteProduct :exec
 UPDATE products SET deleted_at = NOW() WHERE id = $1;

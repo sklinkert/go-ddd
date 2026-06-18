@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/stretchr/testify/require"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
@@ -25,7 +25,7 @@ const (
 // PostgresTestContainer manages a test database container
 type PostgresTestContainer struct {
 	Container testcontainers.Container
-	Conn      *pgx.Conn
+	Pool      *pgxpool.Pool
 	Queries   *db.Queries
 }
 
@@ -35,7 +35,7 @@ func SetupTestDB(t *testing.T) *PostgresTestContainer {
 
 	// Start PostgreSQL container
 	postgresContainer, err := postgres.Run(ctx,
-		"postgres:15-alpine",
+		"postgres:17-alpine",
 		postgres.WithDatabase(dbName),
 		postgres.WithUsername(dbUser),
 		postgres.WithPassword(dbPassword),
@@ -51,18 +51,18 @@ func SetupTestDB(t *testing.T) *PostgresTestContainer {
 	require.NoError(t, err, "Failed to get connection string")
 
 	// Connect to database
-	conn, err := pgx.Connect(ctx, dsn)
+	pool, err := pgxpool.New(ctx, dsn)
 	require.NoError(t, err, "Failed to connect to test database")
 
 	// Apply schema
-	err = applySchema(ctx, conn)
+	err = applySchema(ctx, pool)
 	require.NoError(t, err, "Failed to apply database schema")
 
-	queries := db.New(conn)
+	queries := db.New(pool)
 
 	return &PostgresTestContainer{
 		Container: postgresContainer,
-		Conn:      conn,
+		Pool:      pool,
 		Queries:   queries,
 	}
 }
@@ -71,9 +71,8 @@ func SetupTestDB(t *testing.T) *PostgresTestContainer {
 func (p *PostgresTestContainer) Close(t *testing.T) {
 	ctx := context.Background()
 
-	if p.Conn != nil {
-		err := p.Conn.Close(ctx)
-		require.NoError(t, err, "Failed to close database connection")
+	if p.Pool != nil {
+		p.Pool.Close()
 	}
 
 	if p.Container != nil {
@@ -83,7 +82,7 @@ func (p *PostgresTestContainer) Close(t *testing.T) {
 }
 
 // applySchema reads and applies the SQL schema file
-func applySchema(ctx context.Context, conn *pgx.Conn) error {
+func applySchema(ctx context.Context, pool *pgxpool.Pool) error {
 	// Get current working directory and find project root
 	cwd, err := os.Getwd()
 	if err != nil {
@@ -110,7 +109,7 @@ func applySchema(ctx context.Context, conn *pgx.Conn) error {
 		return fmt.Errorf("failed to read schema file: %w", err)
 	}
 
-	_, err = conn.Exec(ctx, string(schemaBytes))
+	_, err = pool.Exec(ctx, string(schemaBytes))
 	if err != nil {
 		return fmt.Errorf("failed to execute schema: %w", err)
 	}
@@ -126,7 +125,7 @@ func (p *PostgresTestContainer) TruncateTables(t *testing.T) {
 	tables := []string{"products", "idempotency_records", "sellers"}
 
 	for _, table := range tables {
-		_, err := p.Conn.Exec(ctx, fmt.Sprintf("TRUNCATE TABLE %s CASCADE", table))
+		_, err := p.Pool.Exec(ctx, fmt.Sprintf("TRUNCATE TABLE %s CASCADE", table))
 		require.NoError(t, err, "Failed to truncate table %s", table)
 	}
 }

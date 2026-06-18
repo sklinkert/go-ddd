@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -23,7 +24,7 @@ func TestSqlcSellerRepository_Create(t *testing.T) {
 	validatedSeller, err := entities.NewValidatedSeller(seller)
 	require.NoError(t, err)
 
-	createdSeller, err := repo.Create(validatedSeller)
+	createdSeller, err := repo.Create(context.Background(), validatedSeller)
 
 	// Assertions
 	require.NoError(t, err)
@@ -45,11 +46,11 @@ func TestSqlcSellerRepository_FindById(t *testing.T) {
 	validatedSeller, err := entities.NewValidatedSeller(seller)
 	require.NoError(t, err)
 
-	createdSeller, err := repo.Create(validatedSeller)
+	createdSeller, err := repo.Create(context.Background(), validatedSeller)
 	require.NoError(t, err)
 
 	// Test finding by ID
-	foundSeller, err := repo.FindById(createdSeller.Id)
+	foundSeller, err := repo.FindById(context.Background(), createdSeller.Id)
 
 	// Assertions
 	require.NoError(t, err)
@@ -68,10 +69,10 @@ func TestSqlcSellerRepository_FindById_NotFound(t *testing.T) {
 
 	// Test finding non-existent seller
 	nonExistentId := uuid.New()
-	foundSeller, err := repo.FindById(nonExistentId)
+	foundSeller, err := repo.FindById(context.Background(), nonExistentId)
 
 	// Assertions
-	assert.Error(t, err)
+	assert.NoError(t, err)
 	assert.Nil(t, foundSeller)
 }
 
@@ -90,14 +91,14 @@ func TestSqlcSellerRepository_FindAll(t *testing.T) {
 	validatedSeller2, err := entities.NewValidatedSeller(seller2)
 	require.NoError(t, err)
 
-	createdSeller1, err := repo.Create(validatedSeller1)
+	createdSeller1, err := repo.Create(context.Background(), validatedSeller1)
 	require.NoError(t, err)
 
-	createdSeller2, err := repo.Create(validatedSeller2)
+	createdSeller2, err := repo.Create(context.Background(), validatedSeller2)
 	require.NoError(t, err)
 
 	// Test finding all sellers
-	sellers, err := repo.FindAll()
+	sellers, err := repo.FindAll(context.Background())
 
 	// Assertions
 	require.NoError(t, err)
@@ -126,7 +127,7 @@ func TestSqlcSellerRepository_FindAll_Empty(t *testing.T) {
 	repo := NewSqlcSellerRepository(testDB.Queries)
 
 	// Test finding all when no sellers exist
-	sellers, err := repo.FindAll()
+	sellers, err := repo.FindAll(context.Background())
 
 	// Assertions
 	require.NoError(t, err)
@@ -144,7 +145,7 @@ func TestSqlcSellerRepository_Update(t *testing.T) {
 	validatedSeller, err := entities.NewValidatedSeller(seller)
 	require.NoError(t, err)
 
-	createdSeller, err := repo.Create(validatedSeller)
+	createdSeller, err := repo.Create(context.Background(), validatedSeller)
 	require.NoError(t, err)
 
 	// Update the seller
@@ -158,7 +159,7 @@ func TestSqlcSellerRepository_Update(t *testing.T) {
 	validatedUpdatedSeller, err := entities.NewValidatedSeller(updatedSeller)
 	require.NoError(t, err)
 
-	result, err := repo.Update(validatedUpdatedSeller)
+	result, err := repo.Update(context.Background(), validatedUpdatedSeller)
 
 	// Assertions
 	require.NoError(t, err)
@@ -185,7 +186,7 @@ func TestSqlcSellerRepository_Update_NotFound(t *testing.T) {
 	validatedNonExistentSeller, err := entities.NewValidatedSeller(nonExistentSeller)
 	require.NoError(t, err)
 
-	result, err := repo.Update(validatedNonExistentSeller)
+	result, err := repo.Update(context.Background(), validatedNonExistentSeller)
 
 	// Assertions
 	assert.Error(t, err)
@@ -203,16 +204,16 @@ func TestSqlcSellerRepository_Delete(t *testing.T) {
 	validatedSeller, err := entities.NewValidatedSeller(seller)
 	require.NoError(t, err)
 
-	createdSeller, err := repo.Create(validatedSeller)
+	createdSeller, err := repo.Create(context.Background(), validatedSeller)
 	require.NoError(t, err)
 
 	// Delete the seller
-	err = repo.Delete(createdSeller.Id)
+	err = repo.Delete(context.Background(), createdSeller.Id)
 	require.NoError(t, err)
 
 	// Verify seller is deleted
-	deletedSeller, err := repo.FindById(createdSeller.Id)
-	assert.Error(t, err)
+	deletedSeller, err := repo.FindById(context.Background(), createdSeller.Id)
+	assert.NoError(t, err)
 	assert.Nil(t, deletedSeller)
 }
 
@@ -224,7 +225,7 @@ func TestSqlcSellerRepository_Delete_NotFound(t *testing.T) {
 
 	// Try to delete non-existent seller
 	nonExistentId := uuid.New()
-	err := repo.Delete(nonExistentId)
+	err := repo.Delete(context.Background(), nonExistentId)
 
 	// Note: PostgreSQL DELETE doesn't fail if the row doesn't exist
 	// So this should not return an error
@@ -243,7 +244,7 @@ func TestSqlcSellerRepository_Delete_WithExistingProducts(t *testing.T) {
 	validatedSeller, err := entities.NewValidatedSeller(seller)
 	require.NoError(t, err)
 
-	createdSeller, err := sellerRepo.Create(validatedSeller)
+	createdSeller, err := sellerRepo.Create(context.Background(), validatedSeller)
 	require.NoError(t, err)
 
 	// Create a product for the seller
@@ -251,16 +252,17 @@ func TestSqlcSellerRepository_Delete_WithExistingProducts(t *testing.T) {
 	validatedProduct, err := entities.NewValidatedProduct(product)
 	require.NoError(t, err)
 
-	_, err = productRepo.Create(validatedProduct)
+	_, err = productRepo.Create(context.Background(), validatedProduct)
 	require.NoError(t, err)
 
 	// Try to delete the seller - should succeed with soft delete
-	err = sellerRepo.Delete(createdSeller.Id)
+	err = sellerRepo.Delete(context.Background(), createdSeller.Id)
 	assert.NoError(t, err) // Soft delete should succeed even with related products
 
 	// Verify the seller is soft deleted (not returned in queries)
-	_, err = sellerRepo.FindById(createdSeller.Id)
-	assert.Error(t, err) // Should not find soft-deleted seller
+	softDeletedSeller, err := sellerRepo.FindById(context.Background(), createdSeller.Id)
+	assert.NoError(t, err)
+	assert.Nil(t, softDeletedSeller) // Should not find soft-deleted seller
 }
 
 func TestSqlcSellerRepository_Create_EmptyName(t *testing.T) {
@@ -296,7 +298,7 @@ func TestSqlcSellerRepository_Create_LongName(t *testing.T) {
 	validatedSeller, err := entities.NewValidatedSeller(seller)
 	require.NoError(t, err)
 
-	createdSeller, err := repo.Create(validatedSeller)
+	createdSeller, err := repo.Create(context.Background(), validatedSeller)
 
 	// Should succeed as TEXT fields in PostgreSQL can handle large strings
 	require.NoError(t, err)

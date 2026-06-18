@@ -1,6 +1,7 @@
 package rest_test
 
 import (
+	"context"
 	"time"
 
 	"github.com/sklinkert/go-ddd/internal/application/command"
@@ -14,7 +15,7 @@ type MockProductService struct {
 	mock.Mock
 }
 
-func (m *MockProductService) CreateProduct(productCommand *command.CreateProductCommand) (*command.CreateProductCommandResult, error) {
+func (m *MockProductService) CreateProduct(ctx context.Context, productCommand *command.CreateProductCommand) (*command.CreateProductCommandResult, error) {
 	args := m.Called(productCommand)
 
 	var now = time.Now()
@@ -48,7 +49,7 @@ func (m *MockProductService) CreateProduct(productCommand *command.CreateProduct
 	return &result, args.Error(1)
 }
 
-func (m *MockProductService) FindAllProducts() (*query.GetAllProductsQueryResult, error) {
+func (m *MockProductService) FindAllProducts(ctx context.Context) (*query.GetAllProductsQueryResult, error) {
 	args := m.Called()
 
 	productQueryListResult := &query.GetAllProductsQueryResult{}
@@ -60,7 +61,7 @@ func (m *MockProductService) FindAllProducts() (*query.GetAllProductsQueryResult
 	return productQueryListResult, args.Error(1)
 }
 
-func (m *MockProductService) FindProductById(productQuery *query.GetProductByIdQuery) (*query.GetProductByIdQueryResult, error) {
+func (m *MockProductService) FindProductById(ctx context.Context, productQuery *query.GetProductByIdQuery) (*query.GetProductByIdQueryResult, error) {
 	args := m.Called(productQuery)
 
 	productQueryResult := &query.GetProductByIdQueryResult{
@@ -70,12 +71,12 @@ func (m *MockProductService) FindProductById(productQuery *query.GetProductByIdQ
 	return productQueryResult, args.Error(1)
 }
 
-func (m *MockProductService) UpdateProduct(productCommand *command.UpdateProductCommand) (*command.UpdateProductCommandResult, error) {
+func (m *MockProductService) UpdateProduct(ctx context.Context, productCommand *command.UpdateProductCommand) (*command.UpdateProductCommandResult, error) {
 	args := m.Called(productCommand)
 	return args.Get(0).(*command.UpdateProductCommandResult), args.Error(1)
 }
 
-func (m *MockProductService) DeleteProduct(productCommand *command.DeleteProductCommand) (*command.DeleteProductCommandResult, error) {
+func (m *MockProductService) DeleteProduct(ctx context.Context, productCommand *command.DeleteProductCommand) (*command.DeleteProductCommandResult, error) {
 	args := m.Called(productCommand)
 	return args.Get(0).(*command.DeleteProductCommandResult), args.Error(1)
 }
