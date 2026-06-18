@@ -81,16 +81,6 @@ func (repo *SqlcSellerRepository) Delete(id uuid.UUID) error {
 	return repo.queries.DeleteSeller(ctx, id)
 }
 
-func fromSqlcSeller(dbSeller *db.Seller) *entities.Seller {
-	seller := &entities.Seller{
-		Name:      dbSeller.Name,
-		CreatedAt: timeFromTimestamptz(dbSeller.CreatedAt),
-		UpdatedAt: timeFromTimestamptz(dbSeller.UpdatedAt),
-	}
-	seller.Id = dbSeller.ID
-	return seller
-}
-
 func fromSqlcSellerRow(dbSeller *db.GetSellerByIdRow) *entities.Seller {
 	seller := &entities.Seller{
 		Name:      dbSeller.Name,
