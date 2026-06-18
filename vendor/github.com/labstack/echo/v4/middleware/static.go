@@ -48,6 +48,15 @@ type StaticConfig struct {
 	// Filesystem provides access to the static content.
 	// Optional. Defaults to http.Dir(config.Root)
 	Filesystem http.FileSystem `yaml:"-"`
+
+	// EnablePathUnescaping enables path parameter (param: *) unescaping.
+	// Default false (safe): encoded slashes (%2f) in the wildcard param are NOT decoded,
+	// preventing ACL bypass where /admin%2fprivate.txt bypasses a /admin/* route guard by
+	// not matching that route but having its wildcard param decoded to admin/private.txt.
+	// Set to true only when serving files whose names contain URL-encoded characters
+	// (e.g. "hello world.txt" via /hello%20world.txt) and you are not relying on
+	// route-based ACL guards to restrict access.
+	EnablePathUnescaping bool `yaml:"enablePathUnescaping"`
 }
 
 const html = `
@@ -170,9 +179,11 @@ func StaticWithConfig(config StaticConfig) echo.MiddlewareFunc {
 			if strings.HasSuffix(c.Path(), "*") { // When serving from a group, e.g. `/static*`.
 				p = c.Param("*")
 			}
-			p, err = url.PathUnescape(p)
-			if err != nil {
-				return
+			if config.EnablePathUnescaping {
+				p, err = url.PathUnescape(p)
+				if err != nil {
+					return
+				}
 			}
 			// Security: We use path.Clean() (not filepath.Clean()) because:
 			// 1. HTTP URLs always use forward slashes, regardless of server OS

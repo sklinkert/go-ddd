@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 )
@@ -35,7 +36,7 @@ func (e *Echo) Static(pathPrefix, fsRoot string) *Route {
 	return e.Add(
 		http.MethodGet,
 		pathPrefix+"*",
-		StaticDirectoryHandler(subFs, false),
+		StaticDirectoryHandler(subFs, !e.EnablePathUnescapingStaticFiles),
 	)
 }
 
@@ -48,12 +49,19 @@ func (e *Echo) StaticFS(pathPrefix string, filesystem fs.FS) *Route {
 	return e.Add(
 		http.MethodGet,
 		pathPrefix+"*",
-		StaticDirectoryHandler(filesystem, false),
+		StaticDirectoryHandler(filesystem, !e.EnablePathUnescapingStaticFiles),
 	)
 }
 
-// StaticDirectoryHandler creates handler function to serve files from provided file system
+// StaticDirectoryHandler creates handler function to serve files from provided file system.
 // When disablePathUnescaping is set then file name from path is not unescaped and is served as is.
+//
+// Note: when disablePathUnescaping=false, the handler decodes the wildcard param before serving.
+// If route guards (e.g. e.GET("/admin/*", forbidden)) are used to restrict parts of the
+// filesystem, an encoded separator (%2F) or encoded dot-dot (%2E%2E) in the URL can resolve to
+// a path that the router never matched against the guard route. Do not rely on route guards
+// alone to restrict a filesystem served by this handler.
+// See https://github.com/labstack/echo/security/advisories/GHSA-vfp3-v2gw-7wfq
 func StaticDirectoryHandler(fileSystem fs.FS, disablePathUnescaping bool) HandlerFunc {
 	return func(c Context) error {
 		p := c.Param("*")
@@ -65,8 +73,11 @@ func StaticDirectoryHandler(fileSystem fs.FS, disablePathUnescaping bool) Handle
 			p = tmpPath
 		}
 
-		// fs.FS.Open() already assumes that file names are relative to FS root path and considers name with prefix `/` as invalid
-		name := filepath.ToSlash(filepath.Clean(strings.TrimPrefix(p, "/")))
+		// fs.FS.Open() already assumes that file names are relative to FS root path and considers name with prefix `/` as invalid.
+		// Use path.Clean (not filepath.Clean): fs.FS paths are always forward-slash, so a backslash must stay a literal
+		// character rather than being interpreted as a separator on Windows (which would resolve a file across a boundary
+		// the router never matched on).
+		name := path.Clean(strings.TrimPrefix(p, "/"))
 		fi, err := fs.Stat(fileSystem, name)
 		if err != nil {
 			return ErrNotFound
