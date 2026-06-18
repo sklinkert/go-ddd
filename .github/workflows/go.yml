@@ -51,6 +51,9 @@ jobs:
         cache: true
 
     - name: golangci-lint
-      uses: golangci/golangci-lint-action@v6
+      # v7+ installs golangci-lint v2 (matching the v2 .golangci.yml).
+      # Pin to a v2 release built with Go >= the go.mod version, otherwise
+      # golangci-lint refuses to lint a newer-Go module.
+      uses: golangci/golangci-lint-action@v7
       with:
-        version: latest
+        version: v2.12.2
