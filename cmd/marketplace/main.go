@@ -2,23 +2,33 @@ package main
 
 import (
 	"context"
+	"log"
+	"os"
+
 	"github.com/labstack/echo/v4"
 	"github.com/sklinkert/go-ddd/internal/application/services"
 	postgres2 "github.com/sklinkert/go-ddd/internal/infrastructure/db/postgres"
 	"github.com/sklinkert/go-ddd/internal/interface/api/rest"
-	"log"
 )
 
 func main() {
-	dsn := "host=localhost user=marketplace password=marketplace dbname=marketplace port=5432 sslmode=disable"
+	// DATABASE_URL may be a libpq keyword DSN or a postgres:// URL; pgx accepts both.
+	dsn := os.Getenv("DATABASE_URL")
+	if dsn == "" {
+		dsn = "host=localhost user=marketplace password=marketplace dbname=marketplace port=5432 sslmode=disable"
+	}
+
 	port := ":8080"
+	if p := os.Getenv("PORT"); p != "" {
+		port = ":" + p
+	}
 
 	ctx := context.Background()
 	conn, err := postgres2.NewConnection(ctx, dsn)
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
-	defer conn.Close(ctx)
+	defer func() { _ = conn.Close(ctx) }()
 
 	queries := postgres2.NewQueries(conn)
 

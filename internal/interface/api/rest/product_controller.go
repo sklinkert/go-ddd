@@ -1,6 +1,8 @@
 package rest
 
 import (
+	"net/http"
+
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -8,7 +10,6 @@ import (
 	"github.com/sklinkert/go-ddd/internal/application/query"
 	"github.com/sklinkert/go-ddd/internal/interface/api/rest/dto/mapper"
 	"github.com/sklinkert/go-ddd/internal/interface/api/rest/dto/request"
-	"net/http"
 )
 
 type ProductController struct {
