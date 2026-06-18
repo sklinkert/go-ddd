@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+
 	"github.com/sklinkert/go-ddd/internal/application/command"
 	"github.com/sklinkert/go-ddd/internal/application/interfaces"
 	"github.com/sklinkert/go-ddd/internal/application/mapper"
@@ -73,11 +74,9 @@ func (s *SellerService) CreateSeller(sellerCommand *command.CreateSellerCommand)
 	if idempotencyRecord != nil {
 		responseJSON, _ := json.Marshal(result)
 		idempotencyRecord.SetResponse(string(responseJSON), 200)
-		_, err = s.idempotencyRepo.Create(ctx, idempotencyRecord)
-		if err != nil {
-			// Log error but don't fail the operation
-			// In production, you might want to handle this differently
-		}
+		// Best-effort write: a failed idempotency record must not fail the
+		// operation. Proper structured logging is added in the hardening PR.
+		_, _ = s.idempotencyRepo.Create(ctx, idempotencyRecord)
 	}
 
 	return &result, nil
@@ -170,11 +169,9 @@ func (s *SellerService) UpdateSeller(updateCommand *command.UpdateSellerCommand)
 	if idempotencyRecord != nil {
 		responseJSON, _ := json.Marshal(result)
 		idempotencyRecord.SetResponse(string(responseJSON), 200)
-		_, err = s.idempotencyRepo.Create(ctx, idempotencyRecord)
-		if err != nil {
-			// Log error but don't fail the operation
-			// In production, you might want to handle this differently
-		}
+		// Best-effort write: a failed idempotency record must not fail the
+		// operation. Proper structured logging is added in the hardening PR.
+		_, _ = s.idempotencyRepo.Create(ctx, idempotencyRecord)
 	}
 
 	return &result, nil
@@ -231,11 +228,9 @@ func (s *SellerService) DeleteSeller(sellerCommand *command.DeleteSellerCommand)
 	if idempotencyRecord != nil {
 		responseJSON, _ := json.Marshal(result)
 		idempotencyRecord.SetResponse(string(responseJSON), 200)
-		_, err = s.idempotencyRepo.Create(ctx, idempotencyRecord)
-		if err != nil {
-			// Log error but don't fail the operation
-			// In production, you might want to handle this differently
-		}
+		// Best-effort write: a failed idempotency record must not fail the
+		// operation. Proper structured logging is added in the hardening PR.
+		_, _ = s.idempotencyRepo.Create(ctx, idempotencyRecord)
 	}
 
 	return &result, nil

@@ -33,7 +33,7 @@ func main() {
 	if err != nil {
 		log.Fatal("Failed to connect to database:", err)
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	driver, err := postgres.WithInstance(db, &postgres.Config{})
 	if err != nil {
@@ -44,7 +44,7 @@ func main() {
 	if err != nil {
 		log.Fatal("Failed to create migrate instance:", err)
 	}
-	defer m.Close()
+	defer func() { _, _ = m.Close() }()
 
 	switch *command {
 	case "up":

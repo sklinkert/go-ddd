@@ -1,0 +1,38 @@
+version: "2"
+
+run:
+  timeout: 5m
+
+linters:
+  # The default set already includes errcheck, govet, ineffassign,
+  # staticcheck and unused. We add a few high-signal extras.
+  # (revive is intentionally omitted: its var-naming rule wants `ID`,
+  # while this codebase uses the `Id` convention by design.)
+  enable:
+    - misspell
+    - bodyclose
+    - unconvert
+  settings:
+    staticcheck:
+      checks:
+        - all
+        # QF* are stylistic "quickfix" suggestions (e.g. tagged switches);
+        # they add noise without improving correctness.
+        - -QF1003
+        # ST1003 enforces the `ID` initialism. This codebase uses the
+        # `Id` convention consistently and by design.
+        - -ST1003
+        # ST1000 requires a doc comment on every package; not a convention
+        # this template enforces.
+        - -ST1000
+  exclusions:
+    rules:
+      # Test files frequently ignore errors on cleanup/teardown.
+      - path: _test\.go
+        linters:
+          - errcheck
+
+formatters:
+  enable:
+    - gofmt
+    - goimports

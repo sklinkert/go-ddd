@@ -3,11 +3,12 @@ package services
 import (
 	"errors"
 	"fmt"
+	"testing"
+
 	"github.com/google/uuid"
 	"github.com/sklinkert/go-ddd/internal/application/command"
 	"github.com/sklinkert/go-ddd/internal/application/query"
 	"github.com/sklinkert/go-ddd/internal/domain/entities"
-	"testing"
 )
 
 // MockSellerRepository is a mock implementation of the SellerRepository interface

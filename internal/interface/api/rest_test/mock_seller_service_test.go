@@ -2,6 +2,7 @@ package rest
 
 import (
 	"errors"
+
 	"github.com/google/uuid"
 	"github.com/sklinkert/go-ddd/internal/application/command"
 	"github.com/sklinkert/go-ddd/internal/application/interfaces"
