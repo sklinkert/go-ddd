@@ -64,8 +64,15 @@ func (m *MockProductService) FindAllProducts(ctx context.Context) (*query.GetAll
 func (m *MockProductService) FindProductById(ctx context.Context, productQuery *query.GetProductByIdQuery) (*query.GetProductByIdQueryResult, error) {
 	args := m.Called(productQuery)
 
+	// A nil entity models the not-found case: the service returns a nil
+	// result so the controller can answer 404.
+	product, _ := args.Get(0).(*entities.Product)
+	if product == nil {
+		return nil, args.Error(1)
+	}
+
 	productQueryResult := &query.GetProductByIdQueryResult{
-		Result: mapper.NewProductResultFromEntity(args.Get(0).(*entities.Product)),
+		Result: mapper.NewProductResultFromEntity(product),
 	}
 
 	return productQueryResult, args.Error(1)
