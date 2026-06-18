@@ -8,7 +8,7 @@ DATABASE_URL ?= postgres://marketplace:marketplace@localhost:5432/marketplace?ss
 DOCKER_TEST_PKGS := github.com/sklinkert/go-ddd/internal/infrastructure/db/postgres \
                     github.com/sklinkert/go-ddd/internal/testhelpers
 
-.PHONY: help build run test test-unit lint fmt tidy vendor sqlc migrate-up migrate-down docker-up docker-down
+.PHONY: help build run test test-unit cover lint fmt tidy vendor sqlc migrate-up migrate-down docker-up docker-down
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
@@ -25,6 +25,10 @@ test: ## Run all tests with the race detector (needs Docker)
 
 test-unit: ## Run only tests that don't need Docker
 	go test -race $(filter-out $(DOCKER_TEST_PKGS),$(shell go list ./...))
+
+cover: ## Run all tests and print total coverage (needs Docker)
+	go test -coverprofile=coverage.out ./...
+	go tool cover -func=coverage.out | tail -1
 
 lint: ## Run golangci-lint
 	golangci-lint run ./...
