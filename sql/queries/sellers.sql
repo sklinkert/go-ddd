@@ -14,10 +14,10 @@ FROM sellers
 WHERE deleted_at IS NULL
 ORDER BY created_at DESC;
 
--- name: UpdateSeller :exec
-UPDATE sellers 
+-- name: UpdateSeller :execrows
+UPDATE sellers
 SET name = $2, updated_at = $3
-WHERE id = $1;
+WHERE id = $1 AND deleted_at IS NULL;
 
 -- name: DeleteSeller :exec
 UPDATE sellers SET deleted_at = NOW() WHERE id = $1;

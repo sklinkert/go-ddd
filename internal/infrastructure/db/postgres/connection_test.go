@@ -14,12 +14,12 @@ func TestNewConnection(t *testing.T) {
 	defer testDB.Close(t)
 
 	// Test NewQueries with the existing connection (we can't easily get a new DSN)
-	queries := NewQueries(testDB.Conn)
+	queries := NewQueries(testDB.Pool)
 	assert.NotNil(t, queries)
 
 	// Verify the connection is working by using the existing connection
 	ctx := context.Background()
-	err := testDB.Conn.Ping(ctx)
+	err := testDB.Pool.Ping(ctx)
 	assert.NoError(t, err)
 }
 
@@ -46,7 +46,7 @@ func TestNewQueries(t *testing.T) {
 	defer testDB.Close(t)
 
 	// Test NewQueries with valid connection
-	queries := NewQueries(testDB.Conn)
+	queries := NewQueries(testDB.Pool)
 	assert.NotNil(t, queries)
 
 	// Verify queries object is functional by running a simple query

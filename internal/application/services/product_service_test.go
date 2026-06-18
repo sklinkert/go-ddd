@@ -3,7 +3,6 @@ package services
 import (
 	"context"
 	"errors"
-	"fmt"
 	"testing"
 
 	"github.com/google/uuid"
@@ -17,12 +16,12 @@ type MockProductRepository struct {
 	products []*entities.ValidatedProduct
 }
 
-func (m *MockProductRepository) Create(product *entities.ValidatedProduct) (*entities.Product, error) {
+func (m *MockProductRepository) Create(ctx context.Context, product *entities.ValidatedProduct) (*entities.Product, error) {
 	m.products = append(m.products, product)
 	return &product.Product, nil
 }
 
-func (m *MockProductRepository) FindAll() ([]*entities.Product, error) {
+func (m *MockProductRepository) FindAll(ctx context.Context) ([]*entities.Product, error) {
 	var products []*entities.Product
 	for _, p := range m.products {
 		products = append(products, &p.Product)
@@ -30,7 +29,7 @@ func (m *MockProductRepository) FindAll() ([]*entities.Product, error) {
 	return products, nil
 }
 
-func (m *MockProductRepository) Update(product *entities.ValidatedProduct) (*entities.Product, error) {
+func (m *MockProductRepository) Update(ctx context.Context, product *entities.ValidatedProduct) (*entities.Product, error) {
 	for index, p := range m.products {
 		if p.Id == product.Id {
 			m.products[index] = product
@@ -40,7 +39,7 @@ func (m *MockProductRepository) Update(product *entities.ValidatedProduct) (*ent
 	return nil, errors.New("product not found for update")
 }
 
-func (m *MockProductRepository) Delete(id uuid.UUID) error {
+func (m *MockProductRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	for index, p := range m.products {
 		if p.Id == id {
 			m.products = append(m.products[:index], m.products[index+1:]...)
@@ -50,14 +49,13 @@ func (m *MockProductRepository) Delete(id uuid.UUID) error {
 	return errors.New("product not found for delete")
 }
 
-func (m *MockProductRepository) FindById(id uuid.UUID) (*entities.Product, error) {
+func (m *MockProductRepository) FindById(ctx context.Context, id uuid.UUID) (*entities.Product, error) {
 	for _, p := range m.products {
 		if p.Id == id {
 			return &p.Product, nil
 		}
-		fmt.Printf("Id: mem:%s - %s\n", p.Id, id)
 	}
-	return nil, errors.New("product not found")
+	return nil, nil
 }
 
 // MockIdempotencyRepository is a mock implementation of the IdempotencyRepository interface
@@ -100,7 +98,7 @@ func TestProductService_CreateProduct(t *testing.T) {
 	// Create product
 	product := entities.NewProduct("Example", 100.0, *seller)
 	productCommand := getCreateProductCommand(product)
-	_, err := service.CreateProduct(productCommand)
+	_, err := service.CreateProduct(context.Background(), productCommand)
 	if err != nil {
 		t.Errorf("Unexpected error: %s", err)
 	}
@@ -120,10 +118,10 @@ func TestProductService_GetAllProducts(t *testing.T) {
 	seller := createPersistedSeller(t, sellerRepo)
 
 	// Add two products
-	_, _ = service.CreateProduct(getCreateProductCommand(entities.NewProduct("Example1", 100.0, *seller)))
-	_, _ = service.CreateProduct(getCreateProductCommand(entities.NewProduct("Example2", 200.0, *seller)))
+	_, _ = service.CreateProduct(context.Background(), getCreateProductCommand(entities.NewProduct("Example1", 100.0, *seller)))
+	_, _ = service.CreateProduct(context.Background(), getCreateProductCommand(entities.NewProduct("Example2", 200.0, *seller)))
 
-	products, err := service.FindAllProducts()
+	products, err := service.FindAllProducts(context.Background())
 	if err != nil {
 		t.Errorf("Unexpected error: %s", err)
 	}
@@ -143,12 +141,12 @@ func TestProductService_FindProductById(t *testing.T) {
 	seller := createPersistedSeller(t, sellerRepo)
 
 	product := entities.NewProduct("Example", 100.0, *seller)
-	result, err := service.CreateProduct(getCreateProductCommand(product))
+	result, err := service.CreateProduct(context.Background(), getCreateProductCommand(product))
 	if err != nil {
 		t.Errorf("Unexpected error: %s", err)
 	}
 
-	foundProduct, err := service.FindProductById(&query.GetProductByIdQuery{Id: result.Result.Id})
+	foundProduct, err := service.FindProductById(context.Background(), &query.GetProductByIdQuery{Id: result.Result.Id})
 	if err != nil {
 		t.Fatalf("Unexpected error: %s", err)
 	}
@@ -157,9 +155,12 @@ func TestProductService_FindProductById(t *testing.T) {
 		t.Errorf("Expected product name 'Example', but got %s", foundProduct.Result.Name)
 	}
 
-	_, err = service.FindProductById(&query.GetProductByIdQuery{Id: uuid.New()}) // some non-existent Id
-	if err == nil {
-		t.Error("Expected error for non-existent product, but got none")
+	notFound, err := service.FindProductById(context.Background(), &query.GetProductByIdQuery{Id: uuid.New()}) // some non-existent Id
+	if err != nil {
+		t.Errorf("Unexpected error: %s", err)
+	}
+	if notFound != nil {
+		t.Error("Expected nil result for non-existent product, but got one")
 	}
 }
 
@@ -177,7 +178,7 @@ func createPersistedSeller(t *testing.T, sellerRepo *MockSellerRepository) *enti
 	if err != nil {
 		t.Fatalf("Unexpected error: %s", err)
 	}
-	_, err = sellerRepo.Create(validatedSeller)
+	_, err = sellerRepo.Create(context.Background(), validatedSeller)
 	if err != nil {
 		t.Fatalf("Unexpected error: %s", err)
 	}

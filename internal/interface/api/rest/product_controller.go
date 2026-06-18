@@ -5,7 +5,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
+	"github.com/sklinkert/go-ddd/internal/application/command"
 	"github.com/sklinkert/go-ddd/internal/application/interfaces"
 	"github.com/sklinkert/go-ddd/internal/application/query"
 	"github.com/sklinkert/go-ddd/internal/interface/api/rest/dto/mapper"
@@ -24,7 +24,8 @@ func NewProductController(e *echo.Echo, service interfaces.ProductService) *Prod
 	e.POST("/api/v1/products", controller.CreateProductController)
 	e.GET("/api/v1/products", controller.GetAllProductsController)
 	e.GET("/api/v1/products/:id", controller.GetProductByIdController)
-	e.Use(middleware.Recover())
+	e.PUT("/api/v1/products/:id", controller.UpdateProductController)
+	e.DELETE("/api/v1/products/:id", controller.DeleteProductController)
 
 	return controller
 }
@@ -45,7 +46,7 @@ func (pc *ProductController) CreateProductController(c echo.Context) error {
 		})
 	}
 
-	result, err := pc.service.CreateProduct(productCommand)
+	result, err := pc.service.CreateProduct(c.Request().Context(), productCommand)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{
 			"error": "Failed to create product",
@@ -58,7 +59,7 @@ func (pc *ProductController) CreateProductController(c echo.Context) error {
 }
 
 func (pc *ProductController) GetAllProductsController(c echo.Context) error {
-	products, err := pc.service.FindAllProducts()
+	products, err := pc.service.FindAllProducts(c.Request().Context())
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{
 			"error": "Failed to fetch products",
@@ -78,7 +79,7 @@ func (pc *ProductController) GetProductByIdController(c echo.Context) error {
 		})
 	}
 
-	product, err := pc.service.FindProductById(&query.GetProductByIdQuery{Id: id})
+	product, err := pc.service.FindProductById(c.Request().Context(), &query.GetProductByIdQuery{Id: id})
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{
 			"error": "Failed to fetch product",
@@ -94,4 +95,56 @@ func (pc *ProductController) GetProductByIdController(c echo.Context) error {
 	response := mapper.ToProductResponse(product.Result)
 
 	return c.JSON(http.StatusOK, response)
+}
+
+func (pc *ProductController) UpdateProductController(c echo.Context) error {
+	id, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{
+			"error": "Invalid product Id format",
+		})
+	}
+
+	var updateProductRequest request.UpdateProductRequest
+	if err := c.Bind(&updateProductRequest); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{
+			"error": "Failed to parse request body",
+		})
+	}
+
+	productCommand, err := updateProductRequest.ToUpdateProductCommand(id)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{
+			"error": "Invalid seller Id format",
+		})
+	}
+
+	result, err := pc.service.UpdateProduct(c.Request().Context(), productCommand)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{
+			"error": "Failed to update product",
+		})
+	}
+
+	response := mapper.ToProductResponse(result.Result)
+
+	return c.JSON(http.StatusOK, response)
+}
+
+func (pc *ProductController) DeleteProductController(c echo.Context) error {
+	id, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{
+			"error": "Invalid product Id format",
+		})
+	}
+
+	_, err = pc.service.DeleteProduct(c.Request().Context(), &command.DeleteProductCommand{Id: id})
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{
+			"error": "Failed to delete product",
+		})
+	}
+
+	return c.NoContent(http.StatusNoContent)
 }

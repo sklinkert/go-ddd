@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -24,7 +25,7 @@ func TestSqlcProductRepository_Create(t *testing.T) {
 	validatedSeller, err := entities.NewValidatedSeller(seller)
 	require.NoError(t, err)
 
-	_, err = sellerRepo.Create(validatedSeller)
+	_, err = sellerRepo.Create(context.Background(), validatedSeller)
 	require.NoError(t, err)
 
 	// Create a product
@@ -32,7 +33,7 @@ func TestSqlcProductRepository_Create(t *testing.T) {
 	validatedProduct, err := entities.NewValidatedProduct(product)
 	require.NoError(t, err)
 
-	createdProduct, err := repo.Create(validatedProduct)
+	createdProduct, err := repo.Create(context.Background(), validatedProduct)
 
 	// Assertions
 	require.NoError(t, err)
@@ -57,18 +58,18 @@ func TestSqlcProductRepository_FindById(t *testing.T) {
 	validatedSeller, err := entities.NewValidatedSeller(seller)
 	require.NoError(t, err)
 
-	_, err = sellerRepo.Create(validatedSeller)
+	_, err = sellerRepo.Create(context.Background(), validatedSeller)
 	require.NoError(t, err)
 
 	product := entities.NewProduct("Test Product", 99.99, *validatedSeller)
 	validatedProduct, err := entities.NewValidatedProduct(product)
 	require.NoError(t, err)
 
-	createdProduct, err := repo.Create(validatedProduct)
+	createdProduct, err := repo.Create(context.Background(), validatedProduct)
 	require.NoError(t, err)
 
 	// Test finding by ID
-	foundProduct, err := repo.FindById(createdProduct.Id)
+	foundProduct, err := repo.FindById(context.Background(), createdProduct.Id)
 
 	// Assertions
 	require.NoError(t, err)
@@ -88,10 +89,10 @@ func TestSqlcProductRepository_FindById_NotFound(t *testing.T) {
 
 	// Test finding non-existent product
 	nonExistentId := uuid.New()
-	foundProduct, err := repo.FindById(nonExistentId)
+	foundProduct, err := repo.FindById(context.Background(), nonExistentId)
 
 	// Assertions
-	assert.Error(t, err)
+	assert.NoError(t, err)
 	assert.Nil(t, foundProduct)
 }
 
@@ -107,7 +108,7 @@ func TestSqlcProductRepository_FindAll(t *testing.T) {
 	validatedSeller, err := entities.NewValidatedSeller(seller)
 	require.NoError(t, err)
 
-	_, err = sellerRepo.Create(validatedSeller)
+	_, err = sellerRepo.Create(context.Background(), validatedSeller)
 	require.NoError(t, err)
 
 	// Create multiple products
@@ -119,14 +120,14 @@ func TestSqlcProductRepository_FindAll(t *testing.T) {
 	validatedProduct2, err := entities.NewValidatedProduct(product2)
 	require.NoError(t, err)
 
-	createdProduct1, err := repo.Create(validatedProduct1)
+	createdProduct1, err := repo.Create(context.Background(), validatedProduct1)
 	require.NoError(t, err)
 
-	createdProduct2, err := repo.Create(validatedProduct2)
+	createdProduct2, err := repo.Create(context.Background(), validatedProduct2)
 	require.NoError(t, err)
 
 	// Test finding all products
-	products, err := repo.FindAll()
+	products, err := repo.FindAll(context.Background())
 
 	// Assertions
 	require.NoError(t, err)
@@ -155,7 +156,7 @@ func TestSqlcProductRepository_FindAll_Empty(t *testing.T) {
 	repo := NewSqlcProductRepository(testDB.Queries)
 
 	// Test finding all when no products exist
-	products, err := repo.FindAll()
+	products, err := repo.FindAll(context.Background())
 
 	// Assertions
 	require.NoError(t, err)
@@ -174,14 +175,14 @@ func TestSqlcProductRepository_Update(t *testing.T) {
 	validatedSeller, err := entities.NewValidatedSeller(seller)
 	require.NoError(t, err)
 
-	_, err = sellerRepo.Create(validatedSeller)
+	_, err = sellerRepo.Create(context.Background(), validatedSeller)
 	require.NoError(t, err)
 
 	product := entities.NewProduct("Original Product", 50.00, *validatedSeller)
 	validatedProduct, err := entities.NewValidatedProduct(product)
 	require.NoError(t, err)
 
-	createdProduct, err := repo.Create(validatedProduct)
+	createdProduct, err := repo.Create(context.Background(), validatedProduct)
 	require.NoError(t, err)
 
 	// Update the product
@@ -197,7 +198,7 @@ func TestSqlcProductRepository_Update(t *testing.T) {
 	validatedUpdatedProduct, err := entities.NewValidatedProduct(updatedProduct)
 	require.NoError(t, err)
 
-	result, err := repo.Update(validatedUpdatedProduct)
+	result, err := repo.Update(context.Background(), validatedUpdatedProduct)
 
 	// Assertions
 	require.NoError(t, err)
@@ -232,7 +233,7 @@ func TestSqlcProductRepository_Update_NotFound(t *testing.T) {
 	validatedNonExistentProduct, err := entities.NewValidatedProduct(nonExistentProduct)
 	require.NoError(t, err)
 
-	result, err := repo.Update(validatedNonExistentProduct)
+	result, err := repo.Update(context.Background(), validatedNonExistentProduct)
 
 	// Assertions
 	assert.Error(t, err)
@@ -251,23 +252,23 @@ func TestSqlcProductRepository_Delete(t *testing.T) {
 	validatedSeller, err := entities.NewValidatedSeller(seller)
 	require.NoError(t, err)
 
-	_, err = sellerRepo.Create(validatedSeller)
+	_, err = sellerRepo.Create(context.Background(), validatedSeller)
 	require.NoError(t, err)
 
 	product := entities.NewProduct("Test Product", 99.99, *validatedSeller)
 	validatedProduct, err := entities.NewValidatedProduct(product)
 	require.NoError(t, err)
 
-	createdProduct, err := repo.Create(validatedProduct)
+	createdProduct, err := repo.Create(context.Background(), validatedProduct)
 	require.NoError(t, err)
 
 	// Delete the product
-	err = repo.Delete(createdProduct.Id)
+	err = repo.Delete(context.Background(), createdProduct.Id)
 	require.NoError(t, err)
 
 	// Verify product is deleted
-	deletedProduct, err := repo.FindById(createdProduct.Id)
-	assert.Error(t, err)
+	deletedProduct, err := repo.FindById(context.Background(), createdProduct.Id)
+	assert.NoError(t, err)
 	assert.Nil(t, deletedProduct)
 }
 
@@ -279,7 +280,7 @@ func TestSqlcProductRepository_Delete_NotFound(t *testing.T) {
 
 	// Try to delete non-existent product
 	nonExistentId := uuid.New()
-	err := repo.Delete(nonExistentId)
+	err := repo.Delete(context.Background(), nonExistentId)
 
 	// Note: PostgreSQL DELETE doesn't fail if the row doesn't exist
 	// So this should not return an error
@@ -312,7 +313,7 @@ func TestSqlcProductRepository_Create_WithInvalidSeller(t *testing.T) {
 	validatedProduct, err := entities.NewValidatedProduct(product)
 	require.NoError(t, err)
 
-	createdProduct, err := repo.Create(validatedProduct)
+	createdProduct, err := repo.Create(context.Background(), validatedProduct)
 
 	// Should fail due to foreign key constraint
 	assert.Error(t, err)

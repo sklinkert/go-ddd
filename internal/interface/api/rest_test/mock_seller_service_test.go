@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"context"
 	"errors"
 
 	"github.com/google/uuid"
@@ -21,7 +22,7 @@ func NewMockSellerService() interfaces.SellerService {
 	}
 }
 
-func (m *MockSellerService) CreateSeller(seller *command.CreateSellerCommand) (*command.CreateSellerCommandResult, error) {
+func (m *MockSellerService) CreateSeller(ctx context.Context, seller *command.CreateSellerCommand) (*command.CreateSellerCommandResult, error) {
 	var result command.CreateSellerCommandResult
 
 	newSeller := entities.NewSeller(seller.Name)
@@ -38,7 +39,7 @@ func (m *MockSellerService) CreateSeller(seller *command.CreateSellerCommand) (*
 	return &result, nil
 }
 
-func (m *MockSellerService) FindAllSellers() (*query.GetAllSellersQueryResult, error) {
+func (m *MockSellerService) FindAllSellers(ctx context.Context) (*query.GetAllSellersQueryResult, error) {
 	var allSellers query.GetAllSellersQueryResult
 	for _, v := range m.sellers {
 		allSellers.Result = append(allSellers.Result, mapper.NewSellerResultFromEntity(&v.Seller))
@@ -46,7 +47,7 @@ func (m *MockSellerService) FindAllSellers() (*query.GetAllSellersQueryResult, e
 	return &allSellers, nil
 }
 
-func (m *MockSellerService) FindSellerById(sellerQuery *query.GetSellerByIdQuery) (*query.GetSellerByIdQueryResult, error) {
+func (m *MockSellerService) FindSellerById(ctx context.Context, sellerQuery *query.GetSellerByIdQuery) (*query.GetSellerByIdQueryResult, error) {
 	if seller, exists := m.sellers[sellerQuery.Id]; exists {
 		return &query.GetSellerByIdQueryResult{
 			Result: mapper.NewSellerResultFromEntity(&seller.Seller),
@@ -55,7 +56,7 @@ func (m *MockSellerService) FindSellerById(sellerQuery *query.GetSellerByIdQuery
 	return nil, errors.New("seller not found")
 }
 
-func (m *MockSellerService) UpdateSeller(updateCommand *command.UpdateSellerCommand) (*command.UpdateSellerCommandResult, error) {
+func (m *MockSellerService) UpdateSeller(ctx context.Context, updateCommand *command.UpdateSellerCommand) (*command.UpdateSellerCommandResult, error) {
 	if _, exists := m.sellers[updateCommand.Id]; exists {
 		m.sellers[updateCommand.Id].Name = updateCommand.Name
 		return &command.UpdateSellerCommandResult{
@@ -65,7 +66,7 @@ func (m *MockSellerService) UpdateSeller(updateCommand *command.UpdateSellerComm
 	return nil, errors.New("seller not found")
 }
 
-func (m *MockSellerService) DeleteSeller(deleteCommand *command.DeleteSellerCommand) (*command.DeleteSellerCommandResult, error) {
+func (m *MockSellerService) DeleteSeller(ctx context.Context, deleteCommand *command.DeleteSellerCommand) (*command.DeleteSellerCommandResult, error) {
 	if _, exists := m.sellers[deleteCommand.Id]; exists {
 		delete(m.sellers, deleteCommand.Id)
 		return &command.DeleteSellerCommandResult{Success: true}, nil
