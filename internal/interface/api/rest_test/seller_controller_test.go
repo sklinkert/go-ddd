@@ -2,6 +2,7 @@ package rest
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -51,7 +52,7 @@ func TestPutSeller(t *testing.T) {
 	mockService := NewMockSellerService()
 	controller := rest.NewSellerController(echo.New(), mockService)
 
-	createdSeller, err := mockService.CreateSeller(&command.CreateSellerCommand{Name: "TestSeller"})
+	createdSeller, err := mockService.CreateSeller(context.Background(), &command.CreateSellerCommand{Name: "TestSeller"})
 	assert.NoError(t, err)
 
 	updateRequest := request.UpdateSellerRequest{
@@ -85,12 +86,14 @@ func TestDeleteSeller(t *testing.T) {
 	mockService := NewMockSellerService()
 	controller := rest.NewSellerController(echo.New(), mockService)
 
-	createdSeller, err := mockService.CreateSeller(&command.CreateSellerCommand{Name: "TestSeller"})
+	createdSeller, err := mockService.CreateSeller(context.Background(), &command.CreateSellerCommand{Name: "TestSeller"})
 	assert.NoError(t, err)
 
 	req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/v1/sellers/%s", createdSeller.Result.Id), nil)
 	rec := httptest.NewRecorder()
 	c := echo.New().NewContext(req, rec)
+	c.SetParamNames("id")
+	c.SetParamValues(createdSeller.Result.Id.String())
 
 	// Act
 	if err := controller.DeleteSellerController(c); err != nil {
@@ -106,12 +109,14 @@ func TestGetSellerById(t *testing.T) {
 	mockService := NewMockSellerService()
 	controller := rest.NewSellerController(echo.New(), mockService)
 
-	createdSeller, err := mockService.CreateSeller(&command.CreateSellerCommand{Name: "TestSeller"})
+	createdSeller, err := mockService.CreateSeller(context.Background(), &command.CreateSellerCommand{Name: "TestSeller"})
 	assert.NoError(t, err)
 
 	req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/sellers/%s", createdSeller.Result.Id), nil)
 	rec := httptest.NewRecorder()
 	c := echo.New().NewContext(req, rec)
+	c.SetParamNames("id")
+	c.SetParamValues(createdSeller.Result.Id.String())
 
 	// Act
 	if err := controller.GetSellerByIdController(c); err != nil {
@@ -134,10 +139,10 @@ func TestGetAllSellers(t *testing.T) {
 	mockService := NewMockSellerService()
 	controller := rest.NewSellerController(echo.New(), mockService)
 
-	_, err := mockService.CreateSeller(&command.CreateSellerCommand{Name: "TestSeller1"})
+	_, err := mockService.CreateSeller(context.Background(), &command.CreateSellerCommand{Name: "TestSeller1"})
 	assert.NoError(t, err)
 
-	_, err = mockService.CreateSeller(&command.CreateSellerCommand{Name: "TestSeller2"})
+	_, err = mockService.CreateSeller(context.Background(), &command.CreateSellerCommand{Name: "TestSeller2"})
 	assert.NoError(t, err)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/sellers", nil)

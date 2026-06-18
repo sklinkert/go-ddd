@@ -31,9 +31,7 @@ func NewProductService(
 	}
 }
 
-func (s *ProductService) CreateProduct(productCommand *command.CreateProductCommand) (*command.CreateProductCommandResult, error) {
-	ctx := context.Background()
-
+func (s *ProductService) CreateProduct(ctx context.Context, productCommand *command.CreateProductCommand) (*command.CreateProductCommandResult, error) {
 	// Check idempotency key
 	if productCommand.IdempotencyKey != "" {
 		existingRecord, err := s.idempotencyRepo.FindByKey(ctx, productCommand.IdempotencyKey)
@@ -52,13 +50,9 @@ func (s *ProductService) CreateProduct(productCommand *command.CreateProductComm
 	}
 
 	// Create idempotency record
-	var idempotencyRecord *entities.IdempotencyRecord
-	if productCommand.IdempotencyKey != "" {
-		requestJSON, _ := json.Marshal(productCommand)
-		idempotencyRecord = entities.NewIdempotencyRecord(productCommand.IdempotencyKey, string(requestJSON))
-	}
+	idempotencyRecord := newIdempotencyRecord(ctx, productCommand.IdempotencyKey, productCommand)
 
-	storedSeller, err := s.sellerRepository.FindById(productCommand.SellerId)
+	storedSeller, err := s.sellerRepository.FindById(ctx, productCommand.SellerId)
 	if err != nil {
 		return nil, err
 	}
@@ -83,7 +77,7 @@ func (s *ProductService) CreateProduct(productCommand *command.CreateProductComm
 		return nil, err
 	}
 
-	_, err = s.productRepository.Create(validatedProduct)
+	_, err = s.productRepository.Create(ctx, validatedProduct)
 	if err != nil {
 		return nil, err
 	}
@@ -92,20 +86,13 @@ func (s *ProductService) CreateProduct(productCommand *command.CreateProductComm
 		Result: mapper.NewProductResultFromValidatedEntity(validatedProduct),
 	}
 
-	// Store response in idempotency record
-	if idempotencyRecord != nil {
-		responseJSON, _ := json.Marshal(result)
-		idempotencyRecord.SetResponse(string(responseJSON), 200)
-		// Best-effort write: a failed idempotency record must not fail the
-		// operation. Proper structured logging is added in the hardening PR.
-		_, _ = s.idempotencyRepo.Create(ctx, idempotencyRecord)
-	}
+	storeIdempotencyResponse(ctx, s.idempotencyRepo, idempotencyRecord, result)
 
 	return &result, nil
 }
 
-func (s *ProductService) FindAllProducts() (*query.GetAllProductsQueryResult, error) {
-	storedProducts, err := s.productRepository.FindAll()
+func (s *ProductService) FindAllProducts(ctx context.Context) (*query.GetAllProductsQueryResult, error) {
+	storedProducts, err := s.productRepository.FindAll(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -118,10 +105,15 @@ func (s *ProductService) FindAllProducts() (*query.GetAllProductsQueryResult, er
 	return &queryListResult, nil
 }
 
-func (s *ProductService) FindProductById(productQuery *query.GetProductByIdQuery) (*query.GetProductByIdQueryResult, error) {
-	storedProduct, err := s.productRepository.FindById(productQuery.Id)
+func (s *ProductService) FindProductById(ctx context.Context, productQuery *query.GetProductByIdQuery) (*query.GetProductByIdQueryResult, error) {
+	storedProduct, err := s.productRepository.FindById(ctx, productQuery.Id)
 	if err != nil {
 		return nil, err
+	}
+
+	// Not found: let the caller translate this into a 404.
+	if storedProduct == nil {
+		return nil, nil
 	}
 
 	var queryResult query.GetProductByIdQueryResult
@@ -130,9 +122,7 @@ func (s *ProductService) FindProductById(productQuery *query.GetProductByIdQuery
 	return &queryResult, nil
 }
 
-func (s *ProductService) UpdateProduct(productCommand *command.UpdateProductCommand) (*command.UpdateProductCommandResult, error) {
-	ctx := context.Background()
-
+func (s *ProductService) UpdateProduct(ctx context.Context, productCommand *command.UpdateProductCommand) (*command.UpdateProductCommandResult, error) {
 	// Check idempotency key
 	if productCommand.IdempotencyKey != "" {
 		existingRecord, err := s.idempotencyRepo.FindByKey(ctx, productCommand.IdempotencyKey)
@@ -151,14 +141,10 @@ func (s *ProductService) UpdateProduct(productCommand *command.UpdateProductComm
 	}
 
 	// Create idempotency record
-	var idempotencyRecord *entities.IdempotencyRecord
-	if productCommand.IdempotencyKey != "" {
-		requestJSON, _ := json.Marshal(productCommand)
-		idempotencyRecord = entities.NewIdempotencyRecord(productCommand.IdempotencyKey, string(requestJSON))
-	}
+	idempotencyRecord := newIdempotencyRecord(ctx, productCommand.IdempotencyKey, productCommand)
 
 	// Find existing product
-	existingProduct, err := s.productRepository.FindById(productCommand.Id)
+	existingProduct, err := s.productRepository.FindById(ctx, productCommand.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -169,7 +155,7 @@ func (s *ProductService) UpdateProduct(productCommand *command.UpdateProductComm
 
 	// Find seller if different
 	if productCommand.SellerId != existingProduct.Seller.Id {
-		storedSeller, err := s.sellerRepository.FindById(productCommand.SellerId)
+		storedSeller, err := s.sellerRepository.FindById(ctx, productCommand.SellerId)
 		if err != nil {
 			return nil, err
 		}
@@ -199,7 +185,7 @@ func (s *ProductService) UpdateProduct(productCommand *command.UpdateProductComm
 		return nil, err
 	}
 
-	_, err = s.productRepository.Update(validatedProduct)
+	_, err = s.productRepository.Update(ctx, validatedProduct)
 	if err != nil {
 		return nil, err
 	}
@@ -208,20 +194,12 @@ func (s *ProductService) UpdateProduct(productCommand *command.UpdateProductComm
 		Result: mapper.NewProductResultFromValidatedEntity(validatedProduct),
 	}
 
-	// Store response in idempotency record
-	if idempotencyRecord != nil {
-		responseJSON, _ := json.Marshal(result)
-		idempotencyRecord.SetResponse(string(responseJSON), 200)
-		// Best-effort write: a failed idempotency record must not fail the
-		// operation. Proper structured logging is added in the hardening PR.
-		_, _ = s.idempotencyRepo.Create(ctx, idempotencyRecord)
-	}
+	storeIdempotencyResponse(ctx, s.idempotencyRepo, idempotencyRecord, result)
 
 	return &result, nil
 }
-func (s *ProductService) DeleteProduct(productCommand *command.DeleteProductCommand) (*command.DeleteProductCommandResult, error) {
-	ctx := context.Background()
 
+func (s *ProductService) DeleteProduct(ctx context.Context, productCommand *command.DeleteProductCommand) (*command.DeleteProductCommandResult, error) {
 	// Check idempotency key
 	if productCommand.IdempotencyKey != "" {
 		existingRecord, err := s.idempotencyRepo.FindByKey(ctx, productCommand.IdempotencyKey)
@@ -240,14 +218,10 @@ func (s *ProductService) DeleteProduct(productCommand *command.DeleteProductComm
 	}
 
 	// Create idempotency record
-	var idempotencyRecord *entities.IdempotencyRecord
-	if productCommand.IdempotencyKey != "" {
-		requestJSON, _ := json.Marshal(productCommand)
-		idempotencyRecord = entities.NewIdempotencyRecord(productCommand.IdempotencyKey, string(requestJSON))
-	}
+	idempotencyRecord := newIdempotencyRecord(ctx, productCommand.IdempotencyKey, productCommand)
 
 	// Check if product exists
-	existingProduct, err := s.productRepository.FindById(productCommand.Id)
+	existingProduct, err := s.productRepository.FindById(ctx, productCommand.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -257,7 +231,7 @@ func (s *ProductService) DeleteProduct(productCommand *command.DeleteProductComm
 	}
 
 	// Delete product
-	err = s.productRepository.Delete(productCommand.Id)
+	err = s.productRepository.Delete(ctx, productCommand.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -266,14 +240,7 @@ func (s *ProductService) DeleteProduct(productCommand *command.DeleteProductComm
 		Success: true,
 	}
 
-	// Store response in idempotency record
-	if idempotencyRecord != nil {
-		responseJSON, _ := json.Marshal(result)
-		idempotencyRecord.SetResponse(string(responseJSON), 200)
-		// Best-effort write: a failed idempotency record must not fail the
-		// operation. Proper structured logging is added in the hardening PR.
-		_, _ = s.idempotencyRepo.Create(ctx, idempotencyRecord)
-	}
+	storeIdempotencyResponse(ctx, s.idempotencyRepo, idempotencyRecord, result)
 
 	return &result, nil
 }
