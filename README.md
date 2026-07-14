@@ -1,20 +1,28 @@
 # Go-DDD: Build Domain-Driven Go Services Fast
 
-`go-ddd` jump-starts production-grade Go backends that keep business rules, infrastructure, and delivery code cleanly separated. Out of the box you get opinionated DDD building blocks, CQRS command and query flows, idempotent write paths, and tooling to keep schema and code in lockstep.
+[![CI](https://github.com/sklinkert/go-ddd/actions/workflows/go.yml/badge.svg)](https://github.com/sklinkert/go-ddd/actions/workflows/go.yml)
+[![Go Report Card](https://goreportcard.com/badge/github.com/sklinkert/go-ddd)](https://goreportcard.com/report/github.com/sklinkert/go-ddd)
+[![Go Reference](https://pkg.go.dev/badge/github.com/sklinkert/go-ddd.svg)](https://pkg.go.dev/github.com/sklinkert/go-ddd)
+[![Go Version](https://img.shields.io/github/go-mod/go-version/sklinkert/go-ddd)](go.mod)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
+`go-ddd` jump-starts production-grade Go backends that keep business rules, infrastructure, and delivery code cleanly separated. Out of the box you get opinionated DDD building blocks, CQRS command and query flows, idempotent write paths, domain events with a transactional outbox, and tooling to keep schema and code in lockstep.
 
 ## Why This Template
 
 - **Model-first defaults** – Onion architecture keeps the domain pure while application services orchestrate infrastructure concerns.
-- **Battle-tested patterns** – Commands, queries, repositories, and soft deletes mirror patterns used in real-world enterprise applications.
-- **Idempotent pipelines** – Retry-safe command handlers prevent duplicate writes and highlight resilient workflows.
+- **Battle-tested patterns** – Commands, queries, repositories, value objects, domain events, and soft deletes mirror patterns used in real-world enterprise applications.
+- **Idempotent pipelines** – Race-safe idempotency keys (atomic reservation, no check-then-write) make every command retry-safe.
+- **Domain events + outbox** – State changes and their events are persisted together; a relay publishes them with at-least-once delivery.
 - **Migration discipline** – SQL migrations, `migrate.go`, and `sqlc` make schema evolution explicit and reproducible.
 
 ## What You Get
 
-- Marketplace example that demonstrates aggregates (Seller, Product), cross-module interactions, and validation rules.
+- Marketplace example that demonstrates aggregates (Seller, Product), a `Money` value object, cross-module interactions, and validation rules.
 - Layered modules under `internal/` for `domain`, `application`, `infrastructure`, `interface`, plus `testhelpers` for fixture reuse.
 - Executable entrypoint at `cmd/marketplace/main.go` ready to wire adapters or frameworks of your choice.
 - Database assets in `migrations/` and `sql/` plus generated data access via `sqlc`.
+- [OpenAPI spec](api/openapi.yaml), `/healthz` + `/readyz` probes, and a one-command Docker Compose stack.
 
 ## Tech Stack Essentials
 
@@ -30,6 +38,29 @@
 
 Domain-Driven Design connects implementation to an evolving model. `go-ddd` showcases this by modelling a simple marketplace where `Sellers` manage `Products`, exercising aggregates, value objects, and validation flows.
 
+Anatomy of a write request:
+
+```mermaid
+sequenceDiagram
+    participant C as Client
+    participant R as REST Controller
+    participant S as Application Service
+    participant D as Domain
+    participant P as Postgres
+
+    C->>R: POST /api/v1/products (idempotency_key)
+    R->>S: CreateProductCommand
+    S->>P: Reserve idempotency key (atomic)
+    S->>D: NewProduct(name, Money, ValidatedSeller)
+    D->>D: validate() → ValidatedProduct + ProductCreated event
+    S->>P: INSERT product + outbox event
+    P-->>S: persisted row
+    S->>P: store response for idempotency key
+    S-->>R: CommandResult
+    R-->>C: 201 Created (JSON)
+    Note over P: Outbox relay publishes<br/>ProductCreated asynchronously
+```
+
 ## Documentation
 
 📚 **[Comprehensive DDD & CQRS Principles Guide](DDD_CQRS_PRINCIPLES.md)** - Learn how to apply these patterns to any business domain.
@@ -37,6 +68,7 @@ Domain-Driven Design connects implementation to an evolving model. `go-ddd` show
 ## Repository Structure
 
 ![ddd-diagram-onion.png](ddd-diagram-onion.png)
+
 
 - `domain`: The heart of the software, representing business logic and rules.
     - `entities`: Fundamental objects within our system, like `Product` and `Seller`. Contains basic validation logic.
@@ -97,11 +129,16 @@ This separation enables different optimization strategies:
 ### Idempotency Keys
 Idempotency ensures that multiple identical requests have the same effect as a single request. This is crucial for handling network failures and retries in distributed systems. Implementation:
 - Each command accepts an optional `idempotency_key` in the request
-- The application layer checks if this key has been processed before
-- If yes, it returns the cached response without re-executing business logic
-- If no, it executes the command and stores the response for future requests
+- The key is **reserved atomically** (`INSERT ... ON CONFLICT DO NOTHING`), so two concurrent requests with the same key can never both execute — no check-then-write race
+- A completed request returns its cached response; a still-running one returns an "in progress" error so the client retries later
+- Reusing a key with a **different payload** is rejected instead of silently returning the wrong cached response
+- If the command fails, the reservation is released so the client can retry; reservations orphaned by a crash expire after a TTL
 
 This prevents duplicate entities from being created when clients retry failed requests.
+
+### Domain Events and the Transactional Outbox
+
+Aggregates record events (e.g. `ProductCreated`) when something business-relevant happens. Instead of publishing them directly to a broker — which risks losing events when the process crashes between the DB commit and the publish — events are stored in an `outbox_events` table. A relay polls the outbox and publishes unpublished events with at-least-once delivery. See `internal/domain/events/` and `internal/infrastructure/outbox/`.
 
 ## Database Migrations
 
@@ -111,7 +148,10 @@ This project uses [golang-migrate](https://github.com/golang-migrate/migrate) fo
 ```
 migrations/
 ├── 000001_initial_schema.up.sql    # Creates initial tables
-└── 000001_initial_schema.down.sql  # Rollback for initial schema
+├── 000001_initial_schema.down.sql  # Rollback for initial schema
+├── 000002_price_as_money.up.sql    # Money as integer cents + currency
+├── 000003_outbox.up.sql            # Transactional outbox table
+└── ...
 ```
 
 ### Running Migrations
@@ -150,8 +190,8 @@ migrate create -ext sql -dir migrations -seq add_user_email_column
 ```
 
 This will create two files:
-- `000002_add_user_email_column.up.sql` - Forward migration
-- `000002_add_user_email_column.down.sql` - Rollback migration
+- `0000NN_add_user_email_column.up.sql` - Forward migration
+- `0000NN_add_user_email_column.down.sql` - Rollback migration
 
 ### Migration Best Practices
 - Always create both `up` and `down` migrations
@@ -173,6 +213,51 @@ make docker-up        # docker compose up --build
 # API is now available on http://localhost:8080
 make docker-down      # tear everything down
 ```
+
+### Try the API in 30 seconds
+
+Create a seller:
+
+```bash
+curl -s -X POST http://localhost:8080/api/v1/sellers \
+  -H 'Content-Type: application/json' \
+  -d '{"name": "Acme Corp", "idempotency_key": "create-acme-1"}'
+```
+
+```json
+{"id":"0197a3c2-...","name":"Acme Corp","created_at":"2026-07-14T09:00:00Z","updated_at":"2026-07-14T09:00:00Z"}
+```
+
+Create a product for that seller (prices are integer cents — never floats):
+
+```bash
+curl -s -X POST http://localhost:8080/api/v1/products \
+  -H 'Content-Type: application/json' \
+  -d '{"name": "Wooden Chair", "price_cents": 4999, "currency": "EUR", "seller_id": "<seller-id-from-above>"}'
+```
+
+```json
+{"id":"0197a3c3-...","name":"Wooden Chair","price_cents":4999,"currency":"EUR","seller_id":"0197a3c2-...","created_at":"...","updated_at":"..."}
+```
+
+Replay a request with the same `idempotency_key` — you get the cached response back instead of a duplicate seller:
+
+```bash
+curl -s -X POST http://localhost:8080/api/v1/sellers \
+  -H 'Content-Type: application/json' \
+  -d '{"name": "Acme Corp", "idempotency_key": "create-acme-1"}'
+# → identical response, no second row created
+```
+
+List products and check service health:
+
+```bash
+curl -s http://localhost:8080/api/v1/products
+curl -s http://localhost:8080/readyz
+```
+
+The full API is described in the [OpenAPI spec](api/openapi.yaml).
+
 
 ### Local development
 
@@ -225,6 +310,14 @@ make sqlc         # regenerate sqlc code
 
 ### Contributions
 Contributions, issues, and feature requests are welcome! Feel free to check the issues page.
+
+### Use This Template
+
+Click **"Use this template"** on GitHub to bootstrap your own service from this structure, or fork it and replace the marketplace domain with your own. The [DDD & CQRS guide](DDD_CQRS_PRINCIPLES.md) walks you through adapting the patterns to any business domain.
+
+If this template helps you, **give it a ⭐** — it helps others find it.
+
+[![Star History Chart](https://api.star-history.com/svg?repos=sklinkert/go-ddd&type=Date)](https://star-history.com/#sklinkert/go-ddd&Date)
 
 ### License
 Distributed under the MIT License. See LICENSE for more information.

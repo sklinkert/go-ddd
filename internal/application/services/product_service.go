@@ -2,9 +2,8 @@ package services
 
 import (
 	"context"
-	"encoding/json"
-	"errors"
 
+	"github.com/google/uuid"
 	"github.com/sklinkert/go-ddd/internal/application/command"
 	"github.com/sklinkert/go-ddd/internal/application/interfaces"
 	"github.com/sklinkert/go-ddd/internal/application/mapper"
@@ -32,63 +31,32 @@ func NewProductService(
 }
 
 func (s *ProductService) CreateProduct(ctx context.Context, productCommand *command.CreateProductCommand) (*command.CreateProductCommandResult, error) {
-	// Check idempotency key
-	if productCommand.IdempotencyKey != "" {
-		existingRecord, err := s.idempotencyRepo.FindByKey(ctx, productCommand.IdempotencyKey)
+	return withIdempotency(ctx, s.idempotencyRepo, productCommand.IdempotencyKey, productCommand, func() (*command.CreateProductCommandResult, error) {
+		validatedSeller, err := s.findValidatedSeller(ctx, productCommand.SellerId)
 		if err != nil {
 			return nil, err
 		}
 
-		if existingRecord != nil {
-			// Return cached response
-			var result command.CreateProductCommandResult
-			if err := json.Unmarshal([]byte(existingRecord.Response), &result); err != nil {
-				return nil, err
-			}
-			return &result, nil
+		price, err := entities.NewMoney(productCommand.PriceCents, productCommand.Currency)
+		if err != nil {
+			return nil, err
 		}
-	}
 
-	// Create idempotency record
-	idempotencyRecord := newIdempotencyRecord(ctx, productCommand.IdempotencyKey, productCommand)
+		newProduct := entities.NewProduct(productCommand.Name, price, *validatedSeller)
 
-	storedSeller, err := s.sellerRepository.FindById(ctx, productCommand.SellerId)
-	if err != nil {
-		return nil, err
-	}
+		validatedProduct, err := entities.NewValidatedProduct(newProduct)
+		if err != nil {
+			return nil, err
+		}
 
-	if storedSeller == nil {
-		return nil, errors.New("seller not found")
-	}
+		if _, err := s.productRepository.Create(ctx, validatedProduct); err != nil {
+			return nil, err
+		}
 
-	validatedSeller, err := entities.NewValidatedSeller(storedSeller)
-	if err != nil {
-		return nil, err
-	}
-
-	var newProduct = entities.NewProduct(
-		productCommand.Name,
-		productCommand.Price,
-		*validatedSeller,
-	)
-
-	validatedProduct, err := entities.NewValidatedProduct(newProduct)
-	if err != nil {
-		return nil, err
-	}
-
-	_, err = s.productRepository.Create(ctx, validatedProduct)
-	if err != nil {
-		return nil, err
-	}
-
-	result := command.CreateProductCommandResult{
-		Result: mapper.NewProductResultFromValidatedEntity(validatedProduct),
-	}
-
-	storeIdempotencyResponse(ctx, s.idempotencyRepo, idempotencyRecord, result)
-
-	return &result, nil
+		return &command.CreateProductCommandResult{
+			Result: mapper.NewProductResultFromValidatedEntity(validatedProduct),
+		}, nil
+	})
 }
 
 func (s *ProductService) FindAllProducts(ctx context.Context) (*query.GetAllProductsQueryResult, error) {
@@ -123,124 +91,83 @@ func (s *ProductService) FindProductById(ctx context.Context, productQuery *quer
 }
 
 func (s *ProductService) UpdateProduct(ctx context.Context, productCommand *command.UpdateProductCommand) (*command.UpdateProductCommandResult, error) {
-	// Check idempotency key
-	if productCommand.IdempotencyKey != "" {
-		existingRecord, err := s.idempotencyRepo.FindByKey(ctx, productCommand.IdempotencyKey)
+	return withIdempotency(ctx, s.idempotencyRepo, productCommand.IdempotencyKey, productCommand, func() (*command.UpdateProductCommandResult, error) {
+		existingProduct, err := s.productRepository.FindById(ctx, productCommand.Id)
 		if err != nil {
 			return nil, err
 		}
 
-		if existingRecord != nil {
-			// Return cached response
-			var result command.UpdateProductCommandResult
-			if err := json.Unmarshal([]byte(existingRecord.Response), &result); err != nil {
+		if existingProduct == nil {
+			return nil, entities.ErrProductNotFound
+		}
+
+		if productCommand.SellerId != existingProduct.SellerId {
+			validatedSeller, err := s.findValidatedSeller(ctx, productCommand.SellerId)
+			if err != nil {
 				return nil, err
 			}
-			return &result, nil
+
+			if err := existingProduct.AssignSeller(*validatedSeller); err != nil {
+				return nil, err
+			}
 		}
-	}
 
-	// Create idempotency record
-	idempotencyRecord := newIdempotencyRecord(ctx, productCommand.IdempotencyKey, productCommand)
+		if err := existingProduct.UpdateName(productCommand.Name); err != nil {
+			return nil, err
+		}
 
-	// Find existing product
-	existingProduct, err := s.productRepository.FindById(ctx, productCommand.Id)
-	if err != nil {
-		return nil, err
-	}
-
-	if existingProduct == nil {
-		return nil, errors.New("product not found")
-	}
-
-	// Find seller if different
-	if productCommand.SellerId != existingProduct.Seller.Id {
-		storedSeller, err := s.sellerRepository.FindById(ctx, productCommand.SellerId)
+		price, err := entities.NewMoney(productCommand.PriceCents, productCommand.Currency)
 		if err != nil {
 			return nil, err
 		}
 
-		if storedSeller == nil {
-			return nil, errors.New("seller not found")
+		if err := existingProduct.UpdatePrice(price); err != nil {
+			return nil, err
 		}
 
-		validatedSeller, err := entities.NewValidatedSeller(storedSeller)
+		validatedProduct, err := entities.NewValidatedProduct(existingProduct)
 		if err != nil {
 			return nil, err
 		}
-		existingProduct.Seller = validatedSeller.Seller
-	}
 
-	// Update product fields
-	if err := existingProduct.UpdateName(productCommand.Name); err != nil {
-		return nil, err
-	}
+		if _, err := s.productRepository.Update(ctx, validatedProduct); err != nil {
+			return nil, err
+		}
 
-	if err := existingProduct.UpdatePrice(productCommand.Price); err != nil {
-		return nil, err
-	}
-
-	validatedProduct, err := entities.NewValidatedProduct(existingProduct)
-	if err != nil {
-		return nil, err
-	}
-
-	_, err = s.productRepository.Update(ctx, validatedProduct)
-	if err != nil {
-		return nil, err
-	}
-
-	result := command.UpdateProductCommandResult{
-		Result: mapper.NewProductResultFromValidatedEntity(validatedProduct),
-	}
-
-	storeIdempotencyResponse(ctx, s.idempotencyRepo, idempotencyRecord, result)
-
-	return &result, nil
+		return &command.UpdateProductCommandResult{
+			Result: mapper.NewProductResultFromValidatedEntity(validatedProduct),
+		}, nil
+	})
 }
 
 func (s *ProductService) DeleteProduct(ctx context.Context, productCommand *command.DeleteProductCommand) (*command.DeleteProductCommandResult, error) {
-	// Check idempotency key
-	if productCommand.IdempotencyKey != "" {
-		existingRecord, err := s.idempotencyRepo.FindByKey(ctx, productCommand.IdempotencyKey)
+	return withIdempotency(ctx, s.idempotencyRepo, productCommand.IdempotencyKey, productCommand, func() (*command.DeleteProductCommandResult, error) {
+		existingProduct, err := s.productRepository.FindById(ctx, productCommand.Id)
 		if err != nil {
 			return nil, err
 		}
 
-		if existingRecord != nil {
-			// Return cached response
-			var result command.DeleteProductCommandResult
-			if err := json.Unmarshal([]byte(existingRecord.Response), &result); err != nil {
-				return nil, err
-			}
-			return &result, nil
+		if existingProduct == nil {
+			return nil, entities.ErrProductNotFound
 		}
-	}
 
-	// Create idempotency record
-	idempotencyRecord := newIdempotencyRecord(ctx, productCommand.IdempotencyKey, productCommand)
+		if err := s.productRepository.Delete(ctx, productCommand.Id); err != nil {
+			return nil, err
+		}
 
-	// Check if product exists
-	existingProduct, err := s.productRepository.FindById(ctx, productCommand.Id)
+		return &command.DeleteProductCommandResult{Success: true}, nil
+	})
+}
+
+func (s *ProductService) findValidatedSeller(ctx context.Context, sellerId uuid.UUID) (*entities.ValidatedSeller, error) {
+	storedSeller, err := s.sellerRepository.FindById(ctx, sellerId)
 	if err != nil {
 		return nil, err
 	}
 
-	if existingProduct == nil {
-		return nil, errors.New("product not found")
+	if storedSeller == nil {
+		return nil, entities.ErrSellerNotFound
 	}
 
-	// Delete product
-	err = s.productRepository.Delete(ctx, productCommand.Id)
-	if err != nil {
-		return nil, err
-	}
-
-	result := command.DeleteProductCommandResult{
-		Success: true,
-	}
-
-	storeIdempotencyResponse(ctx, s.idempotencyRepo, idempotencyRecord, result)
-
-	return &result, nil
+	return entities.NewValidatedSeller(storedSeller)
 }

@@ -7,8 +7,8 @@ import (
 
 type UpdateSellerRequest struct {
 	IdempotencyKey string    `json:"idempotency_key"`
-	Id             uuid.UUID `json:"Id"`
-	Name           string    `json:"Name"`
+	Id             uuid.UUID `json:"id"`
+	Name           string    `json:"name"`
 }
 
 func (req *UpdateSellerRequest) ToUpdateSellerCommand() (*command.UpdateSellerCommand, error) {

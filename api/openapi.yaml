@@ -1,0 +1,329 @@
+openapi: 3.0.3
+info:
+  title: go-ddd Marketplace API
+  description: |
+    Example REST API of the go-ddd template. Sellers manage products.
+    Write endpoints accept an optional `idempotency_key` making retries safe.
+  version: "1.0.0"
+  license:
+    name: MIT
+    url: https://github.com/sklinkert/go-ddd/blob/main/LICENSE
+servers:
+  - url: http://localhost:8080
+paths:
+  /healthz:
+    get:
+      summary: Liveness probe
+      operationId: getLiveness
+      responses:
+        "200":
+          description: Process is alive
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+  /readyz:
+    get:
+      summary: Readiness probe (includes database check)
+      operationId: getReadiness
+      responses:
+        "200":
+          description: Ready to serve traffic
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+        "503":
+          description: Dependency unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+  /api/v1/sellers:
+    post:
+      summary: Create a seller
+      operationId: createSeller
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSellerRequest"
+      responses:
+        "201":
+          description: Seller created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Seller"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+    get:
+      summary: List all sellers
+      operationId: listSellers
+      responses:
+        "200":
+          description: All sellers
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListSellersResponse"
+    put:
+      summary: Update a seller
+      operationId: updateSeller
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateSellerRequest"
+      responses:
+        "200":
+          description: Seller updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Seller"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+  /api/v1/sellers/{id}:
+    get:
+      summary: Get a seller by id
+      operationId: getSellerById
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: The seller
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Seller"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    delete:
+      summary: Delete a seller (soft delete)
+      operationId: deleteSeller
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "204":
+          description: Seller deleted
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /api/v1/products:
+    post:
+      summary: Create a product
+      operationId: createProduct
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateProductRequest"
+      responses:
+        "201":
+          description: Product created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+    get:
+      summary: List all products
+      operationId: listProducts
+      responses:
+        "200":
+          description: All products
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListProductsResponse"
+  /api/v1/products/{id}:
+    get:
+      summary: Get a product by id
+      operationId: getProductById
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: The product
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    put:
+      summary: Update a product
+      operationId: updateProduct
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateProductRequest"
+      responses:
+        "200":
+          description: Product updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+    delete:
+      summary: Delete a product (soft delete)
+      operationId: deleteProduct
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "204":
+          description: Product deleted
+        "404":
+          $ref: "#/components/responses/NotFound"
+components:
+  parameters:
+    Id:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  responses:
+    BadRequest:
+      description: Malformed request
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+          example: ok
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+    CreateSellerRequest:
+      type: object
+      required: [name]
+      properties:
+        idempotency_key:
+          type: string
+          description: Optional key making retries safe.
+        name:
+          type: string
+          example: Acme Corp
+    UpdateSellerRequest:
+      type: object
+      required: [id, name]
+      properties:
+        idempotency_key:
+          type: string
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+    Seller:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    ListSellersResponse:
+      type: object
+      properties:
+        sellers:
+          type: array
+          items:
+            $ref: "#/components/schemas/Seller"
+    CreateProductRequest:
+      type: object
+      required: [name, price_cents, currency, seller_id]
+      properties:
+        idempotency_key:
+          type: string
+        name:
+          type: string
+          example: Wooden Chair
+        price_cents:
+          type: integer
+          format: int64
+          description: Price in minor units (cents) — no floats for money.
+          example: 4999
+        currency:
+          type: string
+          enum: [EUR, USD]
+        seller_id:
+          type: string
+          format: uuid
+    UpdateProductRequest:
+      type: object
+      required: [name, price_cents, currency, seller_id]
+      properties:
+        idempotency_key:
+          type: string
+        name:
+          type: string
+        price_cents:
+          type: integer
+          format: int64
+        currency:
+          type: string
+          enum: [EUR, USD]
+        seller_id:
+          type: string
+          format: uuid
+    Product:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        price_cents:
+          type: integer
+          format: int64
+        currency:
+          type: string
+        seller_id:
+          type: string
+          format: uuid
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    ListProductsResponse:
+      type: object
+      properties:
+        products:
+          type: array
+          items:
+            $ref: "#/components/schemas/Product"

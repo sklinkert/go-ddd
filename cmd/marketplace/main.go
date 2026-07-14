@@ -13,7 +13,9 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/sklinkert/go-ddd/internal/application/services"
+	"github.com/sklinkert/go-ddd/internal/infrastructure/config"
 	postgres2 "github.com/sklinkert/go-ddd/internal/infrastructure/db/postgres"
+	"github.com/sklinkert/go-ddd/internal/infrastructure/outbox"
 	"github.com/sklinkert/go-ddd/internal/interface/api/rest"
 )
 
@@ -21,22 +23,14 @@ func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	slog.SetDefault(logger)
 
-	// DATABASE_URL may be a libpq keyword DSN or a postgres:// URL; pgx accepts both.
-	dsn := os.Getenv("DATABASE_URL")
-	if dsn == "" {
-		dsn = "host=localhost user=marketplace password=marketplace dbname=marketplace port=5432 sslmode=disable"
-	}
-
-	port := ":8080"
-	if p := os.Getenv("PORT"); p != "" {
-		port = ":" + p
-	}
+	cfg := config.Load()
+	port := ":" + cfg.Port
 
 	// Root context is cancelled on SIGINT/SIGTERM so we can drain gracefully.
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
-	pool, err := postgres2.NewConnection(ctx, dsn)
+	pool, err := postgres2.NewConnection(ctx, cfg.DatabaseURL)
 	if err != nil {
 		logger.Error("failed to connect to database", slog.Any("error", err))
 		os.Exit(1)
@@ -45,7 +39,7 @@ func main() {
 
 	queries := postgres2.NewQueries(pool)
 
-	productRepo := postgres2.NewSqlcProductRepository(queries)
+	productRepo := postgres2.NewSqlcProductRepository(pool)
 	sellerRepo := postgres2.NewSqlcSellerRepository(queries)
 	idempotencyRepo := postgres2.NewSqlcIdempotencyRepository(queries)
 
@@ -60,6 +54,11 @@ func main() {
 
 	rest.NewProductController(e, productService)
 	rest.NewSellerController(e, sellerService)
+	rest.NewHealthController(e, pool)
+
+	// The outbox relay publishes stored domain events (at-least-once).
+	relay := outbox.NewRelay(queries, outbox.SlogPublisher{}, 5*time.Second)
+	go relay.Start(ctx)
 
 	// Start the server in the background so we can wait for shutdown signals.
 	srvErr := make(chan error, 1)

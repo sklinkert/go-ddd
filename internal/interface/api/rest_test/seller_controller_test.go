@@ -11,7 +11,6 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/sklinkert/go-ddd/internal/application/command"
-	"github.com/sklinkert/go-ddd/internal/domain/entities"
 	"github.com/sklinkert/go-ddd/internal/interface/api/rest"
 	"github.com/sklinkert/go-ddd/internal/interface/api/rest/dto/request"
 	"github.com/sklinkert/go-ddd/internal/interface/api/rest/dto/response"
@@ -23,10 +22,9 @@ func TestCreateSeller(t *testing.T) {
 	mockService := NewMockSellerService()
 	controller := rest.NewSellerController(echo.New(), mockService)
 
-	// Create a seller for testing
-	seller := entities.NewSeller("TestSeller")
+	createRequest := request.CreateSellerRequest{Name: "TestSeller"}
 
-	sellerJSON, _ := json.Marshal(seller)
+	sellerJSON, _ := json.Marshal(createRequest)
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/sellers", bytes.NewReader(sellerJSON))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
@@ -37,14 +35,13 @@ func TestCreateSeller(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	fmt.Printf("rec: %s\n", rec.Body.String())
-
 	// Assert
 	assert.Equal(t, http.StatusCreated, rec.Code)
 
-	var createdSeller entities.Seller
-	_ = json.Unmarshal(rec.Body.Bytes(), &createdSeller)
-	assert.Equal(t, seller.Name, createdSeller.Name)
+	var createdSeller response.SellerResponse
+	assert.NoError(t, json.Unmarshal(rec.Body.Bytes(), &createdSeller))
+	assert.Equal(t, createRequest.Name, createdSeller.Name)
+	assert.NotEmpty(t, createdSeller.Id)
 }
 
 func TestPutSeller(t *testing.T) {
@@ -79,6 +76,7 @@ func TestPutSeller(t *testing.T) {
 	assert.NoError(t, err)
 
 	assert.Equal(t, updateRequest.Name, receivedResponse.Name)
+	assert.Equal(t, updateRequest.Id.String(), receivedResponse.Id)
 }
 
 func TestDeleteSeller(t *testing.T) {

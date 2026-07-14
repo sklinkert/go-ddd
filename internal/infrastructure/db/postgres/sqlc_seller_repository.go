@@ -73,7 +73,7 @@ func (repo *SqlcSellerRepository) Update(ctx context.Context, seller *entities.V
 	}
 	if rows == 0 {
 		// Nothing matched: the seller does not exist (or is soft-deleted).
-		return nil, pgx.ErrNoRows
+		return nil, entities.ErrSellerNotFound
 	}
 
 	return repo.FindById(ctx, seller.Id)

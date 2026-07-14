@@ -28,3 +28,9 @@ func (i *IdempotencyRecord) SetResponse(response string, statusCode int) {
 	i.Response = response
 	i.StatusCode = statusCode
 }
+
+// IsCompleted reports whether the original request finished and stored its
+// response. A record without a response marks a request still in flight.
+func (i *IdempotencyRecord) IsCompleted() bool {
+	return i.StatusCode != 0
+}

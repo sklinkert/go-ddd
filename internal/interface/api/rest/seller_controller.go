@@ -48,9 +48,7 @@ func (sc *SellerController) CreateSellerController(c echo.Context) error {
 
 	commandResult, err := sc.service.CreateSeller(c.Request().Context(), sellerCommand)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{
-			"error": "Failed to create seller",
-		})
+		return writeCommandError(c, err, "Failed to create seller")
 	}
 
 	response := mapper.ToSellerResponse(commandResult.Result)
@@ -115,9 +113,7 @@ func (sc *SellerController) PutSellerController(c echo.Context) error {
 
 	commandResult, err := sc.service.UpdateSeller(c.Request().Context(), updateSellerCommand)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{
-			"error": "Failed to update seller",
-		})
+		return writeCommandError(c, err, "Failed to update seller")
 	}
 
 	response := mapper.ToSellerResponse(commandResult.Result)
@@ -135,9 +131,7 @@ func (sc *SellerController) DeleteSellerController(c echo.Context) error {
 
 	_, err = sc.service.DeleteSeller(c.Request().Context(), &command.DeleteSellerCommand{Id: id})
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{
-			"error": "Failed to delete seller",
-		})
+		return writeCommandError(c, err, "Failed to delete seller")
 	}
 
 	return c.NoContent(http.StatusNoContent)

@@ -1,7 +1,7 @@
 package entities
 
 import (
-	"errors"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -25,10 +25,10 @@ func NewSeller(name string) *Seller {
 
 func (s *Seller) validate() error {
 	if s.Name == "" {
-		return errors.New("name must not be empty")
+		return fmt.Errorf("%w: name must not be empty", ErrValidation)
 	}
 	if s.CreatedAt.After(s.UpdatedAt) {
-		return errors.New("created_at must be before updated_at")
+		return fmt.Errorf("%w: created_at must be before updated_at", ErrValidation)
 	}
 
 	return nil

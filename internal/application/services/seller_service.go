@@ -2,8 +2,6 @@ package services
 
 import (
 	"context"
-	"encoding/json"
-	"errors"
 
 	"github.com/sklinkert/go-ddd/internal/application/command"
 	"github.com/sklinkert/go-ddd/internal/application/interfaces"
@@ -28,45 +26,22 @@ func NewSellerService(repo repositories.SellerRepository, idempotencyRepo reposi
 
 // CreateSeller saves a new seller
 func (s *SellerService) CreateSeller(ctx context.Context, sellerCommand *command.CreateSellerCommand) (*command.CreateSellerCommandResult, error) {
-	// Check idempotency key
-	if sellerCommand.IdempotencyKey != "" {
-		existingRecord, err := s.idempotencyRepo.FindByKey(ctx, sellerCommand.IdempotencyKey)
+	return withIdempotency(ctx, s.idempotencyRepo, sellerCommand.IdempotencyKey, sellerCommand, func() (*command.CreateSellerCommandResult, error) {
+		newSeller := entities.NewSeller(sellerCommand.Name)
+
+		validatedSeller, err := entities.NewValidatedSeller(newSeller)
 		if err != nil {
 			return nil, err
 		}
 
-		if existingRecord != nil {
-			// Return cached response
-			var result command.CreateSellerCommandResult
-			if err := json.Unmarshal([]byte(existingRecord.Response), &result); err != nil {
-				return nil, err
-			}
-			return &result, nil
+		if _, err := s.repo.Create(ctx, validatedSeller); err != nil {
+			return nil, err
 		}
-	}
 
-	// Create idempotency record
-	idempotencyRecord := newIdempotencyRecord(ctx, sellerCommand.IdempotencyKey, sellerCommand)
-
-	var newSeller = entities.NewSeller(sellerCommand.Name)
-
-	validatedSeller, err := entities.NewValidatedSeller(newSeller)
-	if err != nil {
-		return nil, err
-	}
-
-	_, err = s.repo.Create(ctx, validatedSeller)
-	if err != nil {
-		return nil, err
-	}
-
-	result := command.CreateSellerCommandResult{
-		Result: mapper.NewSellerResultFromValidatedEntity(validatedSeller),
-	}
-
-	storeIdempotencyResponse(ctx, s.idempotencyRepo, idempotencyRecord, result)
-
-	return &result, nil
+		return &command.CreateSellerCommandResult{
+			Result: mapper.NewSellerResultFromValidatedEntity(validatedSeller),
+		}, nil
+	})
 }
 
 // FindAllSellers fetches all sellers
@@ -104,100 +79,50 @@ func (s *SellerService) FindSellerById(ctx context.Context, sellerQuery *query.G
 
 // UpdateSeller updates a seller
 func (s *SellerService) UpdateSeller(ctx context.Context, updateCommand *command.UpdateSellerCommand) (*command.UpdateSellerCommandResult, error) {
-	// Check idempotency key
-	if updateCommand.IdempotencyKey != "" {
-		existingRecord, err := s.idempotencyRepo.FindByKey(ctx, updateCommand.IdempotencyKey)
+	return withIdempotency(ctx, s.idempotencyRepo, updateCommand.IdempotencyKey, updateCommand, func() (*command.UpdateSellerCommandResult, error) {
+		seller, err := s.repo.FindById(ctx, updateCommand.Id)
 		if err != nil {
 			return nil, err
 		}
 
-		if existingRecord != nil {
-			// Return cached response
-			var result command.UpdateSellerCommandResult
-			if err := json.Unmarshal([]byte(existingRecord.Response), &result); err != nil {
-				return nil, err
-			}
-			return &result, nil
+		if seller == nil {
+			return nil, entities.ErrSellerNotFound
 		}
-	}
 
-	// Create idempotency record
-	idempotencyRecord := newIdempotencyRecord(ctx, updateCommand.IdempotencyKey, updateCommand)
+		if err := seller.UpdateName(updateCommand.Name); err != nil {
+			return nil, err
+		}
 
-	seller, err := s.repo.FindById(ctx, updateCommand.Id)
-	if err != nil {
-		return nil, err
-	}
+		validatedUpdatedSeller, err := entities.NewValidatedSeller(seller)
+		if err != nil {
+			return nil, err
+		}
 
-	if seller == nil {
-		return nil, errors.New("seller not found")
-	}
+		if _, err := s.repo.Update(ctx, validatedUpdatedSeller); err != nil {
+			return nil, err
+		}
 
-	if err := seller.UpdateName(updateCommand.Name); err != nil {
-		return nil, err
-	}
-
-	validatedUpdatedSeller, err := entities.NewValidatedSeller(seller)
-	if err != nil {
-		return nil, err
-	}
-
-	_, err = s.repo.Update(ctx, validatedUpdatedSeller)
-	if err != nil {
-		return nil, err
-	}
-
-	result := command.UpdateSellerCommandResult{
-		Result: mapper.NewSellerResultFromEntity(seller),
-	}
-
-	storeIdempotencyResponse(ctx, s.idempotencyRepo, idempotencyRecord, result)
-
-	return &result, nil
+		return &command.UpdateSellerCommandResult{
+			Result: mapper.NewSellerResultFromValidatedEntity(validatedUpdatedSeller),
+		}, nil
+	})
 }
 
 func (s *SellerService) DeleteSeller(ctx context.Context, sellerCommand *command.DeleteSellerCommand) (*command.DeleteSellerCommandResult, error) {
-	// Check idempotency key
-	if sellerCommand.IdempotencyKey != "" {
-		existingRecord, err := s.idempotencyRepo.FindByKey(ctx, sellerCommand.IdempotencyKey)
+	return withIdempotency(ctx, s.idempotencyRepo, sellerCommand.IdempotencyKey, sellerCommand, func() (*command.DeleteSellerCommandResult, error) {
+		existingSeller, err := s.repo.FindById(ctx, sellerCommand.Id)
 		if err != nil {
 			return nil, err
 		}
 
-		if existingRecord != nil {
-			// Return cached response
-			var result command.DeleteSellerCommandResult
-			if err := json.Unmarshal([]byte(existingRecord.Response), &result); err != nil {
-				return nil, err
-			}
-			return &result, nil
+		if existingSeller == nil {
+			return nil, entities.ErrSellerNotFound
 		}
-	}
 
-	// Create idempotency record
-	idempotencyRecord := newIdempotencyRecord(ctx, sellerCommand.IdempotencyKey, sellerCommand)
+		if err := s.repo.Delete(ctx, sellerCommand.Id); err != nil {
+			return nil, err
+		}
 
-	// Check if seller exists
-	existingSeller, err := s.repo.FindById(ctx, sellerCommand.Id)
-	if err != nil {
-		return nil, err
-	}
-
-	if existingSeller == nil {
-		return nil, errors.New("seller not found")
-	}
-
-	// Delete seller
-	err = s.repo.Delete(ctx, sellerCommand.Id)
-	if err != nil {
-		return nil, err
-	}
-
-	result := command.DeleteSellerCommandResult{
-		Success: true,
-	}
-
-	storeIdempotencyResponse(ctx, s.idempotencyRepo, idempotencyRecord, result)
-
-	return &result, nil
+		return &command.DeleteSellerCommandResult{Success: true}, nil
+	})
 }

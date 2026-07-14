@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"testing"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -81,7 +82,7 @@ func (p *PostgresTestContainer) Close(t *testing.T) {
 	}
 }
 
-// applySchema reads and applies the SQL schema file
+// applySchema applies all up-migrations in order
 func applySchema(ctx context.Context, pool *pgxpool.Pool) error {
 	// Get current working directory and find project root
 	cwd, err := os.Getwd()
@@ -102,16 +103,24 @@ func applySchema(ctx context.Context, pool *pgxpool.Pool) error {
 		projectRoot = parent
 	}
 
-	schemaPath := filepath.Join(projectRoot, "migrations", "000001_initial_schema.up.sql")
-
-	schemaBytes, err := os.ReadFile(schemaPath)
+	migrationPaths, err := filepath.Glob(filepath.Join(projectRoot, "migrations", "*.up.sql"))
 	if err != nil {
-		return fmt.Errorf("failed to read schema file: %w", err)
+		return fmt.Errorf("failed to list migration files: %w", err)
 	}
+	if len(migrationPaths) == 0 {
+		return fmt.Errorf("no migration files found in %s", filepath.Join(projectRoot, "migrations"))
+	}
+	sort.Strings(migrationPaths)
 
-	_, err = pool.Exec(ctx, string(schemaBytes))
-	if err != nil {
-		return fmt.Errorf("failed to execute schema: %w", err)
+	for _, migrationPath := range migrationPaths {
+		migrationBytes, err := os.ReadFile(migrationPath)
+		if err != nil {
+			return fmt.Errorf("failed to read migration file %s: %w", migrationPath, err)
+		}
+
+		if _, err := pool.Exec(ctx, string(migrationBytes)); err != nil {
+			return fmt.Errorf("failed to execute migration %s: %w", migrationPath, err)
+		}
 	}
 
 	return nil
@@ -122,7 +131,7 @@ func (p *PostgresTestContainer) TruncateTables(t *testing.T) {
 	ctx := context.Background()
 
 	// Truncate tables in dependency order (child tables first)
-	tables := []string{"products", "idempotency_records", "sellers"}
+	tables := []string{"products", "idempotency_records", "outbox_events", "sellers"}
 
 	for _, table := range tables {
 		_, err := p.Pool.Exec(ctx, fmt.Sprintf("TRUNCATE TABLE %s CASCADE", table))

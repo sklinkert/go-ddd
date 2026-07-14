@@ -4,16 +4,24 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func mustMoney(t *testing.T, cents int64, currency Currency) Money {
+	t.Helper()
+	money, err := NewMoney(cents, currency)
+	require.NoError(t, err)
+	return money
+}
 
 func TestProduct_UpdateName(t *testing.T) {
 	seller := NewSeller("Test Seller")
 	validatedSeller, err := NewValidatedSeller(seller)
 	require.NoError(t, err)
 
-	product := NewProduct("Original Product", 99.99, *validatedSeller)
+	product := NewProduct("Original Product", mustMoney(t, 9999, USD), *validatedSeller)
 	originalUpdatedAt := product.UpdatedAt
 
 	// Give some time to ensure UpdatedAt changes
@@ -31,7 +39,7 @@ func TestProduct_UpdateName_EmptyName(t *testing.T) {
 	validatedSeller, err := NewValidatedSeller(seller)
 	require.NoError(t, err)
 
-	product := NewProduct("Original Product", 99.99, *validatedSeller)
+	product := NewProduct("Original Product", mustMoney(t, 9999, USD), *validatedSeller)
 
 	// Test empty name validation
 	err = product.UpdateName("")
@@ -46,44 +54,53 @@ func TestProduct_UpdatePrice(t *testing.T) {
 	validatedSeller, err := NewValidatedSeller(seller)
 	require.NoError(t, err)
 
-	product := NewProduct("Test Product", 50.00, *validatedSeller)
+	product := NewProduct("Test Product", mustMoney(t, 5000, USD), *validatedSeller)
 	originalUpdatedAt := product.UpdatedAt
 
 	// Give some time to ensure UpdatedAt changes
 	time.Sleep(1 * time.Millisecond)
 
 	// Test successful price update
-	err = product.UpdatePrice(75.50)
+	newPrice := mustMoney(t, 7550, EUR)
+	err = product.UpdatePrice(newPrice)
 	assert.NoError(t, err)
-	assert.Equal(t, 75.50, product.Price)
+	assert.Equal(t, newPrice, product.Price)
 	assert.True(t, product.UpdatedAt.After(originalUpdatedAt))
 }
 
-func TestProduct_UpdatePrice_InvalidPrice(t *testing.T) {
+func TestProduct_UpdatePrice_ZeroPrice(t *testing.T) {
 	seller := NewSeller("Test Seller")
 	validatedSeller, err := NewValidatedSeller(seller)
 	require.NoError(t, err)
 
-	product := NewProduct("Test Product", 50.00, *validatedSeller)
+	product := NewProduct("Test Product", mustMoney(t, 5000, USD), *validatedSeller)
 
-	testCases := []struct {
-		name          string
-		price         float64
-		expectedError string
-	}{
-		{"zero price", 0.0, "price must be greater than 0"},
-		{"negative price", -10.50, "price must be greater than 0"},
-	}
+	zeroPrice := mustMoney(t, 0, USD)
+	err = product.UpdatePrice(zeroPrice)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "price must be greater than 0")
+	// Note: The current implementation modifies first, then validates, so price changes even on error
+	assert.Equal(t, zeroPrice, product.Price)
+}
 
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			err = product.UpdatePrice(tc.price)
-			assert.Error(t, err)
-			assert.Contains(t, err.Error(), tc.expectedError)
-			// Note: The current implementation modifies first, then validates, so price changes even on error
-			assert.Equal(t, tc.price, product.Price)
-		})
-	}
+func TestProduct_AssignSeller(t *testing.T) {
+	seller := NewSeller("Test Seller")
+	validatedSeller, err := NewValidatedSeller(seller)
+	require.NoError(t, err)
+
+	product := NewProduct("Test Product", mustMoney(t, 5000, USD), *validatedSeller)
+	originalUpdatedAt := product.UpdatedAt
+
+	newSeller := NewSeller("New Seller")
+	validatedNewSeller, err := NewValidatedSeller(newSeller)
+	require.NoError(t, err)
+
+	time.Sleep(1 * time.Millisecond)
+
+	err = product.AssignSeller(*validatedNewSeller)
+	assert.NoError(t, err)
+	assert.Equal(t, validatedNewSeller.Id, product.SellerId)
+	assert.True(t, product.UpdatedAt.After(originalUpdatedAt))
 }
 
 func TestProduct_Validate_CreatedAtAfterUpdatedAt(t *testing.T) {
@@ -94,8 +111,8 @@ func TestProduct_Validate_CreatedAtAfterUpdatedAt(t *testing.T) {
 	// Create product with invalid time order
 	product := &Product{
 		Name:      "Test Product",
-		Price:     99.99,
-		Seller:    validatedSeller.Seller,
+		Price:     mustMoney(t, 9999, USD),
+		SellerId:  validatedSeller.Id,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now().Add(-1 * time.Hour), // UpdatedAt before CreatedAt
 	}
@@ -114,21 +131,22 @@ func TestProduct_Validate_AllEdgeCases(t *testing.T) {
 	testCases := []struct {
 		name          string
 		productName   string
-		price         float64
+		priceCents    int64
+		sellerId      uuid.UUID
 		expectedError string
 	}{
-		{"empty name", "", 10.0, "name must not be empty"},
-		{"zero price", "Valid Product", 0.0, "price must be greater than 0"},
-		{"negative price", "Valid Product", -5.0, "price must be greater than 0"},
-		{"valid product", "Valid Product", 10.0, ""},
+		{"empty name", "", 1000, validatedSeller.Id, "name must not be empty"},
+		{"zero price", "Valid Product", 0, validatedSeller.Id, "price must be greater than 0"},
+		{"missing seller id", "Valid Product", 1000, uuid.Nil, "seller id must not be empty"},
+		{"valid product", "Valid Product", 1000, validatedSeller.Id, ""},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			product := &Product{
 				Name:      tc.productName,
-				Price:     tc.price,
-				Seller:    validatedSeller.Seller,
+				Price:     mustMoney(t, tc.priceCents, USD),
+				SellerId:  tc.sellerId,
 				CreatedAt: time.Now(),
 				UpdatedAt: time.Now(),
 			}

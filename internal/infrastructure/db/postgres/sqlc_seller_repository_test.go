@@ -237,7 +237,7 @@ func TestSqlcSellerRepository_Delete_WithExistingProducts(t *testing.T) {
 	defer testDB.Close(t)
 
 	sellerRepo := NewSqlcSellerRepository(testDB.Queries)
-	productRepo := NewSqlcProductRepository(testDB.Queries)
+	productRepo := NewSqlcProductRepository(testDB.Pool)
 
 	// Create a seller
 	seller := entities.NewSeller("Test Seller")
@@ -248,7 +248,7 @@ func TestSqlcSellerRepository_Delete_WithExistingProducts(t *testing.T) {
 	require.NoError(t, err)
 
 	// Create a product for the seller
-	product := entities.NewProduct("Test Product", 99.99, *validatedSeller)
+	product := entities.NewProduct("Test Product", mustMoney(t, 9999, entities.USD), *validatedSeller)
 	validatedProduct, err := entities.NewValidatedProduct(product)
 	require.NoError(t, err)
 

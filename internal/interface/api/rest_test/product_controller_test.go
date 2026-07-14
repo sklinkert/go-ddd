@@ -9,21 +9,35 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/sklinkert/go-ddd/internal/application/command"
-	"github.com/sklinkert/go-ddd/internal/application/common"
 	"github.com/sklinkert/go-ddd/internal/domain/entities"
 	"github.com/sklinkert/go-ddd/internal/interface/api/rest/dto/response"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 
 	"github.com/labstack/echo/v4"
 	"github.com/sklinkert/go-ddd/internal/interface/api/rest"
 	"github.com/stretchr/testify/assert"
 )
 
+func mustMoney(t *testing.T, cents int64, currency entities.Currency) entities.Money {
+	t.Helper()
+	money, err := entities.NewMoney(cents, currency)
+	require.NoError(t, err)
+	return money
+}
+
 func TestCreateProduct(t *testing.T) {
 	// Setup
 	e := echo.New()
 	mockService := new(MockProductService)
-	reqBody := map[string]interface{}{"Name": "TestProduct", "Price": 9.99, "SellerId": "123e4567-e89b-12d3-a456-426614174000"}
+	sellerId := "123e4567-e89b-12d3-a456-426614174000"
+	reqBody := map[string]interface{}{
+		"name":            "TestProduct",
+		"price_cents":     999,
+		"currency":        "USD",
+		"seller_id":       sellerId,
+		"idempotency_key": "idem-123",
+	}
 	reqBodyBytes, _ := json.Marshal(reqBody)
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/products", bytes.NewReader(reqBodyBytes))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
@@ -31,54 +45,48 @@ func TestCreateProduct(t *testing.T) {
 	c := e.NewContext(req, rec)
 	ctrl := rest.NewProductController(e, mockService)
 
-	createProductCommandResult := &command.CreateProductCommandResult{
-		Result: &common.ProductResult{
-			Id:    uuid.New(),
-			Name:  "TestProduct",
-			Price: 9.99,
-		},
-	}
-	mockService.On("CreateProduct", mock.Anything).Return(createProductCommandResult, nil)
+	mockService.On("CreateProduct", mock.MatchedBy(func(cmd *command.CreateProductCommand) bool {
+		return cmd.Name == "TestProduct" &&
+			cmd.PriceCents == 999 &&
+			cmd.Currency == entities.USD &&
+			cmd.SellerId.String() == sellerId &&
+			cmd.IdempotencyKey == "idem-123"
+	})).Return((*command.CreateProductCommandResult)(nil), nil)
 
 	// Execute
 	err := ctrl.CreateProductController(c)
 	assert.NoError(t, err)
 
-	// Deserialize the response body
 	var responseBody map[string]interface{}
-	err = json.Unmarshal(rec.Body.Bytes(), &responseBody)
-	if err != nil {
-		t.Fatalf("Failed to decode response body: %v", err)
-	}
-
-	// Remove fields from responseBody that are not present in reqBody
-	// For example, remove Id and Seller fields
-	delete(responseBody, "Id")
-	delete(responseBody, "Seller")
-	delete(reqBody, "SellerId")
-	delete(responseBody, "CreatedAt")
-	delete(responseBody, "UpdatedAt")
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &responseBody))
 
 	// Assertions
 	assert.Equal(t, http.StatusCreated, rec.Code)
-	assert.Equal(t, reqBody, responseBody)
+	assert.Equal(t, "TestProduct", responseBody["name"])
+	assert.Equal(t, float64(999), responseBody["price_cents"])
+	assert.Equal(t, "USD", responseBody["currency"])
+	assert.Equal(t, sellerId, responseBody["seller_id"])
+	assert.NotEmpty(t, responseBody["id"])
 	mockService.AssertExpectations(t)
 }
 
 func TestGetAllProducts(t *testing.T) {
 	// Setup
 	e := echo.New()
-	mockService := new(MockProductService) // Assuming you have a mock of ProductService
+	mockService := new(MockProductService)
 
+	sellerId := uuid.New()
 	expectedProducts := []*entities.Product{
 		{
-			Id:    uuid.New(),
-			Name:  "TestProduct1",
-			Price: 9.99,
+			Id:       uuid.New(),
+			Name:     "TestProduct1",
+			Price:    mustMoney(t, 999, entities.USD),
+			SellerId: sellerId,
 		}, {
-			Id:    uuid.New(),
-			Name:  "TestProduct2",
-			Price: 14.99,
+			Id:       uuid.New(),
+			Name:     "TestProduct2",
+			Price:    mustMoney(t, 1499, entities.EUR),
+			SellerId: sellerId,
 		},
 	}
 
@@ -93,9 +101,11 @@ func TestGetAllProducts(t *testing.T) {
 	for _, product := range expectedProducts {
 		expectedListResponse.Products = append(expectedListResponse.Products,
 			&response.ProductResponse{
-				Id:    product.Id.String(),
-				Name:  product.Name,
-				Price: product.Price,
+				Id:         product.Id.String(),
+				Name:       product.Name,
+				PriceCents: product.Price.Cents(),
+				Currency:   string(product.Price.Currency()),
+				SellerId:   product.SellerId.String(),
 			})
 	}
 
@@ -109,4 +119,20 @@ func TestGetAllProducts(t *testing.T) {
 			assert.ElementsMatch(t, expectedListResponse.Products, receivedListResponse.Products)
 		}
 	}
+}
+
+func TestGetAllProducts_EmptyReturnsEmptyArray(t *testing.T) {
+	e := echo.New()
+	mockService := new(MockProductService)
+	ctrl := rest.NewProductController(e, mockService)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/products", nil)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+
+	mockService.On("FindAllProducts").Return([]*entities.Product{}, nil)
+
+	assert.NoError(t, ctrl.GetAllProductsController(c))
+	assert.Equal(t, http.StatusOK, rec.Code)
+	assert.JSONEq(t, `{"products":[]}`, rec.Body.String())
 }

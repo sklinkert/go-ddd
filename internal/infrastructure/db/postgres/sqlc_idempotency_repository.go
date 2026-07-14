@@ -2,8 +2,9 @@ package postgres
 
 import (
 	"context"
-	"database/sql"
 	"errors"
+
+	"github.com/jackc/pgx/v5"
 
 	"github.com/sklinkert/go-ddd/internal/domain/entities"
 	"github.com/sklinkert/go-ddd/internal/domain/repositories"
@@ -18,10 +19,24 @@ func NewSqlcIdempotencyRepository(queries *db.Queries) repositories.IdempotencyR
 	return &SqlcIdempotencyRepository{queries: queries}
 }
 
+func (r *SqlcIdempotencyRepository) Reserve(ctx context.Context, record *entities.IdempotencyRecord) (bool, error) {
+	rows, err := r.queries.ReserveIdempotencyKey(ctx, db.ReserveIdempotencyKeyParams{
+		ID:        record.Id,
+		Key:       record.Key,
+		Request:   record.Request,
+		CreatedAt: timestamptzFromTime(record.CreatedAt),
+	})
+	if err != nil {
+		return false, err
+	}
+
+	return rows > 0, nil
+}
+
 func (r *SqlcIdempotencyRepository) FindByKey(ctx context.Context, key string) (*entities.IdempotencyRecord, error) {
 	dbRecord, err := r.queries.GetIdempotencyRecordByKey(ctx, key)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
+		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, nil
 		}
 		return nil, err
@@ -37,46 +52,14 @@ func (r *SqlcIdempotencyRepository) FindByKey(ctx context.Context, key string) (
 	}, nil
 }
 
-func (r *SqlcIdempotencyRepository) Create(ctx context.Context, record *entities.IdempotencyRecord) (*entities.IdempotencyRecord, error) {
-	createdRecord, err := r.queries.CreateIdempotencyRecord(ctx, db.CreateIdempotencyRecordParams{
-		ID:         record.Id,
-		Key:        record.Key,
-		Request:    record.Request,
-		Response:   record.Response,
-		StatusCode: int32(record.StatusCode),
-		CreatedAt:  timestamptzFromTime(record.CreatedAt),
+func (r *SqlcIdempotencyRepository) SetResponse(ctx context.Context, key string, response string, statusCode int) error {
+	return r.queries.SetIdempotencyResponse(ctx, db.SetIdempotencyResponseParams{
+		Key:        key,
+		Response:   response,
+		StatusCode: int32(statusCode),
 	})
-	if err != nil {
-		return nil, err
-	}
-
-	return &entities.IdempotencyRecord{
-		Id:         createdRecord.ID,
-		Key:        createdRecord.Key,
-		Request:    createdRecord.Request,
-		Response:   createdRecord.Response,
-		StatusCode: int(createdRecord.StatusCode),
-		CreatedAt:  timeFromTimestamptz(createdRecord.CreatedAt),
-	}, nil
 }
 
-func (r *SqlcIdempotencyRepository) Update(ctx context.Context, record *entities.IdempotencyRecord) (*entities.IdempotencyRecord, error) {
-	updatedRecord, err := r.queries.UpdateIdempotencyRecord(ctx, db.UpdateIdempotencyRecordParams{
-		ID:         record.Id,
-		Request:    record.Request,
-		Response:   record.Response,
-		StatusCode: int32(record.StatusCode),
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return &entities.IdempotencyRecord{
-		Id:         updatedRecord.ID,
-		Key:        updatedRecord.Key,
-		Request:    updatedRecord.Request,
-		Response:   updatedRecord.Response,
-		StatusCode: int(updatedRecord.StatusCode),
-		CreatedAt:  timeFromTimestamptz(updatedRecord.CreatedAt),
-	}, nil
+func (r *SqlcIdempotencyRepository) Delete(ctx context.Context, key string) error {
+	return r.queries.DeleteIdempotencyRecord(ctx, key)
 }

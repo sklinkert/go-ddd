@@ -32,9 +32,14 @@ func (m *MockProductService) CreateProduct(ctx context.Context, productCommand *
 		return nil, err
 	}
 
+	price, err := entities.NewMoney(productCommand.PriceCents, productCommand.Currency)
+	if err != nil {
+		return nil, err
+	}
+
 	var newProduct = entities.NewProduct(
 		productCommand.Name,
-		productCommand.Price,
+		price,
 		*validatedSeller,
 	)
 

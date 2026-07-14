@@ -23,7 +23,7 @@ func TestCreateProduct_ServiceError(t *testing.T) {
 	mockService := new(MockProductService)
 	ctrl := rest.NewProductController(e, mockService)
 
-	body, _ := json.Marshal(map[string]any{"Name": "X", "Price": 1.0, "SellerId": uuid.NewString()})
+	body, _ := json.Marshal(map[string]any{"name": "X", "price_cents": 100, "currency": "EUR", "seller_id": uuid.NewString()})
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/products", bytes.NewReader(body))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
@@ -40,7 +40,7 @@ func TestCreateProduct_InvalidSellerId(t *testing.T) {
 	e := echo.New()
 	ctrl := rest.NewProductController(e, new(MockProductService))
 
-	body, _ := json.Marshal(map[string]any{"Name": "X", "Price": 1.0, "SellerId": "not-a-uuid"})
+	body, _ := json.Marshal(map[string]any{"name": "X", "price_cents": 100, "currency": "EUR", "seller_id": "not-a-uuid"})
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/products", bytes.NewReader(body))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
@@ -90,7 +90,8 @@ func TestUpdateProduct_Success(t *testing.T) {
 	ctrl := rest.NewProductController(e, mockService)
 
 	id := uuid.New()
-	body, _ := json.Marshal(map[string]any{"Name": "Widget v2", "Price": 19.99, "SellerId": uuid.NewString()})
+	sellerId := uuid.New()
+	body, _ := json.Marshal(map[string]any{"name": "Widget v2", "price_cents": 1999, "currency": "USD", "seller_id": sellerId.String()})
 	req := httptest.NewRequest(http.MethodPut, "/api/v1/products/"+id.String(), bytes.NewReader(body))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
@@ -98,12 +99,26 @@ func TestUpdateProduct_Success(t *testing.T) {
 	c.SetParamNames("id")
 	c.SetParamValues(id.String())
 
-	mockService.On("UpdateProduct", mock.Anything).Return(&command.UpdateProductCommandResult{
-		Result: &common.ProductResult{Id: id, Name: "Widget v2", Price: 19.99},
+	mockService.On("UpdateProduct", mock.MatchedBy(func(cmd *command.UpdateProductCommand) bool {
+		return cmd.Id == id && cmd.PriceCents == 1999 && cmd.Currency == entities.USD && cmd.SellerId == sellerId
+	})).Return(&command.UpdateProductCommandResult{
+		Result: &common.ProductResult{
+			Id:       id,
+			Name:     "Widget v2",
+			Price:    mustMoney(t, 1999, entities.USD),
+			SellerId: sellerId,
+		},
 	}, nil)
 
 	assert.NoError(t, ctrl.UpdateProductController(c))
 	assert.Equal(t, http.StatusOK, rec.Code)
+
+	var responseBody map[string]any
+	assert.NoError(t, json.Unmarshal(rec.Body.Bytes(), &responseBody))
+	assert.Equal(t, "Widget v2", responseBody["name"])
+	assert.Equal(t, float64(1999), responseBody["price_cents"])
+	assert.Equal(t, "USD", responseBody["currency"])
+	assert.Equal(t, sellerId.String(), responseBody["seller_id"])
 	mockService.AssertExpectations(t)
 }
 

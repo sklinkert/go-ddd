@@ -41,8 +41,8 @@ func TestPostgresTestContainer_TruncateTables(t *testing.T) {
 
 	// Insert test product
 	_, err = testDB.Pool.Exec(ctx, `
-		INSERT INTO products (id, name, price, seller_id, created_at, updated_at)
-		VALUES (gen_random_uuid(), 'Test Product', 99.99, 
+		INSERT INTO products (id, name, price_cents, currency, seller_id, created_at, updated_at)
+		VALUES (gen_random_uuid(), 'Test Product', 9999, 'USD',
 				(SELECT id FROM sellers LIMIT 1), NOW(), NOW())
 	`)
 	require.NoError(t, err)

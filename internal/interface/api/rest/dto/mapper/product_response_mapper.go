@@ -7,16 +7,18 @@ import (
 
 func ToProductResponse(product *common.ProductResult) *response.ProductResponse {
 	return &response.ProductResponse{
-		Id:        product.Id.String(),
-		Name:      product.Name,
-		Price:     product.Price,
-		CreatedAt: product.CreatedAt,
-		UpdatedAt: product.UpdatedAt,
+		Id:         product.Id.String(),
+		Name:       product.Name,
+		PriceCents: product.Price.Cents(),
+		Currency:   string(product.Price.Currency()),
+		SellerId:   product.SellerId.String(),
+		CreatedAt:  product.CreatedAt,
+		UpdatedAt:  product.UpdatedAt,
 	}
 }
 
 func ToProductListResponse(products []*common.ProductResult) *response.ListProductsResponse {
-	var responseList []*response.ProductResponse
+	responseList := make([]*response.ProductResponse, 0, len(products))
 	for _, product := range products {
 		responseList = append(responseList, ToProductResponse(product))
 	}

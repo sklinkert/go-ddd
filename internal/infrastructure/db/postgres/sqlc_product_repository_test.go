@@ -13,23 +13,36 @@ import (
 	"github.com/sklinkert/go-ddd/internal/testhelpers"
 )
 
-func TestSqlcProductRepository_Create(t *testing.T) {
-	testDB := testhelpers.SetupTestDB(t)
-	defer testDB.Close(t)
+func mustMoney(t *testing.T, cents int64, currency entities.Currency) entities.Money {
+	t.Helper()
+	money, err := entities.NewMoney(cents, currency)
+	require.NoError(t, err)
+	return money
+}
 
-	repo := NewSqlcProductRepository(testDB.Queries)
+func createTestSeller(t *testing.T, testDB *testhelpers.PostgresTestContainer, name string) *entities.ValidatedSeller {
+	t.Helper()
 	sellerRepo := NewSqlcSellerRepository(testDB.Queries)
 
-	// Create a seller first
-	seller := entities.NewSeller("Test Seller")
+	seller := entities.NewSeller(name)
 	validatedSeller, err := entities.NewValidatedSeller(seller)
 	require.NoError(t, err)
 
 	_, err = sellerRepo.Create(context.Background(), validatedSeller)
 	require.NoError(t, err)
 
+	return validatedSeller
+}
+
+func TestSqlcProductRepository_Create(t *testing.T) {
+	testDB := testhelpers.SetupTestDB(t)
+	defer testDB.Close(t)
+
+	repo := NewSqlcProductRepository(testDB.Pool)
+	validatedSeller := createTestSeller(t, testDB, "Test Seller")
+
 	// Create a product
-	product := entities.NewProduct("Test Product", 99.99, *validatedSeller)
+	product := entities.NewProduct("Test Product", mustMoney(t, 9999, entities.USD), *validatedSeller)
 	validatedProduct, err := entities.NewValidatedProduct(product)
 	require.NoError(t, err)
 
@@ -40,7 +53,9 @@ func TestSqlcProductRepository_Create(t *testing.T) {
 	require.NotNil(t, createdProduct)
 	assert.Equal(t, validatedProduct.Name, createdProduct.Name)
 	assert.Equal(t, validatedProduct.Price, createdProduct.Price)
-	assert.Equal(t, validatedSeller.Id, createdProduct.Seller.Id)
+	assert.Equal(t, int64(9999), createdProduct.Price.Cents())
+	assert.Equal(t, entities.USD, createdProduct.Price.Currency())
+	assert.Equal(t, validatedSeller.Id, createdProduct.SellerId)
 	assert.NotEqual(t, uuid.Nil, createdProduct.Id)
 	assert.False(t, createdProduct.CreatedAt.IsZero())
 	assert.False(t, createdProduct.UpdatedAt.IsZero())
@@ -50,18 +65,10 @@ func TestSqlcProductRepository_FindById(t *testing.T) {
 	testDB := testhelpers.SetupTestDB(t)
 	defer testDB.Close(t)
 
-	repo := NewSqlcProductRepository(testDB.Queries)
-	sellerRepo := NewSqlcSellerRepository(testDB.Queries)
+	repo := NewSqlcProductRepository(testDB.Pool)
+	validatedSeller := createTestSeller(t, testDB, "Test Seller")
 
-	// Create test data
-	seller := entities.NewSeller("Test Seller")
-	validatedSeller, err := entities.NewValidatedSeller(seller)
-	require.NoError(t, err)
-
-	_, err = sellerRepo.Create(context.Background(), validatedSeller)
-	require.NoError(t, err)
-
-	product := entities.NewProduct("Test Product", 99.99, *validatedSeller)
+	product := entities.NewProduct("Test Product", mustMoney(t, 9999, entities.EUR), *validatedSeller)
 	validatedProduct, err := entities.NewValidatedProduct(product)
 	require.NoError(t, err)
 
@@ -77,15 +84,14 @@ func TestSqlcProductRepository_FindById(t *testing.T) {
 	assert.Equal(t, createdProduct.Id, foundProduct.Id)
 	assert.Equal(t, createdProduct.Name, foundProduct.Name)
 	assert.Equal(t, createdProduct.Price, foundProduct.Price)
-	assert.Equal(t, createdProduct.Seller.Id, foundProduct.Seller.Id)
-	assert.Equal(t, createdProduct.Seller.Name, foundProduct.Seller.Name)
+	assert.Equal(t, validatedSeller.Id, foundProduct.SellerId)
 }
 
 func TestSqlcProductRepository_FindById_NotFound(t *testing.T) {
 	testDB := testhelpers.SetupTestDB(t)
 	defer testDB.Close(t)
 
-	repo := NewSqlcProductRepository(testDB.Queries)
+	repo := NewSqlcProductRepository(testDB.Pool)
 
 	// Test finding non-existent product
 	nonExistentId := uuid.New()
@@ -100,23 +106,15 @@ func TestSqlcProductRepository_FindAll(t *testing.T) {
 	testDB := testhelpers.SetupTestDB(t)
 	defer testDB.Close(t)
 
-	repo := NewSqlcProductRepository(testDB.Queries)
-	sellerRepo := NewSqlcSellerRepository(testDB.Queries)
-
-	// Create test seller
-	seller := entities.NewSeller("Test Seller")
-	validatedSeller, err := entities.NewValidatedSeller(seller)
-	require.NoError(t, err)
-
-	_, err = sellerRepo.Create(context.Background(), validatedSeller)
-	require.NoError(t, err)
+	repo := NewSqlcProductRepository(testDB.Pool)
+	validatedSeller := createTestSeller(t, testDB, "Test Seller")
 
 	// Create multiple products
-	product1 := entities.NewProduct("Product 1", 10.00, *validatedSeller)
+	product1 := entities.NewProduct("Product 1", mustMoney(t, 1000, entities.USD), *validatedSeller)
 	validatedProduct1, err := entities.NewValidatedProduct(product1)
 	require.NoError(t, err)
 
-	product2 := entities.NewProduct("Product 2", 20.00, *validatedSeller)
+	product2 := entities.NewProduct("Product 2", mustMoney(t, 2000, entities.EUR), *validatedSeller)
 	validatedProduct2, err := entities.NewValidatedProduct(product2)
 	require.NoError(t, err)
 
@@ -146,14 +144,16 @@ func TestSqlcProductRepository_FindAll(t *testing.T) {
 	require.NotNil(t, foundProduct1)
 	require.NotNil(t, foundProduct2)
 	assert.Equal(t, "Product 1", foundProduct1.Name)
+	assert.Equal(t, mustMoney(t, 1000, entities.USD), foundProduct1.Price)
 	assert.Equal(t, "Product 2", foundProduct2.Name)
+	assert.Equal(t, mustMoney(t, 2000, entities.EUR), foundProduct2.Price)
 }
 
 func TestSqlcProductRepository_FindAll_Empty(t *testing.T) {
 	testDB := testhelpers.SetupTestDB(t)
 	defer testDB.Close(t)
 
-	repo := NewSqlcProductRepository(testDB.Queries)
+	repo := NewSqlcProductRepository(testDB.Pool)
 
 	// Test finding all when no products exist
 	products, err := repo.FindAll(context.Background())
@@ -167,18 +167,10 @@ func TestSqlcProductRepository_Update(t *testing.T) {
 	testDB := testhelpers.SetupTestDB(t)
 	defer testDB.Close(t)
 
-	repo := NewSqlcProductRepository(testDB.Queries)
-	sellerRepo := NewSqlcSellerRepository(testDB.Queries)
+	repo := NewSqlcProductRepository(testDB.Pool)
+	validatedSeller := createTestSeller(t, testDB, "Test Seller")
 
-	// Create test data
-	seller := entities.NewSeller("Test Seller")
-	validatedSeller, err := entities.NewValidatedSeller(seller)
-	require.NoError(t, err)
-
-	_, err = sellerRepo.Create(context.Background(), validatedSeller)
-	require.NoError(t, err)
-
-	product := entities.NewProduct("Original Product", 50.00, *validatedSeller)
+	product := entities.NewProduct("Original Product", mustMoney(t, 5000, entities.USD), *validatedSeller)
 	validatedProduct, err := entities.NewValidatedProduct(product)
 	require.NoError(t, err)
 
@@ -189,8 +181,8 @@ func TestSqlcProductRepository_Update(t *testing.T) {
 	updatedProduct := &entities.Product{
 		Id:        createdProduct.Id,
 		Name:      "Updated Product",
-		Price:     75.00,
-		Seller:    createdProduct.Seller,
+		Price:     mustMoney(t, 7500, entities.USD),
+		SellerId:  createdProduct.SellerId,
 		CreatedAt: createdProduct.CreatedAt,
 		UpdatedAt: time.Now(),
 	}
@@ -204,7 +196,7 @@ func TestSqlcProductRepository_Update(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, result)
 	assert.Equal(t, "Updated Product", result.Name)
-	assert.Equal(t, 75.00, result.Price)
+	assert.Equal(t, mustMoney(t, 7500, entities.USD), result.Price)
 	assert.Equal(t, createdProduct.Id, result.Id)
 	assert.True(t, result.UpdatedAt.After(createdProduct.UpdatedAt))
 }
@@ -213,19 +205,14 @@ func TestSqlcProductRepository_Update_NotFound(t *testing.T) {
 	testDB := testhelpers.SetupTestDB(t)
 	defer testDB.Close(t)
 
-	repo := NewSqlcProductRepository(testDB.Queries)
-
-	// Create a seller for the product
-	seller := entities.NewSeller("Test Seller")
-	validatedSeller, err := entities.NewValidatedSeller(seller)
-	require.NoError(t, err)
+	repo := NewSqlcProductRepository(testDB.Pool)
 
 	// Create a product with non-existent ID
 	nonExistentProduct := &entities.Product{
 		Id:        uuid.New(),
 		Name:      "Non-existent Product",
-		Price:     100.00,
-		Seller:    validatedSeller.Seller,
+		Price:     mustMoney(t, 10000, entities.USD),
+		SellerId:  uuid.New(),
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}
@@ -244,18 +231,10 @@ func TestSqlcProductRepository_Delete(t *testing.T) {
 	testDB := testhelpers.SetupTestDB(t)
 	defer testDB.Close(t)
 
-	repo := NewSqlcProductRepository(testDB.Queries)
-	sellerRepo := NewSqlcSellerRepository(testDB.Queries)
+	repo := NewSqlcProductRepository(testDB.Pool)
+	validatedSeller := createTestSeller(t, testDB, "Test Seller")
 
-	// Create test data
-	seller := entities.NewSeller("Test Seller")
-	validatedSeller, err := entities.NewValidatedSeller(seller)
-	require.NoError(t, err)
-
-	_, err = sellerRepo.Create(context.Background(), validatedSeller)
-	require.NoError(t, err)
-
-	product := entities.NewProduct("Test Product", 99.99, *validatedSeller)
+	product := entities.NewProduct("Test Product", mustMoney(t, 9999, entities.USD), *validatedSeller)
 	validatedProduct, err := entities.NewValidatedProduct(product)
 	require.NoError(t, err)
 
@@ -276,7 +255,7 @@ func TestSqlcProductRepository_Delete_NotFound(t *testing.T) {
 	testDB := testhelpers.SetupTestDB(t)
 	defer testDB.Close(t)
 
-	repo := NewSqlcProductRepository(testDB.Queries)
+	repo := NewSqlcProductRepository(testDB.Pool)
 
 	// Try to delete non-existent product
 	nonExistentId := uuid.New()
@@ -291,21 +270,14 @@ func TestSqlcProductRepository_Create_WithInvalidSeller(t *testing.T) {
 	testDB := testhelpers.SetupTestDB(t)
 	defer testDB.Close(t)
 
-	repo := NewSqlcProductRepository(testDB.Queries)
+	repo := NewSqlcProductRepository(testDB.Pool)
 
-	// Create a product with non-existent seller
-	invalidSeller := &entities.Seller{
-		Id:        uuid.New(), // This ID doesn't exist in the database
-		Name:      "Non-existent Seller",
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
-	}
-
+	// Reference a seller ID that doesn't exist in the database
 	product := &entities.Product{
 		Id:        uuid.New(),
 		Name:      "Test Product",
-		Price:     99.99,
-		Seller:    *invalidSeller,
+		Price:     mustMoney(t, 9999, entities.USD),
+		SellerId:  uuid.New(),
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}
