@@ -3,13 +3,15 @@ package request
 import (
 	"github.com/google/uuid"
 	"github.com/sklinkert/go-ddd/internal/application/command"
+	"github.com/sklinkert/go-ddd/internal/domain/entities"
 )
 
 type CreateProductRequest struct {
-	IdempotencyKey string  `json:"idempotency_key"`
-	Name           string  `json:"Name"`
-	Price          float64 `json:"Price"`
-	SellerId       string  `json:"SellerId"`
+	IdempotencyKey string `json:"idempotency_key"`
+	Name           string `json:"name"`
+	PriceCents     int64  `json:"price_cents"`
+	Currency       string `json:"currency"`
+	SellerId       string `json:"seller_id"`
 }
 
 func (req *CreateProductRequest) ToCreateProductCommand() (*command.CreateProductCommand, error) {
@@ -21,7 +23,8 @@ func (req *CreateProductRequest) ToCreateProductCommand() (*command.CreateProduc
 	return &command.CreateProductCommand{
 		IdempotencyKey: req.IdempotencyKey,
 		Name:           req.Name,
-		Price:          req.Price,
+		PriceCents:     req.PriceCents,
+		Currency:       entities.Currency(req.Currency),
 		SellerId:       sellerId,
 	}, nil
 }

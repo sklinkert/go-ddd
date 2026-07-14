@@ -106,6 +106,24 @@ func TestIdempotencyRecord_ImmutableFields(t *testing.T) {
 	assert.Equal(t, 201, record.StatusCode)
 }
 
+func TestIdempotencyRecord_IsCompleted(t *testing.T) {
+	record := NewIdempotencyRecord("test-key", `{"test": "request"}`)
+
+	// A fresh record marks an in-flight request
+	assert.False(t, record.IsCompleted())
+
+	record.SetResponse(`{"id": "123"}`, 200)
+	assert.True(t, record.IsCompleted())
+}
+
+func TestIdempotencyRecord_IsCompleted_ErrorStatus(t *testing.T) {
+	record := NewIdempotencyRecord("test-key", `{"test": "request"}`)
+
+	// Any non-zero status code counts as completed, even errors
+	record.SetResponse(`{"error": "boom"}`, 500)
+	assert.True(t, record.IsCompleted())
+}
+
 func TestIdempotencyRecord_UniqueIDs(t *testing.T) {
 	// Create multiple records to ensure IDs are unique
 	records := make([]*IdempotencyRecord, 100)

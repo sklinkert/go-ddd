@@ -18,7 +18,7 @@ func NewProductResultFromEntity(product *entities.Product) *common.ProductResult
 		Id:        product.Id,
 		Name:      product.Name,
 		Price:     product.Price,
-		Seller:    NewSellerResultFromEntity(&product.Seller),
+		SellerId:  product.SellerId,
 		CreatedAt: product.CreatedAt,
 		UpdatedAt: product.UpdatedAt,
 	}

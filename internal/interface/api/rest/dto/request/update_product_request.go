@@ -3,13 +3,15 @@ package request
 import (
 	"github.com/google/uuid"
 	"github.com/sklinkert/go-ddd/internal/application/command"
+	"github.com/sklinkert/go-ddd/internal/domain/entities"
 )
 
 type UpdateProductRequest struct {
-	IdempotencyKey string  `json:"idempotency_key"`
-	Name           string  `json:"Name"`
-	Price          float64 `json:"Price"`
-	SellerId       string  `json:"SellerId"`
+	IdempotencyKey string `json:"idempotency_key"`
+	Name           string `json:"name"`
+	PriceCents     int64  `json:"price_cents"`
+	Currency       string `json:"currency"`
+	SellerId       string `json:"seller_id"`
 }
 
 // ToUpdateProductCommand builds the command. The product Id comes from the
@@ -24,7 +26,8 @@ func (req *UpdateProductRequest) ToUpdateProductCommand(id uuid.UUID) (*command.
 		IdempotencyKey: req.IdempotencyKey,
 		Id:             id,
 		Name:           req.Name,
-		Price:          req.Price,
+		PriceCents:     req.PriceCents,
+		Currency:       entities.Currency(req.Currency),
 		SellerId:       sellerId,
 	}, nil
 }

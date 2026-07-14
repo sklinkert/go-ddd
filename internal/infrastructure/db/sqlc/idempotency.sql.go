@@ -12,40 +12,13 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const createIdempotencyRecord = `-- name: CreateIdempotencyRecord :one
-INSERT INTO idempotency_records (id, key, request, response, status_code, created_at)
-VALUES ($1, $2, $3, $4, $5, $6)
-RETURNING id, key, request, response, status_code, created_at
+const deleteIdempotencyRecord = `-- name: DeleteIdempotencyRecord :exec
+DELETE FROM idempotency_records WHERE key = $1
 `
 
-type CreateIdempotencyRecordParams struct {
-	ID         uuid.UUID          `db:"id" json:"id"`
-	Key        string             `db:"key" json:"key"`
-	Request    string             `db:"request" json:"request"`
-	Response   string             `db:"response" json:"response"`
-	StatusCode int32              `db:"status_code" json:"status_code"`
-	CreatedAt  pgtype.Timestamptz `db:"created_at" json:"created_at"`
-}
-
-func (q *Queries) CreateIdempotencyRecord(ctx context.Context, arg CreateIdempotencyRecordParams) (IdempotencyRecord, error) {
-	row := q.db.QueryRow(ctx, createIdempotencyRecord,
-		arg.ID,
-		arg.Key,
-		arg.Request,
-		arg.Response,
-		arg.StatusCode,
-		arg.CreatedAt,
-	)
-	var i IdempotencyRecord
-	err := row.Scan(
-		&i.ID,
-		&i.Key,
-		&i.Request,
-		&i.Response,
-		&i.StatusCode,
-		&i.CreatedAt,
-	)
-	return i, err
+func (q *Queries) DeleteIdempotencyRecord(ctx context.Context, key string) error {
+	_, err := q.db.Exec(ctx, deleteIdempotencyRecord, key)
+	return err
 }
 
 const getIdempotencyRecordByKey = `-- name: GetIdempotencyRecordByKey :one
@@ -68,35 +41,46 @@ func (q *Queries) GetIdempotencyRecordByKey(ctx context.Context, key string) (Id
 	return i, err
 }
 
-const updateIdempotencyRecord = `-- name: UpdateIdempotencyRecord :one
-UPDATE idempotency_records
-SET request = $2, response = $3, status_code = $4
-WHERE id = $1
-RETURNING id, key, request, response, status_code, created_at
+const reserveIdempotencyKey = `-- name: ReserveIdempotencyKey :execrows
+INSERT INTO idempotency_records (id, key, request, response, status_code, created_at)
+VALUES ($1, $2, $3, '', 0, $4)
+ON CONFLICT (key) DO NOTHING
 `
 
-type UpdateIdempotencyRecordParams struct {
-	ID         uuid.UUID `db:"id" json:"id"`
-	Request    string    `db:"request" json:"request"`
-	Response   string    `db:"response" json:"response"`
-	StatusCode int32     `db:"status_code" json:"status_code"`
+type ReserveIdempotencyKeyParams struct {
+	ID        uuid.UUID          `db:"id" json:"id"`
+	Key       string             `db:"key" json:"key"`
+	Request   string             `db:"request" json:"request"`
+	CreatedAt pgtype.Timestamptz `db:"created_at" json:"created_at"`
 }
 
-func (q *Queries) UpdateIdempotencyRecord(ctx context.Context, arg UpdateIdempotencyRecordParams) (IdempotencyRecord, error) {
-	row := q.db.QueryRow(ctx, updateIdempotencyRecord,
+// Atomically claims the key. Zero rows means another request already holds it.
+func (q *Queries) ReserveIdempotencyKey(ctx context.Context, arg ReserveIdempotencyKeyParams) (int64, error) {
+	result, err := q.db.Exec(ctx, reserveIdempotencyKey,
 		arg.ID,
+		arg.Key,
 		arg.Request,
-		arg.Response,
-		arg.StatusCode,
+		arg.CreatedAt,
 	)
-	var i IdempotencyRecord
-	err := row.Scan(
-		&i.ID,
-		&i.Key,
-		&i.Request,
-		&i.Response,
-		&i.StatusCode,
-		&i.CreatedAt,
-	)
-	return i, err
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
+const setIdempotencyResponse = `-- name: SetIdempotencyResponse :exec
+UPDATE idempotency_records
+SET response = $2, status_code = $3
+WHERE key = $1
+`
+
+type SetIdempotencyResponseParams struct {
+	Key        string `db:"key" json:"key"`
+	Response   string `db:"response" json:"response"`
+	StatusCode int32  `db:"status_code" json:"status_code"`
+}
+
+func (q *Queries) SetIdempotencyResponse(ctx context.Context, arg SetIdempotencyResponseParams) error {
+	_, err := q.db.Exec(ctx, setIdempotencyResponse, arg.Key, arg.Response, arg.StatusCode)
+	return err
 }

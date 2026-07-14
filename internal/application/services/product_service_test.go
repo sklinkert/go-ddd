@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"errors"
+	"sync"
 	"testing"
 
 	"github.com/google/uuid"
@@ -58,9 +59,17 @@ func (m *MockProductRepository) FindById(ctx context.Context, id uuid.UUID) (*en
 	return nil, nil
 }
 
-// MockIdempotencyRepository is a mock implementation of the IdempotencyRepository interface
+// MockIdempotencyRepository is an in-memory implementation of the
+// IdempotencyRepository interface with call tracking for assertions.
 type MockIdempotencyRepository struct {
-	records map[string]*entities.IdempotencyRecord
+	mu             sync.Mutex
+	records        map[string]*entities.IdempotencyRecord
+	reserveCalls   int
+	deleteCalls    int
+	deletedKeys    []string
+	reserveErr     error
+	findErr        error
+	setResponseErr error
 }
 
 func NewMockIdempotencyRepository() *MockIdempotencyRepository {
@@ -69,21 +78,52 @@ func NewMockIdempotencyRepository() *MockIdempotencyRepository {
 	}
 }
 
+func (m *MockIdempotencyRepository) Reserve(ctx context.Context, record *entities.IdempotencyRecord) (bool, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.reserveCalls++
+	if m.reserveErr != nil {
+		return false, m.reserveErr
+	}
+	if _, exists := m.records[record.Key]; exists {
+		return false, nil
+	}
+	m.records[record.Key] = record
+	return true, nil
+}
+
 func (m *MockIdempotencyRepository) FindByKey(ctx context.Context, key string) (*entities.IdempotencyRecord, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if m.findErr != nil {
+		return nil, m.findErr
+	}
 	if record, exists := m.records[key]; exists {
-		return record, nil
+		copied := *record
+		return &copied, nil
 	}
 	return nil, nil
 }
 
-func (m *MockIdempotencyRepository) Create(ctx context.Context, record *entities.IdempotencyRecord) (*entities.IdempotencyRecord, error) {
-	m.records[record.Key] = record
-	return record, nil
+func (m *MockIdempotencyRepository) SetResponse(ctx context.Context, key string, response string, statusCode int) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if m.setResponseErr != nil {
+		return m.setResponseErr
+	}
+	if record, exists := m.records[key]; exists {
+		record.SetResponse(response, statusCode)
+	}
+	return nil
 }
 
-func (m *MockIdempotencyRepository) Update(ctx context.Context, record *entities.IdempotencyRecord) (*entities.IdempotencyRecord, error) {
-	m.records[record.Key] = record
-	return record, nil
+func (m *MockIdempotencyRepository) Delete(ctx context.Context, key string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.deleteCalls++
+	m.deletedKeys = append(m.deletedKeys, key)
+	delete(m.records, key)
+	return nil
 }
 
 func TestProductService_CreateProduct(t *testing.T) {
@@ -96,8 +136,7 @@ func TestProductService_CreateProduct(t *testing.T) {
 	seller := createPersistedSeller(t, sellerRepo)
 
 	// Create product
-	product := entities.NewProduct("Example", 100.0, *seller)
-	productCommand := getCreateProductCommand(product)
+	productCommand := getCreateProductCommand("Example", 10000, seller.Id)
 	_, err := service.CreateProduct(context.Background(), productCommand)
 	if err != nil {
 		t.Errorf("Unexpected error: %s", err)
@@ -118,8 +157,8 @@ func TestProductService_GetAllProducts(t *testing.T) {
 	seller := createPersistedSeller(t, sellerRepo)
 
 	// Add two products
-	_, _ = service.CreateProduct(context.Background(), getCreateProductCommand(entities.NewProduct("Example1", 100.0, *seller)))
-	_, _ = service.CreateProduct(context.Background(), getCreateProductCommand(entities.NewProduct("Example2", 200.0, *seller)))
+	_, _ = service.CreateProduct(context.Background(), getCreateProductCommand("Example1", 10000, seller.Id))
+	_, _ = service.CreateProduct(context.Background(), getCreateProductCommand("Example2", 20000, seller.Id))
 
 	products, err := service.FindAllProducts(context.Background())
 	if err != nil {
@@ -140,8 +179,7 @@ func TestProductService_FindProductById(t *testing.T) {
 	// Create seller
 	seller := createPersistedSeller(t, sellerRepo)
 
-	product := entities.NewProduct("Example", 100.0, *seller)
-	result, err := service.CreateProduct(context.Background(), getCreateProductCommand(product))
+	result, err := service.CreateProduct(context.Background(), getCreateProductCommand("Example", 10000, seller.Id))
 	if err != nil {
 		t.Errorf("Unexpected error: %s", err)
 	}
@@ -164,11 +202,12 @@ func TestProductService_FindProductById(t *testing.T) {
 	}
 }
 
-func getCreateProductCommand(product *entities.Product) *command.CreateProductCommand {
+func getCreateProductCommand(name string, priceCents int64, sellerId uuid.UUID) *command.CreateProductCommand {
 	return &command.CreateProductCommand{
-		Name:     product.Name,
-		Price:    product.Price,
-		SellerId: product.Seller.Id,
+		Name:       name,
+		PriceCents: priceCents,
+		Currency:   entities.USD,
+		SellerId:   sellerId,
 	}
 }
 

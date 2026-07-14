@@ -10,8 +10,9 @@ This guide explains the DDD and CQRS principles demonstrated in this codebase, p
 5. [Infrastructure Layer Design](#infrastructure-layer-design)
 6. [CQRS Implementation](#cqrs-implementation)
 7. [Idempotency Pattern](#idempotency-pattern)
-8. [Best Practices](#best-practices)
-9. [Applying These Principles](#applying-these-principles)
+8. [Domain Events and the Transactional Outbox](#domain-events-and-the-transactional-outbox)
+9. [Best Practices](#best-practices)
+10. [Applying These Principles](#applying-these-principles)
 
 ## Domain-Driven Design Overview
 
@@ -69,8 +70,23 @@ type Entity struct {
 - Factory methods (NewEntity) ensure valid initial state
 - Business rules are enforced through methods
 - Validation happens at creation and modification
+- Reference other aggregates **by Id**, never by embedding them (`Product.SellerId`, not `Product.Seller`)
 
-### 2. Validation Pattern
+### 2. Value Objects
+
+Attributes with rules of their own become value objects — immutable, validated at construction, compared by value. The canonical example is money (`internal/domain/entities/money.go`):
+
+```go
+// Money stores integer minor units (cents), never float64:
+// floats accumulate rounding errors and have no currency.
+price, err := entities.NewMoney(4999, entities.EUR) // 49.99 EUR
+price.Cents()    // 4999
+price.Currency() // EUR
+```
+
+Because `NewMoney` is the only way to construct one, an invalid `Money` (negative amount, unknown currency) cannot exist anywhere in the system.
+
+### 3. Validation Pattern
 ```go
 // Private validation method
 func (e *Entity) validate() error {
@@ -89,7 +105,7 @@ func (e *Entity) UpdateAttribute(value string) error {
 }
 ```
 
-### 3. Validated Entity Pattern
+### 4. Validated Entity Pattern
 ```go
 type ValidatedEntity struct {
     Entity
@@ -109,7 +125,7 @@ func NewValidatedEntity(entity *Entity) (*ValidatedEntity, error) {
 
 **Purpose:** Ensures only valid entities can be persisted
 
-### 4. Repository Interfaces
+### 5. Repository Interfaces
 ```go
 type EntityRepository interface {
     Create(entity *ValidatedEntity) (*Entity, error)
@@ -241,30 +257,46 @@ func (s *EntityService) FindEntitiesByCategory(query *GetEntitiesByCategoryQuery
 ## Idempotency Pattern
 
 ### Implementation
+
+The naive approach — check whether the key exists, then execute, then store — has a race: two concurrent requests with the same key both pass the check and both execute. This template reserves the key **atomically** instead (`internal/application/services/idempotency.go`):
+
 ```go
-// Check for existing execution
-if command.IdempotencyKey != "" {
-    existing, err := idempotencyRepo.FindByKey(ctx, command.IdempotencyKey)
-    if existing != nil {
-        return cachedResponse, nil
-    }
-}
+// 1. A completed request with the same key returns its cached response.
+// 2. The key is reserved atomically (INSERT ... ON CONFLICT DO NOTHING);
+//    losing the race means another request holds the key.
+// 3. On failure the reservation is released so the client can retry.
+result, err := withIdempotency(ctx, repo, cmd.IdempotencyKey, cmd, func() (*Result, error) {
+    return executeBusinessLogic()
+})
+```
 
-// Execute business logic
-result := executeBusinessLogic()
+A reserved-but-uncompleted key signals a request still in flight; the caller receives `ErrRequestInFlight` instead of a duplicate execution. Reusing a key with a different payload returns `ErrIdempotencyKeyReuse` (HTTP 422), and reservations orphaned by a crash expire after a TTL so a key can never be stuck forever.
 
-// Store result for future requests
-if command.IdempotencyKey != "" {
-    record := NewIdempotencyRecord(command.IdempotencyKey, request)
-    record.SetResponse(response, statusCode)
-    idempotencyRepo.Create(ctx, record)
+### Benefits
+- Prevents duplicate operations — even under concurrent retries
+- Handles network failures gracefully
+- Ensures consistency in distributed systems
+
+## Domain Events and the Transactional Outbox
+
+Aggregates record business-relevant facts as **domain events** (past tense, immutable):
+
+```go
+func NewProduct(name string, price Money, seller ValidatedSeller) *Product {
+    product := &Product{ /* ... */ }
+    product.recordEvent(events.NewProductCreated(product.Id, name, price.Cents(), string(price.Currency()), seller.Id))
+    return product
 }
 ```
 
-### Benefits
-- Prevents duplicate operations
-- Handles network failures gracefully
-- Ensures consistency in distributed systems
+Publishing events directly to a broker after the database commit is a **dual write**: if the process crashes in between, the event is lost. The transactional outbox fixes this:
+
+1. The repository pulls events off the aggregate (`product.PullEvents()`) and inserts them into the `outbox_events` table **in the same transaction** as the state change.
+2. A relay (`internal/infrastructure/outbox/relay.go`) polls unpublished rows and forwards them to a publisher — the template logs them via `slog`; swap in Kafka/NATS/SQS for production.
+3. Events are marked published only after the publisher succeeds, giving **at-least-once** delivery. Consumers must be idempotent.
+
+This is the standard pattern for reliable event-driven integration between bounded contexts. The template ships a deliberately small implementation so you can read it in one sitting; for a standalone, broker-agnostic library version of the same pattern see [go-outbox](https://github.com/sklinkert/go-outbox).
+
 
 ## Best Practices
 

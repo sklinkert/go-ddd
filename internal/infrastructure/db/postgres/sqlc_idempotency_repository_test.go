@@ -3,7 +3,6 @@ package postgres
 import (
 	"context"
 	"testing"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -13,28 +12,58 @@ import (
 	"github.com/sklinkert/go-ddd/internal/testhelpers"
 )
 
-func TestSqlcIdempotencyRepository_Create(t *testing.T) {
+func TestSqlcIdempotencyRepository_Reserve(t *testing.T) {
 	testDB := testhelpers.SetupTestDB(t)
 	defer testDB.Close(t)
 
 	repo := NewSqlcIdempotencyRepository(testDB.Queries)
 	ctx := context.Background()
 
-	// Create an idempotency record
 	record := entities.NewIdempotencyRecord("test-key", `{"name": "test product"}`)
-	record.SetResponse(`{"id": "123", "name": "test product"}`, 201)
 
-	createdRecord, err := repo.Create(ctx, record)
+	claimed, err := repo.Reserve(ctx, record)
 
-	// Assertions
 	require.NoError(t, err)
-	require.NotNil(t, createdRecord)
-	assert.Equal(t, record.Key, createdRecord.Key)
-	assert.Equal(t, record.Request, createdRecord.Request)
-	assert.Equal(t, record.Response, createdRecord.Response)
-	assert.Equal(t, record.StatusCode, createdRecord.StatusCode)
-	assert.NotEqual(t, uuid.Nil, createdRecord.Id)
-	assert.False(t, createdRecord.CreatedAt.IsZero())
+	assert.True(t, claimed)
+
+	// Record is persisted but not completed yet
+	foundRecord, err := repo.FindByKey(ctx, "test-key")
+	require.NoError(t, err)
+	require.NotNil(t, foundRecord)
+	assert.Equal(t, record.Id, foundRecord.Id)
+	assert.Equal(t, record.Key, foundRecord.Key)
+	assert.Equal(t, record.Request, foundRecord.Request)
+	assert.Equal(t, "", foundRecord.Response)
+	assert.Equal(t, 0, foundRecord.StatusCode)
+	assert.False(t, foundRecord.IsCompleted())
+	assert.NotEqual(t, uuid.Nil, foundRecord.Id)
+	assert.False(t, foundRecord.CreatedAt.IsZero())
+}
+
+func TestSqlcIdempotencyRepository_Reserve_DuplicateKey(t *testing.T) {
+	testDB := testhelpers.SetupTestDB(t)
+	defer testDB.Close(t)
+
+	repo := NewSqlcIdempotencyRepository(testDB.Queries)
+	ctx := context.Background()
+
+	record1 := entities.NewIdempotencyRecord("duplicate-key", `{"name": "test product 1"}`)
+	claimed, err := repo.Reserve(ctx, record1)
+	require.NoError(t, err)
+	assert.True(t, claimed)
+
+	// Second reserve with the same key must not claim and must not error
+	record2 := entities.NewIdempotencyRecord("duplicate-key", `{"name": "test product 2"}`)
+	claimed, err = repo.Reserve(ctx, record2)
+	require.NoError(t, err)
+	assert.False(t, claimed)
+
+	// First record is untouched
+	foundRecord, err := repo.FindByKey(ctx, "duplicate-key")
+	require.NoError(t, err)
+	require.NotNil(t, foundRecord)
+	assert.Equal(t, record1.Id, foundRecord.Id)
+	assert.Equal(t, record1.Request, foundRecord.Request)
 }
 
 func TestSqlcIdempotencyRepository_FindByKey(t *testing.T) {
@@ -44,25 +73,19 @@ func TestSqlcIdempotencyRepository_FindByKey(t *testing.T) {
 	repo := NewSqlcIdempotencyRepository(testDB.Queries)
 	ctx := context.Background()
 
-	// Create test data
 	record := entities.NewIdempotencyRecord("find-test-key", `{"name": "test product"}`)
-	record.SetResponse(`{"id": "123", "name": "test product"}`, 201)
-
-	createdRecord, err := repo.Create(ctx, record)
+	claimed, err := repo.Reserve(ctx, record)
 	require.NoError(t, err)
+	require.True(t, claimed)
 
-	// Test finding by key
 	foundRecord, err := repo.FindByKey(ctx, "find-test-key")
 
-	// Assertions
 	require.NoError(t, err)
 	require.NotNil(t, foundRecord)
-	assert.Equal(t, createdRecord.Id, foundRecord.Id)
-	assert.Equal(t, createdRecord.Key, foundRecord.Key)
-	assert.Equal(t, createdRecord.Request, foundRecord.Request)
-	assert.Equal(t, createdRecord.Response, foundRecord.Response)
-	assert.Equal(t, createdRecord.StatusCode, foundRecord.StatusCode)
-	assert.Equal(t, createdRecord.CreatedAt.Unix(), foundRecord.CreatedAt.Unix())
+	assert.Equal(t, record.Id, foundRecord.Id)
+	assert.Equal(t, record.Key, foundRecord.Key)
+	assert.Equal(t, record.Request, foundRecord.Request)
+	assert.Equal(t, record.CreatedAt.Unix(), foundRecord.CreatedAt.Unix())
 }
 
 func TestSqlcIdempotencyRepository_FindByKey_NotFound(t *testing.T) {
@@ -72,123 +95,98 @@ func TestSqlcIdempotencyRepository_FindByKey_NotFound(t *testing.T) {
 	repo := NewSqlcIdempotencyRepository(testDB.Queries)
 	ctx := context.Background()
 
-	// Test finding non-existent key
 	foundRecord, err := repo.FindByKey(ctx, "non-existent-key")
 
-	// Assertions
 	require.NoError(t, err) // Should not error, just return nil
 	assert.Nil(t, foundRecord)
 }
 
-func TestSqlcIdempotencyRepository_Update(t *testing.T) {
+func TestSqlcIdempotencyRepository_SetResponse(t *testing.T) {
 	testDB := testhelpers.SetupTestDB(t)
 	defer testDB.Close(t)
 
 	repo := NewSqlcIdempotencyRepository(testDB.Queries)
 	ctx := context.Background()
 
-	// Create test data
-	record := entities.NewIdempotencyRecord("update-test-key", `{"name": "test product"}`)
-	// Initially no response set
+	record := entities.NewIdempotencyRecord("set-response-key", `{"name": "test product"}`)
+	claimed, err := repo.Reserve(ctx, record)
+	require.NoError(t, err)
+	require.True(t, claimed)
 
-	createdRecord, err := repo.Create(ctx, record)
+	err = repo.SetResponse(ctx, "set-response-key", `{"id": "456", "name": "updated product"}`, 200)
 	require.NoError(t, err)
 
-	// Update the record with response
-	createdRecord.SetResponse(`{"id": "456", "name": "updated product"}`, 200)
-
-	updatedRecord, err := repo.Update(ctx, createdRecord)
-
-	// Assertions
+	foundRecord, err := repo.FindByKey(ctx, "set-response-key")
 	require.NoError(t, err)
-	require.NotNil(t, updatedRecord)
-	assert.Equal(t, createdRecord.Id, updatedRecord.Id)
-	assert.Equal(t, createdRecord.Key, updatedRecord.Key)
-	assert.Equal(t, createdRecord.Request, updatedRecord.Request)
-	assert.Equal(t, `{"id": "456", "name": "updated product"}`, updatedRecord.Response)
-	assert.Equal(t, 200, updatedRecord.StatusCode)
-	assert.Equal(t, createdRecord.CreatedAt.Unix(), updatedRecord.CreatedAt.Unix()) // CreatedAt should not change
+	require.NotNil(t, foundRecord)
+	assert.Equal(t, record.Id, foundRecord.Id)
+	assert.Equal(t, record.Request, foundRecord.Request)
+	assert.Equal(t, `{"id": "456", "name": "updated product"}`, foundRecord.Response)
+	assert.Equal(t, 200, foundRecord.StatusCode)
+	assert.True(t, foundRecord.IsCompleted())
+	assert.Equal(t, record.CreatedAt.Unix(), foundRecord.CreatedAt.Unix()) // CreatedAt should not change
 }
 
-func TestSqlcIdempotencyRepository_Update_NotFound(t *testing.T) {
+func TestSqlcIdempotencyRepository_SetResponse_NonExistentKey(t *testing.T) {
 	testDB := testhelpers.SetupTestDB(t)
 	defer testDB.Close(t)
 
 	repo := NewSqlcIdempotencyRepository(testDB.Queries)
 	ctx := context.Background()
 
-	// Try to update non-existent record
-	nonExistentRecord := &entities.IdempotencyRecord{
-		Id:         uuid.New(),
-		Key:        "non-existent-key",
-		Request:    `{"test": "data"}`,
-		Response:   `{"result": "fail"}`,
-		StatusCode: 404,
-		CreatedAt:  time.Now(),
-	}
+	// Updating a missing key is a no-op, not an error
+	err := repo.SetResponse(ctx, "non-existent-key", `{"result": "fail"}`, 404)
+	assert.NoError(t, err)
 
-	updatedRecord, err := repo.Update(ctx, nonExistentRecord)
-
-	// Assertions
-	assert.Error(t, err)
-	assert.Nil(t, updatedRecord)
+	foundRecord, err := repo.FindByKey(ctx, "non-existent-key")
+	require.NoError(t, err)
+	assert.Nil(t, foundRecord)
 }
 
-func TestSqlcIdempotencyRepository_Create_DuplicateKey(t *testing.T) {
+func TestSqlcIdempotencyRepository_Delete_ReleasesKey(t *testing.T) {
 	testDB := testhelpers.SetupTestDB(t)
 	defer testDB.Close(t)
 
 	repo := NewSqlcIdempotencyRepository(testDB.Queries)
 	ctx := context.Background()
 
-	// Create first record
-	record1 := entities.NewIdempotencyRecord("duplicate-key", `{"name": "test product 1"}`)
-	record1.SetResponse(`{"id": "123"}`, 201)
+	record := entities.NewIdempotencyRecord("release-key", `{"name": "test product"}`)
+	claimed, err := repo.Reserve(ctx, record)
+	require.NoError(t, err)
+	require.True(t, claimed)
 
-	_, err := repo.Create(ctx, record1)
+	err = repo.Delete(ctx, "release-key")
 	require.NoError(t, err)
 
-	// Try to create second record with same key
-	record2 := entities.NewIdempotencyRecord("duplicate-key", `{"name": "test product 2"}`)
-	record2.SetResponse(`{"id": "456"}`, 201)
-
-	createdRecord2, err := repo.Create(ctx, record2)
-
-	// Should fail due to unique constraint on key
-	assert.Error(t, err)
-	assert.Nil(t, createdRecord2)
-}
-
-func TestSqlcIdempotencyRepository_Create_EmptyResponse(t *testing.T) {
-	testDB := testhelpers.SetupTestDB(t)
-	defer testDB.Close(t)
-
-	repo := NewSqlcIdempotencyRepository(testDB.Queries)
-	ctx := context.Background()
-
-	// Create record without setting response (empty response, zero status code)
-	record := entities.NewIdempotencyRecord("empty-response-key", `{"name": "test product"}`)
-	// Note: not calling SetResponse, so Response is empty string and StatusCode is 0
-
-	createdRecord, err := repo.Create(ctx, record)
-
-	// Should succeed with empty response
+	foundRecord, err := repo.FindByKey(ctx, "release-key")
 	require.NoError(t, err)
-	require.NotNil(t, createdRecord)
-	assert.Equal(t, "empty-response-key", createdRecord.Key)
-	assert.Equal(t, `{"name": "test product"}`, createdRecord.Request)
-	assert.Equal(t, "", createdRecord.Response)
-	assert.Equal(t, 0, createdRecord.StatusCode)
+	assert.Nil(t, foundRecord)
+
+	// After release the key can be reserved again
+	retryRecord := entities.NewIdempotencyRecord("release-key", `{"name": "retry"}`)
+	claimed, err = repo.Reserve(ctx, retryRecord)
+	require.NoError(t, err)
+	assert.True(t, claimed)
 }
 
-func TestSqlcIdempotencyRepository_Create_LargeData(t *testing.T) {
+func TestSqlcIdempotencyRepository_Delete_NonExistentKey(t *testing.T) {
 	testDB := testhelpers.SetupTestDB(t)
 	defer testDB.Close(t)
 
 	repo := NewSqlcIdempotencyRepository(testDB.Queries)
 	ctx := context.Background()
 
-	// Create record with large request/response data
+	err := repo.Delete(ctx, "non-existent-key")
+	assert.NoError(t, err)
+}
+
+func TestSqlcIdempotencyRepository_Reserve_LargeData(t *testing.T) {
+	testDB := testhelpers.SetupTestDB(t)
+	defer testDB.Close(t)
+
+	repo := NewSqlcIdempotencyRepository(testDB.Queries)
+	ctx := context.Background()
+
 	largeData := make([]byte, 5000)
 	for i := range largeData {
 		largeData[i] = 'A'
@@ -197,17 +195,19 @@ func TestSqlcIdempotencyRepository_Create_LargeData(t *testing.T) {
 	largeResponse := `{"result": "` + string(largeData) + `"}`
 
 	record := entities.NewIdempotencyRecord("large-data-key", largeRequest)
-	record.SetResponse(largeResponse, 200)
-
-	createdRecord, err := repo.Create(ctx, record)
-
-	// Should succeed as TEXT fields can handle large data
+	claimed, err := repo.Reserve(ctx, record)
 	require.NoError(t, err)
-	require.NotNil(t, createdRecord)
-	assert.Equal(t, "large-data-key", createdRecord.Key)
-	assert.Equal(t, largeRequest, createdRecord.Request)
-	assert.Equal(t, largeResponse, createdRecord.Response)
-	assert.Equal(t, 200, createdRecord.StatusCode)
+	require.True(t, claimed)
+
+	err = repo.SetResponse(ctx, "large-data-key", largeResponse, 200)
+	require.NoError(t, err)
+
+	foundRecord, err := repo.FindByKey(ctx, "large-data-key")
+	require.NoError(t, err)
+	require.NotNil(t, foundRecord)
+	assert.Equal(t, largeRequest, foundRecord.Request)
+	assert.Equal(t, largeResponse, foundRecord.Response)
+	assert.Equal(t, 200, foundRecord.StatusCode)
 }
 
 func TestSqlcIdempotencyRepository_Integration_Workflow(t *testing.T) {
@@ -218,45 +218,43 @@ func TestSqlcIdempotencyRepository_Integration_Workflow(t *testing.T) {
 	ctx := context.Background()
 
 	key := "workflow-test-key"
-	requestData := `{"product": "test", "price": 99.99}`
+	requestData := `{"product": "test", "price_cents": 9999, "currency": "USD"}`
 
-	// Step 1: Check if key exists (should not exist)
+	// Step 1: Key does not exist yet
 	existingRecord, err := repo.FindByKey(ctx, key)
 	require.NoError(t, err)
 	assert.Nil(t, existingRecord)
 
-	// Step 2: Create new record without response (request processing started)
-	initialRecord := entities.NewIdempotencyRecord(key, requestData)
-
-	createdRecord, err := repo.Create(ctx, initialRecord)
+	// Step 2: Reserve the key (request processing started)
+	record := entities.NewIdempotencyRecord(key, requestData)
+	claimed, err := repo.Reserve(ctx, record)
 	require.NoError(t, err)
-	require.NotNil(t, createdRecord)
-	assert.Equal(t, key, createdRecord.Key)
-	assert.Equal(t, requestData, createdRecord.Request)
-	assert.Equal(t, "", createdRecord.Response) // No response yet
-	assert.Equal(t, 0, createdRecord.StatusCode)
+	require.True(t, claimed)
 
-	// Step 3: Update record with response (processing completed)
+	// Step 3: While in flight, a concurrent reserve loses the race
+	concurrent := entities.NewIdempotencyRecord(key, requestData)
+	claimed, err = repo.Reserve(ctx, concurrent)
+	require.NoError(t, err)
+	assert.False(t, claimed)
+
+	inFlight, err := repo.FindByKey(ctx, key)
+	require.NoError(t, err)
+	require.NotNil(t, inFlight)
+	assert.False(t, inFlight.IsCompleted())
+
+	// Step 4: Store the response (processing completed)
 	responseData := `{"id": "prod-123", "status": "created"}`
-	createdRecord.SetResponse(responseData, 201)
-
-	updatedRecord, err := repo.Update(ctx, createdRecord)
+	err = repo.SetResponse(ctx, key, responseData, 201)
 	require.NoError(t, err)
-	require.NotNil(t, updatedRecord)
-	assert.Equal(t, key, updatedRecord.Key)
-	assert.Equal(t, requestData, updatedRecord.Request)
-	assert.Equal(t, responseData, updatedRecord.Response)
-	assert.Equal(t, 201, updatedRecord.StatusCode)
 
-	// Step 4: Retrieve final record by key
 	finalRecord, err := repo.FindByKey(ctx, key)
 	require.NoError(t, err)
 	require.NotNil(t, finalRecord)
-	assert.Equal(t, updatedRecord.Id, finalRecord.Id)
-	assert.Equal(t, updatedRecord.Key, finalRecord.Key)
-	assert.Equal(t, updatedRecord.Request, finalRecord.Request)
-	assert.Equal(t, updatedRecord.Response, finalRecord.Response)
-	assert.Equal(t, updatedRecord.StatusCode, finalRecord.StatusCode)
+	assert.Equal(t, record.Id, finalRecord.Id)
+	assert.Equal(t, requestData, finalRecord.Request)
+	assert.Equal(t, responseData, finalRecord.Response)
+	assert.Equal(t, 201, finalRecord.StatusCode)
+	assert.True(t, finalRecord.IsCompleted())
 }
 
 func TestSqlcIdempotencyRepository_StatusCodes(t *testing.T) {
@@ -275,23 +273,20 @@ func TestSqlcIdempotencyRepository_StatusCodes(t *testing.T) {
 		{"bad_request_400", 400},
 		{"not_found_404", 404},
 		{"server_error_500", 500},
-		{"zero_status", 0},
-		{"negative_status", -1},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			record := entities.NewIdempotencyRecord(tc.name+"-key", `{"test": "data"}`)
-			record.SetResponse(`{"result": "test"}`, tc.statusCode)
-
-			createdRecord, err := repo.Create(ctx, record)
-
+			key := tc.name + "-key"
+			record := entities.NewIdempotencyRecord(key, `{"test": "data"}`)
+			claimed, err := repo.Reserve(ctx, record)
 			require.NoError(t, err)
-			require.NotNil(t, createdRecord)
-			assert.Equal(t, tc.statusCode, createdRecord.StatusCode)
+			require.True(t, claimed)
 
-			// Verify by retrieving
-			foundRecord, err := repo.FindByKey(ctx, tc.name+"-key")
+			err = repo.SetResponse(ctx, key, `{"result": "test"}`, tc.statusCode)
+			require.NoError(t, err)
+
+			foundRecord, err := repo.FindByKey(ctx, key)
 			require.NoError(t, err)
 			require.NotNil(t, foundRecord)
 			assert.Equal(t, tc.statusCode, foundRecord.StatusCode)

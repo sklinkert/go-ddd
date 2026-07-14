@@ -48,9 +48,7 @@ func (pc *ProductController) CreateProductController(c echo.Context) error {
 
 	result, err := pc.service.CreateProduct(c.Request().Context(), productCommand)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{
-			"error": "Failed to create product",
-		})
+		return writeCommandError(c, err, "Failed to create product")
 	}
 
 	response := mapper.ToProductResponse(result.Result)
@@ -121,9 +119,7 @@ func (pc *ProductController) UpdateProductController(c echo.Context) error {
 
 	result, err := pc.service.UpdateProduct(c.Request().Context(), productCommand)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{
-			"error": "Failed to update product",
-		})
+		return writeCommandError(c, err, "Failed to update product")
 	}
 
 	response := mapper.ToProductResponse(result.Result)
@@ -141,9 +137,7 @@ func (pc *ProductController) DeleteProductController(c echo.Context) error {
 
 	_, err = pc.service.DeleteProduct(c.Request().Context(), &command.DeleteProductCommand{Id: id})
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{
-			"error": "Failed to delete product",
-		})
+		return writeCommandError(c, err, "Failed to delete product")
 	}
 
 	return c.NoContent(http.StatusNoContent)

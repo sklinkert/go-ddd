@@ -18,14 +18,24 @@ type IdempotencyRecord struct {
 	CreatedAt  pgtype.Timestamptz `db:"created_at" json:"created_at"`
 }
 
+type OutboxEvent struct {
+	ID          uuid.UUID          `db:"id" json:"id"`
+	AggregateID uuid.UUID          `db:"aggregate_id" json:"aggregate_id"`
+	EventName   string             `db:"event_name" json:"event_name"`
+	Payload     []byte             `db:"payload" json:"payload"`
+	OccurredAt  pgtype.Timestamptz `db:"occurred_at" json:"occurred_at"`
+	PublishedAt pgtype.Timestamptz `db:"published_at" json:"published_at"`
+}
+
 type Product struct {
-	ID        uuid.UUID          `db:"id" json:"id"`
-	Name      string             `db:"name" json:"name"`
-	Price     pgtype.Numeric     `db:"price" json:"price"`
-	SellerID  uuid.UUID          `db:"seller_id" json:"seller_id"`
-	CreatedAt pgtype.Timestamptz `db:"created_at" json:"created_at"`
-	UpdatedAt pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
-	DeletedAt pgtype.Timestamptz `db:"deleted_at" json:"deleted_at"`
+	ID         uuid.UUID          `db:"id" json:"id"`
+	Name       string             `db:"name" json:"name"`
+	SellerID   uuid.UUID          `db:"seller_id" json:"seller_id"`
+	CreatedAt  pgtype.Timestamptz `db:"created_at" json:"created_at"`
+	UpdatedAt  pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
+	DeletedAt  pgtype.Timestamptz `db:"deleted_at" json:"deleted_at"`
+	PriceCents int64              `db:"price_cents" json:"price_cents"`
+	Currency   string             `db:"currency" json:"currency"`
 }
 
 type Seller struct {

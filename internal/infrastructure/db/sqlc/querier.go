@@ -11,9 +11,9 @@ import (
 )
 
 type Querier interface {
-	CreateIdempotencyRecord(ctx context.Context, arg CreateIdempotencyRecordParams) (IdempotencyRecord, error)
 	CreateProduct(ctx context.Context, arg CreateProductParams) (Product, error)
 	CreateSeller(ctx context.Context, arg CreateSellerParams) (Seller, error)
+	DeleteIdempotencyRecord(ctx context.Context, key string) error
 	DeleteProduct(ctx context.Context, id uuid.UUID) error
 	DeleteSeller(ctx context.Context, id uuid.UUID) error
 	GetAllProducts(ctx context.Context) ([]GetAllProductsRow, error)
@@ -21,7 +21,12 @@ type Querier interface {
 	GetIdempotencyRecordByKey(ctx context.Context, key string) (IdempotencyRecord, error)
 	GetProductById(ctx context.Context, id uuid.UUID) (GetProductByIdRow, error)
 	GetSellerById(ctx context.Context, id uuid.UUID) (GetSellerByIdRow, error)
-	UpdateIdempotencyRecord(ctx context.Context, arg UpdateIdempotencyRecordParams) (IdempotencyRecord, error)
+	GetUnpublishedOutboxEvents(ctx context.Context, limit int32) ([]OutboxEvent, error)
+	InsertOutboxEvent(ctx context.Context, arg InsertOutboxEventParams) error
+	MarkOutboxEventPublished(ctx context.Context, id uuid.UUID) error
+	// Atomically claims the key. Zero rows means another request already holds it.
+	ReserveIdempotencyKey(ctx context.Context, arg ReserveIdempotencyKeyParams) (int64, error)
+	SetIdempotencyResponse(ctx context.Context, arg SetIdempotencyResponseParams) error
 	UpdateProduct(ctx context.Context, arg UpdateProductParams) (int64, error)
 	UpdateSeller(ctx context.Context, arg UpdateSellerParams) (int64, error)
 }

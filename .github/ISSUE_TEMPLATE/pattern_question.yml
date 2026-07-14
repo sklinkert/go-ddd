@@ -1,0 +1,16 @@
+name: Pattern question / proposal
+description: Ask about or propose a DDD/architecture pattern for the template
+labels: [discussion]
+body:
+  - type: textarea
+    id: question
+    attributes:
+      label: Question or proposal
+      description: What pattern are you unsure about, or what would you add/change and why?
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: What are you building? Real-world context helps keep answers practical.
