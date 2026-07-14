@@ -1,0 +1,14 @@
+# Exclude generated code and the entrypoint from coverage metrics.
+ignore:
+  - "internal/infrastructure/db/sqlc"
+  - "cmd"
+  - "migrate.go"
+
+coverage:
+  status:
+    project:
+      default:
+        informational: true
+    patch:
+      default:
+        informational: true
