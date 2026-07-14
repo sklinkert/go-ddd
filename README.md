@@ -1,7 +1,7 @@
 # Go-DDD: Build Domain-Driven Go Services Fast
 
 [![CI](https://github.com/sklinkert/go-ddd/actions/workflows/go.yml/badge.svg)](https://github.com/sklinkert/go-ddd/actions/workflows/go.yml)
-[![Go Report Card](https://goreportcard.com/badge/github.com/sklinkert/go-ddd)](https://goreportcard.com/report/github.com/sklinkert/go-ddd)
+[![codecov](https://codecov.io/gh/sklinkert/go-ddd/branch/main/graph/badge.svg)](https://codecov.io/gh/sklinkert/go-ddd)
 [![Go Reference](https://pkg.go.dev/badge/github.com/sklinkert/go-ddd.svg)](https://pkg.go.dev/github.com/sklinkert/go-ddd)
 [![Go Version](https://img.shields.io/github/go-mod/go-version/sklinkert/go-ddd)](go.mod)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
