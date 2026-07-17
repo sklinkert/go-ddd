@@ -24,3 +24,6 @@ go.work
 
 # Build output
 /bin/
+
+# mkdocs build output
+/site/

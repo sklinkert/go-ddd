@@ -1,0 +1,73 @@
+site_name: go-ddd
+site_description: Learn Domain-Driven Design in Go with a production-ready template. Entities, value objects, aggregates, CQRS, domain events, and the transactional outbox, explained from zero.
+site_url: https://sklinkert.github.io/go-ddd/
+site_author: Simon Klinkert
+
+repo_url: https://github.com/sklinkert/go-ddd
+repo_name: sklinkert/go-ddd
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: teal
+      accent: deep orange
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: teal
+      accent: deep orange
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.sections
+    - navigation.footer
+    - navigation.top
+    - toc.follow
+    - content.code.copy
+    - content.action.edit
+    - search.suggest
+    - search.highlight
+  icon:
+    repo: fontawesome/brands/github
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+
+nav:
+  - Why DDD: index.md
+  - Tutorial:
+      - 1. The domain and its language: tutorial/01-the-domain.md
+      - 2. Entities that guard themselves: tutorial/02-entities.md
+      - 3. Value objects, starting with Money: tutorial/03-value-objects.md
+      - 4. Aggregates and their boundaries: tutorial/04-aggregates.md
+      - 5. Repositories: tutorial/05-repositories.md
+      - 6. CQRS, commands and queries: tutorial/06-cqrs.md
+      - 7. Domain events and the outbox: tutorial/07-domain-events-outbox.md
+      - 8. Idempotent commands: tutorial/08-idempotency.md
+      - 9. Testing a DDD codebase: tutorial/09-testing.md
+  - Reference:
+      - Architecture: reference/architecture.md
+      - FAQ: reference/faq.md
