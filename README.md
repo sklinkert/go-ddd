@@ -6,7 +6,12 @@
 [![Go Version](https://img.shields.io/github/go-mod/go-version/sklinkert/go-ddd)](go.mod)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
+[English](README.md) | [简体中文](README.zh-CN.md)
+
 `go-ddd` jump-starts production-grade Go backends that keep business rules, infrastructure, and delivery code cleanly separated. Out of the box you get opinionated DDD building blocks, CQRS command and query flows, idempotent write paths, domain events with a transactional outbox, and tooling to keep schema and code in lockstep.
+
+> 📚 **New to DDD? [Start with the tutorial →](https://sklinkert.github.io/go-ddd/)**
+> A nine-chapter walkthrough that teaches Domain-Driven Design from zero, using this codebase as the running example.
 
 ## Why This Template
 
@@ -63,7 +68,9 @@ sequenceDiagram
 
 ## Documentation
 
-📚 **[Comprehensive DDD & CQRS Principles Guide](DDD_CQRS_PRINCIPLES.md)** - Learn how to apply these patterns to any business domain.
+📚 **[DDD from zero: the full tutorial](https://sklinkert.github.io/go-ddd/)** — nine chapters from "why DDD" to entities, value objects, aggregates, repositories, CQRS, the outbox, idempotency, and testing, all anchored to this codebase.
+
+📖 **[Comprehensive DDD & CQRS Principles Guide](DDD_CQRS_PRINCIPLES.md)** - Learn how to apply these patterns to any business domain.
 
 ## Repository Structure
 
