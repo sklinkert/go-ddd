@@ -31,7 +31,7 @@ Each chapter shows the real code, explains why it's shaped that way, and tells y
 ```bash
 git clone https://github.com/sklinkert/go-ddd.git
 cd go-ddd
-docker-compose up
+docker compose up --build
 ```
 
 The tutorial builds up in the order I'd introduce these patterns to a colleague:

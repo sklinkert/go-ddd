@@ -145,7 +145,7 @@ The outbox earns its keep exactly when a state change in *your* database must re
 
 ## Try it
 
-1. Run the stack (`docker-compose up`), create a product, and watch the relay log `publishing domain event` with `event_name=product.created`. Then check the row: `SELECT event_name, published_at FROM outbox_events;`
+1. Run the stack (`make docker-up`), create a product, and watch the relay log `publishing domain event` with `event_name=product.created`. Then check the row: `SELECT event_name, published_at FROM outbox_events;`
 2. Kill the app between insert and relay tick (set a long poll interval), restart, and confirm the event still goes out. That's the whole pattern in one experiment.
 3. Add a `ProductPriceChanged` event: record it in `UpdatePrice`, and check `Update` in the repository — does it insert outbox events today? (Look. This is a real extension point.)
 
