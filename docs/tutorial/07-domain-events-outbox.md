@@ -27,7 +27,7 @@ func NewProduct(name string, price Money, seller ValidatedSeller) *Product {
     product := &Product{ /* ... */ }
 
     product.recordEvent(events.NewProductCreated(
-        product.Id, name, price.Cents(), string(price.Currency()), seller.Id))
+        product.Id, name, price.MinorUnits(), string(price.Currency()), seller.Id))
 
     return product
 }

@@ -18,10 +18,10 @@ func TestProductService_CreateProduct_SellerNotFound(t *testing.T) {
 	service := NewProductService(&MockProductRepository{}, &MockSellerRepository{}, NewMockIdempotencyRepository())
 
 	_, err := service.CreateProduct(context.Background(), &command.CreateProductCommand{
-		Name:       "Widget",
-		PriceCents: 999,
-		Currency:   entities.USD,
-		SellerId:   uuid.New(), // no such seller persisted
+		Name:            "Widget",
+		PriceMinorUnits: 999,
+		Currency:        entities.USD,
+		SellerId:        uuid.New(), // no such seller persisted
 	})
 
 	assert.Error(t, err)
@@ -35,10 +35,10 @@ func TestProductService_CreateProduct_InvalidCurrency(t *testing.T) {
 	seller := createPersistedSeller(t, sellerRepo)
 
 	_, err := service.CreateProduct(context.Background(), &command.CreateProductCommand{
-		Name:       "Widget",
-		PriceCents: 999,
-		Currency:   "XXX",
-		SellerId:   seller.Id,
+		Name:            "Widget",
+		PriceMinorUnits: 999,
+		Currency:        "XXX",
+		SellerId:        seller.Id,
 	})
 
 	assert.ErrorIs(t, err, entities.ErrValidation)
@@ -49,11 +49,11 @@ func TestProductService_UpdateProduct_NotFound(t *testing.T) {
 	service := NewProductService(&MockProductRepository{}, &MockSellerRepository{}, NewMockIdempotencyRepository())
 
 	_, err := service.UpdateProduct(context.Background(), &command.UpdateProductCommand{
-		Id:         uuid.New(),
-		Name:       "Widget",
-		PriceCents: 999,
-		Currency:   entities.USD,
-		SellerId:   uuid.New(),
+		Id:              uuid.New(),
+		Name:            "Widget",
+		PriceMinorUnits: 999,
+		Currency:        entities.USD,
+		SellerId:        uuid.New(),
 	})
 
 	assert.EqualError(t, err, "product not found")
@@ -70,11 +70,11 @@ func TestProductService_UpdateProduct_ValidationError(t *testing.T) {
 
 	// Empty name must fail domain validation.
 	_, err = service.UpdateProduct(context.Background(), &command.UpdateProductCommand{
-		Id:         created.Result.Id,
-		Name:       "",
-		PriceCents: 999,
-		Currency:   entities.USD,
-		SellerId:   seller.Id,
+		Id:              created.Result.Id,
+		Name:            "",
+		PriceMinorUnits: 999,
+		Currency:        entities.USD,
+		SellerId:        seller.Id,
 	})
 
 	assert.ErrorIs(t, err, entities.ErrValidation)
@@ -91,11 +91,11 @@ func TestProductService_UpdateProduct_Success(t *testing.T) {
 	assert.NoError(t, err)
 
 	updated, err := service.UpdateProduct(context.Background(), &command.UpdateProductCommand{
-		Id:         created.Result.Id,
-		Name:       "Widget v2",
-		PriceCents: 1999,
-		Currency:   entities.USD,
-		SellerId:   seller.Id,
+		Id:              created.Result.Id,
+		Name:            "Widget v2",
+		PriceMinorUnits: 1999,
+		Currency:        entities.USD,
+		SellerId:        seller.Id,
 	})
 
 	assert.NoError(t, err)
@@ -163,11 +163,11 @@ func TestProductService_UpdateProduct_SellerChangedNotFound(t *testing.T) {
 
 	// A different (non-existent) seller must fail the seller lookup branch.
 	_, err = service.UpdateProduct(context.Background(), &command.UpdateProductCommand{
-		Id:         created.Result.Id,
-		Name:       "Widget",
-		PriceCents: 999,
-		Currency:   entities.USD,
-		SellerId:   uuid.New(),
+		Id:              created.Result.Id,
+		Name:            "Widget",
+		PriceMinorUnits: 999,
+		Currency:        entities.USD,
+		SellerId:        uuid.New(),
 	})
 
 	assert.EqualError(t, err, "seller not found")
@@ -189,11 +189,11 @@ func TestProductService_UpdateProduct_SellerChangedSuccess(t *testing.T) {
 	assert.NoError(t, err)
 
 	updated, err := service.UpdateProduct(context.Background(), &command.UpdateProductCommand{
-		Id:         created.Result.Id,
-		Name:       "Widget",
-		PriceCents: 999,
-		Currency:   entities.USD,
-		SellerId:   sellerB.Id,
+		Id:              created.Result.Id,
+		Name:            "Widget",
+		PriceMinorUnits: 999,
+		Currency:        entities.USD,
+		SellerId:        sellerB.Id,
 	})
 
 	assert.NoError(t, err)
@@ -210,12 +210,12 @@ func TestProductService_UpdateProduct_IdempotentReplay(t *testing.T) {
 	assert.NoError(t, err)
 
 	cmd := &command.UpdateProductCommand{
-		IdempotencyKey: "upd-key",
-		Id:             created.Result.Id,
-		Name:           "Widget v2",
-		PriceCents:     1999,
-		Currency:       entities.USD,
-		SellerId:       seller.Id,
+		IdempotencyKey:  "upd-key",
+		Id:              created.Result.Id,
+		Name:            "Widget v2",
+		PriceMinorUnits: 1999,
+		Currency:        entities.USD,
+		SellerId:        seller.Id,
 	}
 
 	first, err := service.UpdateProduct(context.Background(), cmd)

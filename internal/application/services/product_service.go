@@ -37,7 +37,7 @@ func (s *ProductService) CreateProduct(ctx context.Context, productCommand *comm
 			return nil, err
 		}
 
-		price, err := entities.NewMoney(productCommand.PriceCents, productCommand.Currency)
+		price, err := entities.NewMoney(productCommand.PriceMinorUnits, productCommand.Currency)
 		if err != nil {
 			return nil, err
 		}
@@ -116,7 +116,7 @@ func (s *ProductService) UpdateProduct(ctx context.Context, productCommand *comm
 			return nil, err
 		}
 
-		price, err := entities.NewMoney(productCommand.PriceCents, productCommand.Currency)
+		price, err := entities.NewMoney(productCommand.PriceMinorUnits, productCommand.Currency)
 		if err != nil {
 			return nil, err
 		}

@@ -218,7 +218,7 @@ func TestSqlcIdempotencyRepository_Integration_Workflow(t *testing.T) {
 	ctx := context.Background()
 
 	key := "workflow-test-key"
-	requestData := `{"product": "test", "price_cents": 9999, "currency": "USD"}`
+	requestData := `{"product": "test", "price_minor_units": 9999, "currency": "USD"}`
 
 	// Step 1: Key does not exist yet
 	existingRecord, err := repo.FindByKey(ctx, key)

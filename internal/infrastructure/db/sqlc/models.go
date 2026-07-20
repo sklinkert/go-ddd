@@ -28,14 +28,14 @@ type OutboxEvent struct {
 }
 
 type Product struct {
-	ID         uuid.UUID          `db:"id" json:"id"`
-	Name       string             `db:"name" json:"name"`
-	SellerID   uuid.UUID          `db:"seller_id" json:"seller_id"`
-	CreatedAt  pgtype.Timestamptz `db:"created_at" json:"created_at"`
-	UpdatedAt  pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
-	DeletedAt  pgtype.Timestamptz `db:"deleted_at" json:"deleted_at"`
-	PriceCents int64              `db:"price_cents" json:"price_cents"`
-	Currency   string             `db:"currency" json:"currency"`
+	ID              uuid.UUID          `db:"id" json:"id"`
+	Name            string             `db:"name" json:"name"`
+	SellerID        uuid.UUID          `db:"seller_id" json:"seller_id"`
+	CreatedAt       pgtype.Timestamptz `db:"created_at" json:"created_at"`
+	UpdatedAt       pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
+	DeletedAt       pgtype.Timestamptz `db:"deleted_at" json:"deleted_at"`
+	PriceMinorUnits int64              `db:"price_minor_units" json:"price_minor_units"`
+	Currency        string             `db:"currency" json:"currency"`
 }
 
 type Seller struct {

@@ -163,6 +163,7 @@ migrations/
 ├── 000001_initial_schema.down.sql  # 初始模式的回滚
 ├── 000002_price_as_money.up.sql    # 金额改为整数分 + 货币
 ├── 000003_outbox.up.sql            # 事务性发件箱表
+├── 000004_price_minor_units.up.sql # 重命名为 ISO 4217 最小货币单位
 └── ...
 ```
 
@@ -249,11 +250,11 @@ curl -s -X POST http://localhost:8080/api/v1/sellers \
 ```bash
 curl -s -X POST http://localhost:8080/api/v1/products \
   -H 'Content-Type: application/json' \
-  -d '{"name": "Wooden Chair", "price_cents": 4999, "currency": "EUR", "seller_id": "<上一步返回的 seller-id>"}'
+  -d '{"name": "Wooden Chair", "price_minor_units": 4999, "currency": "EUR", "seller_id": "<上一步返回的 seller-id>"}'
 ```
 
 ```json
-{"id":"0197a3c3-...","name":"Wooden Chair","price_cents":4999,"currency":"EUR","seller_id":"0197a3c2-...","created_at":"...","updated_at":"..."}
+{"id":"0197a3c3-...","name":"Wooden Chair","price_minor_units":4999,"currency":"EUR","seller_id":"0197a3c2-...","created_at":"...","updated_at":"..."}
 ```
 
 用相同的 `idempotency_key` 重放请求——返回缓存的响应，而不是创建重复卖家：

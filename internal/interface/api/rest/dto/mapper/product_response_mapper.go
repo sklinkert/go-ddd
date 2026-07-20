@@ -7,13 +7,13 @@ import (
 
 func ToProductResponse(product *common.ProductResult) *response.ProductResponse {
 	return &response.ProductResponse{
-		Id:         product.Id.String(),
-		Name:       product.Name,
-		PriceCents: product.Price.Cents(),
-		Currency:   string(product.Price.Currency()),
-		SellerId:   product.SellerId.String(),
-		CreatedAt:  product.CreatedAt,
-		UpdatedAt:  product.UpdatedAt,
+		Id:              product.Id.String(),
+		Name:            product.Name,
+		PriceMinorUnits: product.Price.MinorUnits(),
+		Currency:        string(product.Price.Currency()),
+		SellerId:        product.SellerId.String(),
+		CreatedAt:       product.CreatedAt,
+		UpdatedAt:       product.UpdatedAt,
 	}
 }
 

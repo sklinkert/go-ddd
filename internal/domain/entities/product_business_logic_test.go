@@ -9,9 +9,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func mustMoney(t *testing.T, cents int64, currency Currency) Money {
+func mustMoney(t *testing.T, minorUnits int64, currency Currency) Money {
 	t.Helper()
-	money, err := NewMoney(cents, currency)
+	money, err := NewMoney(minorUnits, currency)
 	require.NoError(t, err)
 	return money
 }
@@ -129,11 +129,11 @@ func TestProduct_Validate_AllEdgeCases(t *testing.T) {
 	require.NoError(t, err)
 
 	testCases := []struct {
-		name          string
-		productName   string
-		priceCents    int64
-		sellerId      uuid.UUID
-		expectedError string
+		name            string
+		productName     string
+		priceMinorUnits int64
+		sellerId        uuid.UUID
+		expectedError   string
 	}{
 		{"empty name", "", 1000, validatedSeller.Id, "name must not be empty"},
 		{"zero price", "Valid Product", 0, validatedSeller.Id, "price must be greater than 0"},
@@ -145,7 +145,7 @@ func TestProduct_Validate_AllEdgeCases(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			product := &Product{
 				Name:      tc.productName,
-				Price:     mustMoney(t, tc.priceCents, USD),
+				Price:     mustMoney(t, tc.priceMinorUnits, USD),
 				SellerId:  tc.sellerId,
 				CreatedAt: time.Now(),
 				UpdatedAt: time.Now(),

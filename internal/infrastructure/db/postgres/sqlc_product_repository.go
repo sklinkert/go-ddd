@@ -37,13 +37,13 @@ func (repo *SqlcProductRepository) Create(ctx context.Context, product *entities
 	qtx := repo.queries.WithTx(tx)
 
 	if _, err := qtx.CreateProduct(ctx, db.CreateProductParams{
-		ID:         product.Id,
-		Name:       product.Name,
-		PriceCents: product.Price.Cents(),
-		Currency:   string(product.Price.Currency()),
-		SellerID:   product.SellerId,
-		CreatedAt:  timestamptzFromTime(product.CreatedAt),
-		UpdatedAt:  timestamptzFromTime(product.UpdatedAt),
+		ID:              product.Id,
+		Name:            product.Name,
+		PriceMinorUnits: product.Price.MinorUnits(),
+		Currency:        string(product.Price.Currency()),
+		SellerID:        product.SellerId,
+		CreatedAt:       timestamptzFromTime(product.CreatedAt),
+		UpdatedAt:       timestamptzFromTime(product.UpdatedAt),
 	}); err != nil {
 		return nil, err
 	}
@@ -57,7 +57,7 @@ func (repo *SqlcProductRepository) Create(ctx context.Context, product *entities
 		return nil, err
 	}
 
-	created, err := productFromRow(row.ID, row.Name, row.PriceCents, row.Currency, row.SellerID, row.CreatedAt, row.UpdatedAt)
+	created, err := productFromRow(row.ID, row.Name, row.PriceMinorUnits, row.Currency, row.SellerID, row.CreatedAt, row.UpdatedAt)
 	if err != nil {
 		return nil, err
 	}
@@ -80,7 +80,7 @@ func (repo *SqlcProductRepository) FindById(ctx context.Context, id uuid.UUID) (
 		return nil, err
 	}
 
-	return productFromRow(row.ID, row.Name, row.PriceCents, row.Currency, row.SellerID, row.CreatedAt, row.UpdatedAt)
+	return productFromRow(row.ID, row.Name, row.PriceMinorUnits, row.Currency, row.SellerID, row.CreatedAt, row.UpdatedAt)
 }
 
 func (repo *SqlcProductRepository) FindAll(ctx context.Context) ([]*entities.Product, error) {
@@ -91,7 +91,7 @@ func (repo *SqlcProductRepository) FindAll(ctx context.Context) ([]*entities.Pro
 
 	products := make([]*entities.Product, len(rows))
 	for i, row := range rows {
-		product, err := productFromRow(row.ID, row.Name, row.PriceCents, row.Currency, row.SellerID, row.CreatedAt, row.UpdatedAt)
+		product, err := productFromRow(row.ID, row.Name, row.PriceMinorUnits, row.Currency, row.SellerID, row.CreatedAt, row.UpdatedAt)
 		if err != nil {
 			return nil, err
 		}
@@ -103,12 +103,12 @@ func (repo *SqlcProductRepository) FindAll(ctx context.Context) ([]*entities.Pro
 
 func (repo *SqlcProductRepository) Update(ctx context.Context, product *entities.ValidatedProduct) (*entities.Product, error) {
 	rows, err := repo.queries.UpdateProduct(ctx, db.UpdateProductParams{
-		ID:         product.Id,
-		Name:       product.Name,
-		PriceCents: product.Price.Cents(),
-		Currency:   string(product.Price.Currency()),
-		SellerID:   product.SellerId,
-		UpdatedAt:  timestamptzFromTime(product.UpdatedAt),
+		ID:              product.Id,
+		Name:            product.Name,
+		PriceMinorUnits: product.Price.MinorUnits(),
+		Currency:        string(product.Price.Currency()),
+		SellerID:        product.SellerId,
+		UpdatedAt:       timestamptzFromTime(product.UpdatedAt),
 	})
 	if err != nil {
 		return nil, err
@@ -125,8 +125,8 @@ func (repo *SqlcProductRepository) Delete(ctx context.Context, id uuid.UUID) err
 	return repo.queries.DeleteProduct(ctx, id)
 }
 
-func productFromRow(id uuid.UUID, name string, priceCents int64, currency string, sellerId uuid.UUID, createdAt, updatedAt pgtype.Timestamptz) (*entities.Product, error) {
-	price, err := entities.NewMoney(priceCents, entities.Currency(currency))
+func productFromRow(id uuid.UUID, name string, priceMinorUnits int64, currency string, sellerId uuid.UUID, createdAt, updatedAt pgtype.Timestamptz) (*entities.Product, error) {
+	price, err := entities.NewMoney(priceMinorUnits, entities.Currency(currency))
 	if err != nil {
 		return nil, err
 	}

@@ -37,13 +37,13 @@ func TestSqlcProductRepository_Create_WritesOutboxEvent(t *testing.T) {
 	assert.False(t, event.PublishedAt.Valid)
 
 	var payload struct {
-		Name       string `json:"Name"`
-		PriceCents int64  `json:"PriceCents"`
-		Currency   string `json:"Currency"`
+		Name            string `json:"Name"`
+		PriceMinorUnits int64  `json:"PriceMinorUnits"`
+		Currency        string `json:"Currency"`
 	}
 	require.NoError(t, json.Unmarshal(event.Payload, &payload))
 	assert.Equal(t, "Outbox Product", payload.Name)
-	assert.Equal(t, int64(1299), payload.PriceCents)
+	assert.Equal(t, int64(1299), payload.PriceMinorUnits)
 	assert.Equal(t, "EUR", payload.Currency)
 
 	// Marking published removes it from the unpublished set (relay behavior).

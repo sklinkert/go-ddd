@@ -31,7 +31,7 @@ func NewProduct(name string, price Money, seller ValidatedSeller) *Product {
     }
 
     product.recordEvent(events.NewProductCreated(
-        product.Id, name, price.Cents(), string(price.Currency()), seller.Id))
+        product.Id, name, price.MinorUnits(), string(price.Currency()), seller.Id))
 
     return product
 }
@@ -76,7 +76,7 @@ func (p *Product) validate() error {
     if p.Name == "" {
         return fmt.Errorf("%w: name must not be empty", ErrValidation)
     }
-    if p.Price.Cents() == 0 {
+    if p.Price.MinorUnits() == 0 {
         return fmt.Errorf("%w: price must be greater than 0", ErrValidation)
     }
     if p.SellerId == uuid.Nil {
@@ -122,14 +122,14 @@ Is this bulletproof? No — `Product` fields are exported (the persistence layer
 
 You might object: my HTTP layer already validates requests. Keep it! Edge validation and domain validation answer different questions:
 
-- The edge asks: *is this request well-formed?* (Is `price_cents` a number? Is `seller_id` a UUID?)
+- The edge asks: *is this request well-formed?* (Is `price_minor_units` a number? Is `seller_id` a UUID?)
 - The domain asks: *is this a valid product?* (Is the price positive? Does the seller exist and pass validation?)
 
 The edge check is about protocol; it produces friendly 400s fast. The domain check is about business truth, and it runs no matter where the call came from — HTTP today, a message consumer tomorrow, a backfill script at 2am. The scattered-validation problem isn't solved by choosing one location; it's solved by giving each rule its *one correct* location.
 
 ## Try it
 
-1. Delete the `Price.Cents() == 0` check from `validate()` and run `go test ./internal/...` — watch which tests fail and read what they assert. The test suite documents the invariants.
+1. Delete the `Price.MinorUnits() == 0` check from `validate()` and run `go test ./internal/...` — watch which tests fail and read what they assert. The test suite documents the invariants.
 2. Add a new rule: product names must be at most 200 characters. Notice you touch exactly two files — the entity and its test.
 3. Try to call `productRepository.Create` with a plain `*Product`. Enjoy the compile error; that error is the pattern working.
 

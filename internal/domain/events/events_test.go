@@ -17,7 +17,7 @@ func TestNewProductCreated(t *testing.T) {
 	assert.Equal(t, "product.created", event.EventName())
 	assert.Equal(t, productId, event.AggregateId())
 	assert.Equal(t, sellerId, event.SellerId)
-	assert.Equal(t, int64(999), event.PriceCents)
+	assert.Equal(t, int64(999), event.PriceMinorUnits)
 	assert.Equal(t, "USD", event.Currency)
 	assert.NotEqual(t, uuid.Nil, event.EventId())
 	assert.WithinDuration(t, time.Now(), event.OccurredAt(), time.Second)

@@ -7,11 +7,11 @@ import (
 )
 
 type CreateProductRequest struct {
-	IdempotencyKey string `json:"idempotency_key"`
-	Name           string `json:"name"`
-	PriceCents     int64  `json:"price_cents"`
-	Currency       string `json:"currency"`
-	SellerId       string `json:"seller_id"`
+	IdempotencyKey  string `json:"idempotency_key"`
+	Name            string `json:"name"`
+	PriceMinorUnits int64  `json:"price_minor_units"`
+	Currency        string `json:"currency"`
+	SellerId        string `json:"seller_id"`
 }
 
 func (req *CreateProductRequest) ToCreateProductCommand() (*command.CreateProductCommand, error) {
@@ -21,10 +21,10 @@ func (req *CreateProductRequest) ToCreateProductCommand() (*command.CreateProduc
 	}
 
 	return &command.CreateProductCommand{
-		IdempotencyKey: req.IdempotencyKey,
-		Name:           req.Name,
-		PriceCents:     req.PriceCents,
-		Currency:       entities.Currency(req.Currency),
-		SellerId:       sellerId,
+		IdempotencyKey:  req.IdempotencyKey,
+		Name:            req.Name,
+		PriceMinorUnits: req.PriceMinorUnits,
+		Currency:        entities.Currency(req.Currency),
+		SellerId:        sellerId,
 	}, nil
 }

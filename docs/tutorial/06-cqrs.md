@@ -22,13 +22,13 @@ type CreateProductCommand struct {
     IdempotencyKey string
     Id             uuid.UUID
     Name           string
-    PriceCents     int64
+    PriceMinorUnits int64
     Currency       entities.Currency
     SellerId       uuid.UUID
 }
 ```
 
-It carries raw-ish data (`PriceCents int64`, not `Money`) because the command is the *request* to do something — turning its data into validated domain objects is the application service's job:
+It carries raw-ish data (`PriceMinorUnits int64`, not `Money`) because the command is the *request* to do something — turning its data into validated domain objects is the application service's job:
 
 ```go
 func (s *ProductService) CreateProduct(ctx context.Context, cmd *command.CreateProductCommand) (*command.CreateProductCommandResult, error) {
@@ -38,7 +38,7 @@ func (s *ProductService) CreateProduct(ctx context.Context, cmd *command.CreateP
             return nil, err
         }
 
-        price, err := entities.NewMoney(cmd.PriceCents, cmd.Currency)
+        price, err := entities.NewMoney(cmd.PriceMinorUnits, cmd.Currency)
         if err != nil {
             return nil, err
         }

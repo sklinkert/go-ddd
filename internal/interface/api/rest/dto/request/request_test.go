@@ -13,11 +13,11 @@ import (
 func TestCreateProductRequest_ToCreateProductCommand(t *testing.T) {
 	sellerId := uuid.New()
 	req := &CreateProductRequest{
-		IdempotencyKey: "key-1",
-		Name:           "Widget",
-		PriceCents:     999,
-		Currency:       "USD",
-		SellerId:       sellerId.String(),
+		IdempotencyKey:  "key-1",
+		Name:            "Widget",
+		PriceMinorUnits: 999,
+		Currency:        "USD",
+		SellerId:        sellerId.String(),
 	}
 
 	cmd, err := req.ToCreateProductCommand()
@@ -25,13 +25,13 @@ func TestCreateProductRequest_ToCreateProductCommand(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "key-1", cmd.IdempotencyKey)
 	assert.Equal(t, "Widget", cmd.Name)
-	assert.Equal(t, int64(999), cmd.PriceCents)
+	assert.Equal(t, int64(999), cmd.PriceMinorUnits)
 	assert.Equal(t, entities.USD, cmd.Currency)
 	assert.Equal(t, sellerId, cmd.SellerId)
 }
 
 func TestCreateProductRequest_ToCreateProductCommand_InvalidSellerId(t *testing.T) {
-	req := &CreateProductRequest{Name: "Widget", PriceCents: 999, Currency: "USD", SellerId: "not-a-uuid"}
+	req := &CreateProductRequest{Name: "Widget", PriceMinorUnits: 999, Currency: "USD", SellerId: "not-a-uuid"}
 
 	cmd, err := req.ToCreateProductCommand()
 
@@ -41,14 +41,14 @@ func TestCreateProductRequest_ToCreateProductCommand_InvalidSellerId(t *testing.
 
 func TestCreateProductRequest_JsonTags(t *testing.T) {
 	sellerId := uuid.New()
-	body := `{"idempotency_key":"key-1","name":"Widget","price_cents":1234,"currency":"EUR","seller_id":"` + sellerId.String() + `"}`
+	body := `{"idempotency_key":"key-1","name":"Widget","price_minor_units":1234,"currency":"EUR","seller_id":"` + sellerId.String() + `"}`
 
 	var req CreateProductRequest
 	require.NoError(t, json.Unmarshal([]byte(body), &req))
 
 	assert.Equal(t, "key-1", req.IdempotencyKey)
 	assert.Equal(t, "Widget", req.Name)
-	assert.Equal(t, int64(1234), req.PriceCents)
+	assert.Equal(t, int64(1234), req.PriceMinorUnits)
 	assert.Equal(t, "EUR", req.Currency)
 	assert.Equal(t, sellerId.String(), req.SellerId)
 }
@@ -57,11 +57,11 @@ func TestUpdateProductRequest_ToUpdateProductCommand(t *testing.T) {
 	sellerId := uuid.New()
 	productId := uuid.New()
 	req := &UpdateProductRequest{
-		IdempotencyKey: "key-2",
-		Name:           "Widget v2",
-		PriceCents:     1999,
-		Currency:       "EUR",
-		SellerId:       sellerId.String(),
+		IdempotencyKey:  "key-2",
+		Name:            "Widget v2",
+		PriceMinorUnits: 1999,
+		Currency:        "EUR",
+		SellerId:        sellerId.String(),
 	}
 
 	cmd, err := req.ToUpdateProductCommand(productId)
@@ -70,7 +70,7 @@ func TestUpdateProductRequest_ToUpdateProductCommand(t *testing.T) {
 	assert.Equal(t, productId, cmd.Id)
 	assert.Equal(t, "key-2", cmd.IdempotencyKey)
 	assert.Equal(t, "Widget v2", cmd.Name)
-	assert.Equal(t, int64(1999), cmd.PriceCents)
+	assert.Equal(t, int64(1999), cmd.PriceMinorUnits)
 	assert.Equal(t, entities.EUR, cmd.Currency)
 	assert.Equal(t, sellerId, cmd.SellerId)
 }
