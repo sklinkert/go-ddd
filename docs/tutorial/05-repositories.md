@@ -38,7 +38,7 @@ The concrete side, [`SqlcProductRepository`](https://github.com/sklinkert/go-ddd
 
 ```sql
 -- name: GetProductById :one
-SELECT p.id, p.name, p.price_cents, p.currency, p.seller_id, p.created_at, p.updated_at
+SELECT p.id, p.name, p.price_minor_units, p.currency, p.seller_id, p.created_at, p.updated_at
 FROM products p
 JOIN sellers s ON p.seller_id = s.id
 WHERE p.id = $1 AND p.deleted_at IS NULL AND s.deleted_at IS NULL;
@@ -53,8 +53,8 @@ I prefer this over an ORM in a DDD codebase for a specific reason: **the mapping
 Reading a row back is a boundary crossing, and the same rule from [chapter 3](03-value-objects.md) applies — reconstruction routes through the validating constructors:
 
 ```go
-func productFromRow(id uuid.UUID, name string, priceCents int64, currency string, /* ... */) (*entities.Product, error) {
-    price, err := entities.NewMoney(priceCents, entities.Currency(currency))
+func productFromRow(id uuid.UUID, name string, priceMinorUnits int64, currency string, /* ... */) (*entities.Product, error) {
+    price, err := entities.NewMoney(priceMinorUnits, entities.Currency(currency))
     if err != nil {
         return nil, err
     }

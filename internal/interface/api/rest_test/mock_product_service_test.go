@@ -32,7 +32,7 @@ func (m *MockProductService) CreateProduct(ctx context.Context, productCommand *
 		return nil, err
 	}
 
-	price, err := entities.NewMoney(productCommand.PriceCents, productCommand.Currency)
+	price, err := entities.NewMoney(productCommand.PriceMinorUnits, productCommand.Currency)
 	if err != nil {
 		return nil, err
 	}

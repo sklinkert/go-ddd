@@ -202,12 +202,12 @@ func TestProductService_FindProductById(t *testing.T) {
 	}
 }
 
-func getCreateProductCommand(name string, priceCents int64, sellerId uuid.UUID) *command.CreateProductCommand {
+func getCreateProductCommand(name string, priceMinorUnits int64, sellerId uuid.UUID) *command.CreateProductCommand {
 	return &command.CreateProductCommand{
-		Name:       name,
-		PriceCents: priceCents,
-		Currency:   entities.USD,
-		SellerId:   sellerId,
+		Name:            name,
+		PriceMinorUnits: priceMinorUnits,
+		Currency:        entities.USD,
+		SellerId:        sellerId,
 	}
 }
 

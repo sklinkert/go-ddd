@@ -7,11 +7,11 @@ import (
 )
 
 type UpdateProductRequest struct {
-	IdempotencyKey string `json:"idempotency_key"`
-	Name           string `json:"name"`
-	PriceCents     int64  `json:"price_cents"`
-	Currency       string `json:"currency"`
-	SellerId       string `json:"seller_id"`
+	IdempotencyKey  string `json:"idempotency_key"`
+	Name            string `json:"name"`
+	PriceMinorUnits int64  `json:"price_minor_units"`
+	Currency        string `json:"currency"`
+	SellerId        string `json:"seller_id"`
 }
 
 // ToUpdateProductCommand builds the command. The product Id comes from the
@@ -23,11 +23,11 @@ func (req *UpdateProductRequest) ToUpdateProductCommand(id uuid.UUID) (*command.
 	}
 
 	return &command.UpdateProductCommand{
-		IdempotencyKey: req.IdempotencyKey,
-		Id:             id,
-		Name:           req.Name,
-		PriceCents:     req.PriceCents,
-		Currency:       entities.Currency(req.Currency),
-		SellerId:       sellerId,
+		IdempotencyKey:  req.IdempotencyKey,
+		Id:              id,
+		Name:            req.Name,
+		PriceMinorUnits: req.PriceMinorUnits,
+		Currency:        entities.Currency(req.Currency),
+		SellerId:        sellerId,
 	}, nil
 }

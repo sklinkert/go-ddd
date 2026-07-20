@@ -12,9 +12,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func mustMoney(t *testing.T, cents int64, currency entities.Currency) entities.Money {
+func mustMoney(t *testing.T, minorUnits int64, currency entities.Currency) entities.Money {
 	t.Helper()
-	money, err := entities.NewMoney(cents, currency)
+	money, err := entities.NewMoney(minorUnits, currency)
 	require.NoError(t, err)
 	return money
 }
@@ -66,7 +66,7 @@ func TestToProductResponse(t *testing.T) {
 
 	assert.Equal(t, id.String(), resp.Id)
 	assert.Equal(t, "Widget", resp.Name)
-	assert.Equal(t, int64(999), resp.PriceCents)
+	assert.Equal(t, int64(999), resp.PriceMinorUnits)
 	assert.Equal(t, "USD", resp.Currency)
 	assert.Equal(t, sellerId.String(), resp.SellerId)
 	assert.Equal(t, now, resp.CreatedAt)
@@ -86,7 +86,7 @@ func TestToProductResponse_JsonShape(t *testing.T) {
 	var payload map[string]any
 	require.NoError(t, json.Unmarshal(data, &payload))
 
-	assert.Equal(t, float64(1234), payload["price_cents"])
+	assert.Equal(t, float64(1234), payload["price_minor_units"])
 	assert.Equal(t, "EUR", payload["currency"])
 	assert.Equal(t, result.SellerId.String(), payload["seller_id"])
 }
@@ -101,7 +101,7 @@ func TestToProductListResponse(t *testing.T) {
 
 	assert.Len(t, resp.Products, 2)
 	assert.Equal(t, "Widget", resp.Products[0].Name)
-	assert.Equal(t, int64(100), resp.Products[0].PriceCents)
+	assert.Equal(t, int64(100), resp.Products[0].PriceMinorUnits)
 	assert.Equal(t, "Gadget", resp.Products[1].Name)
 	assert.Equal(t, "EUR", resp.Products[1].Currency)
 }

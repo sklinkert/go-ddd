@@ -142,7 +142,7 @@ Against the live stack, the behavior in four commands:
 for i in $(seq 5); do
   curl -s -o /dev/null -w "%{http_code}\n" -X POST localhost:8080/api/v1/products \
     -H 'Content-Type: application/json' \
-    -d '{"idempotency_key":"k-42","name":"Widget","price_cents":999,"currency":"EUR","seller_id":"..."}' &
+    -d '{"idempotency_key":"k-42","name":"Widget","price_minor_units":999,"currency":"EUR","seller_id":"..."}' &
 done; wait
 ```
 

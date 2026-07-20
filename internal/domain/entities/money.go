@@ -13,31 +13,36 @@ const (
 	USD Currency = "USD"
 )
 
-var supportedCurrencies = map[Currency]struct{}{
-	EUR: {},
-	USD: {},
+// supportedCurrencies maps each supported currency to its ISO 4217
+// minor-unit exponent. Not every currency has two decimals: JPY, KRW,
+// CLP and ISK have 0; BHD, JOD, KWD, OMR and TND have 3. When adding a
+// currency here, use its real exponent so String() stays correct.
+var supportedCurrencies = map[Currency]int{
+	EUR: 2,
+	USD: 2,
 }
 
-// Money is an immutable value object storing an amount in minor units
-// (cents) to avoid floating-point rounding errors.
+// Money is an immutable value object storing an amount in ISO 4217 minor
+// units (cents for EUR/USD, yen for JPY, fils for BHD) to avoid
+// floating-point rounding errors.
 type Money struct {
-	cents    int64
-	currency Currency
+	minorUnits int64
+	currency   Currency
 }
 
-func NewMoney(cents int64, currency Currency) (Money, error) {
-	if cents < 0 {
+func NewMoney(minorUnits int64, currency Currency) (Money, error) {
+	if minorUnits < 0 {
 		return Money{}, fmt.Errorf("%w: amount must not be negative", ErrValidation)
 	}
 	if _, ok := supportedCurrencies[currency]; !ok {
 		return Money{}, fmt.Errorf("%w: unsupported currency %q", ErrValidation, currency)
 	}
 
-	return Money{cents: cents, currency: currency}, nil
+	return Money{minorUnits: minorUnits, currency: currency}, nil
 }
 
-func (m Money) Cents() int64 {
-	return m.cents
+func (m Money) MinorUnits() int64 {
+	return m.minorUnits
 }
 
 func (m Money) Currency() Currency {
@@ -49,16 +54,26 @@ func (m Money) IsZero() bool {
 }
 
 func (m Money) String() string {
-	return fmt.Sprintf("%d.%02d %s", m.cents/100, m.cents%100, m.currency)
+	exponent := supportedCurrencies[m.currency]
+	if exponent == 0 {
+		return fmt.Sprintf("%d %s", m.minorUnits, m.currency)
+	}
+
+	divisor := int64(1)
+	for range exponent {
+		divisor *= 10
+	}
+
+	return fmt.Sprintf("%d.%0*d %s", m.minorUnits/divisor, exponent, m.minorUnits%divisor, m.currency)
 }
 
 type moneyJSON struct {
-	Cents    int64    `json:"cents"`
-	Currency Currency `json:"currency"`
+	MinorUnits int64    `json:"minor_units"`
+	Currency   Currency `json:"currency"`
 }
 
 func (m Money) MarshalJSON() ([]byte, error) {
-	return json.Marshal(moneyJSON{Cents: m.cents, Currency: m.currency})
+	return json.Marshal(moneyJSON{MinorUnits: m.minorUnits, Currency: m.currency})
 }
 
 // UnmarshalJSON goes through NewMoney so a Money can never be deserialized
@@ -69,7 +84,7 @@ func (m *Money) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	money, err := NewMoney(raw.Cents, raw.Currency)
+	money, err := NewMoney(raw.MinorUnits, raw.Currency)
 	if err != nil {
 		return err
 	}

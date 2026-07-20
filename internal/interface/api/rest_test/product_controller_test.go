@@ -19,9 +19,9 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func mustMoney(t *testing.T, cents int64, currency entities.Currency) entities.Money {
+func mustMoney(t *testing.T, minorUnits int64, currency entities.Currency) entities.Money {
 	t.Helper()
-	money, err := entities.NewMoney(cents, currency)
+	money, err := entities.NewMoney(minorUnits, currency)
 	require.NoError(t, err)
 	return money
 }
@@ -32,11 +32,11 @@ func TestCreateProduct(t *testing.T) {
 	mockService := new(MockProductService)
 	sellerId := "123e4567-e89b-12d3-a456-426614174000"
 	reqBody := map[string]interface{}{
-		"name":            "TestProduct",
-		"price_cents":     999,
-		"currency":        "USD",
-		"seller_id":       sellerId,
-		"idempotency_key": "idem-123",
+		"name":              "TestProduct",
+		"price_minor_units": 999,
+		"currency":          "USD",
+		"seller_id":         sellerId,
+		"idempotency_key":   "idem-123",
 	}
 	reqBodyBytes, _ := json.Marshal(reqBody)
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/products", bytes.NewReader(reqBodyBytes))
@@ -47,7 +47,7 @@ func TestCreateProduct(t *testing.T) {
 
 	mockService.On("CreateProduct", mock.MatchedBy(func(cmd *command.CreateProductCommand) bool {
 		return cmd.Name == "TestProduct" &&
-			cmd.PriceCents == 999 &&
+			cmd.PriceMinorUnits == 999 &&
 			cmd.Currency == entities.USD &&
 			cmd.SellerId.String() == sellerId &&
 			cmd.IdempotencyKey == "idem-123"
@@ -63,7 +63,7 @@ func TestCreateProduct(t *testing.T) {
 	// Assertions
 	assert.Equal(t, http.StatusCreated, rec.Code)
 	assert.Equal(t, "TestProduct", responseBody["name"])
-	assert.Equal(t, float64(999), responseBody["price_cents"])
+	assert.Equal(t, float64(999), responseBody["price_minor_units"])
 	assert.Equal(t, "USD", responseBody["currency"])
 	assert.Equal(t, sellerId, responseBody["seller_id"])
 	assert.NotEmpty(t, responseBody["id"])
@@ -101,11 +101,11 @@ func TestGetAllProducts(t *testing.T) {
 	for _, product := range expectedProducts {
 		expectedListResponse.Products = append(expectedListResponse.Products,
 			&response.ProductResponse{
-				Id:         product.Id.String(),
-				Name:       product.Name,
-				PriceCents: product.Price.Cents(),
-				Currency:   string(product.Price.Currency()),
-				SellerId:   product.SellerId.String(),
+				Id:              product.Id.String(),
+				Name:            product.Name,
+				PriceMinorUnits: product.Price.MinorUnits(),
+				Currency:        string(product.Price.Currency()),
+				SellerId:        product.SellerId.String(),
 			})
 	}
 

@@ -13,9 +13,9 @@ import (
 	"github.com/sklinkert/go-ddd/internal/testhelpers"
 )
 
-func mustMoney(t *testing.T, cents int64, currency entities.Currency) entities.Money {
+func mustMoney(t *testing.T, minorUnits int64, currency entities.Currency) entities.Money {
 	t.Helper()
-	money, err := entities.NewMoney(cents, currency)
+	money, err := entities.NewMoney(minorUnits, currency)
 	require.NoError(t, err)
 	return money
 }
@@ -53,7 +53,7 @@ func TestSqlcProductRepository_Create(t *testing.T) {
 	require.NotNil(t, createdProduct)
 	assert.Equal(t, validatedProduct.Name, createdProduct.Name)
 	assert.Equal(t, validatedProduct.Price, createdProduct.Price)
-	assert.Equal(t, int64(9999), createdProduct.Price.Cents())
+	assert.Equal(t, int64(9999), createdProduct.Price.MinorUnits())
 	assert.Equal(t, entities.USD, createdProduct.Price.Currency())
 	assert.Equal(t, validatedSeller.Id, createdProduct.SellerId)
 	assert.NotEqual(t, uuid.Nil, createdProduct.Id)

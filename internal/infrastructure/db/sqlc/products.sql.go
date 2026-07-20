@@ -13,26 +13,26 @@ import (
 )
 
 const createProduct = `-- name: CreateProduct :one
-INSERT INTO products (id, name, price_cents, currency, seller_id, created_at, updated_at)
+INSERT INTO products (id, name, price_minor_units, currency, seller_id, created_at, updated_at)
 VALUES ($1, $2, $3, $4, $5, $6, $7)
-RETURNING id, name, seller_id, created_at, updated_at, deleted_at, price_cents, currency
+RETURNING id, name, seller_id, created_at, updated_at, deleted_at, price_minor_units, currency
 `
 
 type CreateProductParams struct {
-	ID         uuid.UUID          `db:"id" json:"id"`
-	Name       string             `db:"name" json:"name"`
-	PriceCents int64              `db:"price_cents" json:"price_cents"`
-	Currency   string             `db:"currency" json:"currency"`
-	SellerID   uuid.UUID          `db:"seller_id" json:"seller_id"`
-	CreatedAt  pgtype.Timestamptz `db:"created_at" json:"created_at"`
-	UpdatedAt  pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
+	ID              uuid.UUID          `db:"id" json:"id"`
+	Name            string             `db:"name" json:"name"`
+	PriceMinorUnits int64              `db:"price_minor_units" json:"price_minor_units"`
+	Currency        string             `db:"currency" json:"currency"`
+	SellerID        uuid.UUID          `db:"seller_id" json:"seller_id"`
+	CreatedAt       pgtype.Timestamptz `db:"created_at" json:"created_at"`
+	UpdatedAt       pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
 }
 
 func (q *Queries) CreateProduct(ctx context.Context, arg CreateProductParams) (Product, error) {
 	row := q.db.QueryRow(ctx, createProduct,
 		arg.ID,
 		arg.Name,
-		arg.PriceCents,
+		arg.PriceMinorUnits,
 		arg.Currency,
 		arg.SellerID,
 		arg.CreatedAt,
@@ -46,7 +46,7 @@ func (q *Queries) CreateProduct(ctx context.Context, arg CreateProductParams) (P
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
-		&i.PriceCents,
+		&i.PriceMinorUnits,
 		&i.Currency,
 	)
 	return i, err
@@ -62,7 +62,7 @@ func (q *Queries) DeleteProduct(ctx context.Context, id uuid.UUID) error {
 }
 
 const getAllProducts = `-- name: GetAllProducts :many
-SELECT p.id, p.name, p.price_cents, p.currency, p.seller_id, p.created_at, p.updated_at
+SELECT p.id, p.name, p.price_minor_units, p.currency, p.seller_id, p.created_at, p.updated_at
 FROM products p
 JOIN sellers s ON p.seller_id = s.id
 WHERE p.deleted_at IS NULL AND s.deleted_at IS NULL
@@ -70,13 +70,13 @@ ORDER BY p.created_at DESC
 `
 
 type GetAllProductsRow struct {
-	ID         uuid.UUID          `db:"id" json:"id"`
-	Name       string             `db:"name" json:"name"`
-	PriceCents int64              `db:"price_cents" json:"price_cents"`
-	Currency   string             `db:"currency" json:"currency"`
-	SellerID   uuid.UUID          `db:"seller_id" json:"seller_id"`
-	CreatedAt  pgtype.Timestamptz `db:"created_at" json:"created_at"`
-	UpdatedAt  pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
+	ID              uuid.UUID          `db:"id" json:"id"`
+	Name            string             `db:"name" json:"name"`
+	PriceMinorUnits int64              `db:"price_minor_units" json:"price_minor_units"`
+	Currency        string             `db:"currency" json:"currency"`
+	SellerID        uuid.UUID          `db:"seller_id" json:"seller_id"`
+	CreatedAt       pgtype.Timestamptz `db:"created_at" json:"created_at"`
+	UpdatedAt       pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
 }
 
 func (q *Queries) GetAllProducts(ctx context.Context) ([]GetAllProductsRow, error) {
@@ -91,7 +91,7 @@ func (q *Queries) GetAllProducts(ctx context.Context) ([]GetAllProductsRow, erro
 		if err := rows.Scan(
 			&i.ID,
 			&i.Name,
-			&i.PriceCents,
+			&i.PriceMinorUnits,
 			&i.Currency,
 			&i.SellerID,
 			&i.CreatedAt,
@@ -108,20 +108,20 @@ func (q *Queries) GetAllProducts(ctx context.Context) ([]GetAllProductsRow, erro
 }
 
 const getProductById = `-- name: GetProductById :one
-SELECT p.id, p.name, p.price_cents, p.currency, p.seller_id, p.created_at, p.updated_at
+SELECT p.id, p.name, p.price_minor_units, p.currency, p.seller_id, p.created_at, p.updated_at
 FROM products p
 JOIN sellers s ON p.seller_id = s.id
 WHERE p.id = $1 AND p.deleted_at IS NULL AND s.deleted_at IS NULL
 `
 
 type GetProductByIdRow struct {
-	ID         uuid.UUID          `db:"id" json:"id"`
-	Name       string             `db:"name" json:"name"`
-	PriceCents int64              `db:"price_cents" json:"price_cents"`
-	Currency   string             `db:"currency" json:"currency"`
-	SellerID   uuid.UUID          `db:"seller_id" json:"seller_id"`
-	CreatedAt  pgtype.Timestamptz `db:"created_at" json:"created_at"`
-	UpdatedAt  pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
+	ID              uuid.UUID          `db:"id" json:"id"`
+	Name            string             `db:"name" json:"name"`
+	PriceMinorUnits int64              `db:"price_minor_units" json:"price_minor_units"`
+	Currency        string             `db:"currency" json:"currency"`
+	SellerID        uuid.UUID          `db:"seller_id" json:"seller_id"`
+	CreatedAt       pgtype.Timestamptz `db:"created_at" json:"created_at"`
+	UpdatedAt       pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
 }
 
 func (q *Queries) GetProductById(ctx context.Context, id uuid.UUID) (GetProductByIdRow, error) {
@@ -130,7 +130,7 @@ func (q *Queries) GetProductById(ctx context.Context, id uuid.UUID) (GetProductB
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
-		&i.PriceCents,
+		&i.PriceMinorUnits,
 		&i.Currency,
 		&i.SellerID,
 		&i.CreatedAt,
@@ -141,24 +141,24 @@ func (q *Queries) GetProductById(ctx context.Context, id uuid.UUID) (GetProductB
 
 const updateProduct = `-- name: UpdateProduct :execrows
 UPDATE products
-SET name = $2, price_cents = $3, currency = $4, seller_id = $5, updated_at = $6
+SET name = $2, price_minor_units = $3, currency = $4, seller_id = $5, updated_at = $6
 WHERE id = $1 AND deleted_at IS NULL
 `
 
 type UpdateProductParams struct {
-	ID         uuid.UUID          `db:"id" json:"id"`
-	Name       string             `db:"name" json:"name"`
-	PriceCents int64              `db:"price_cents" json:"price_cents"`
-	Currency   string             `db:"currency" json:"currency"`
-	SellerID   uuid.UUID          `db:"seller_id" json:"seller_id"`
-	UpdatedAt  pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
+	ID              uuid.UUID          `db:"id" json:"id"`
+	Name            string             `db:"name" json:"name"`
+	PriceMinorUnits int64              `db:"price_minor_units" json:"price_minor_units"`
+	Currency        string             `db:"currency" json:"currency"`
+	SellerID        uuid.UUID          `db:"seller_id" json:"seller_id"`
+	UpdatedAt       pgtype.Timestamptz `db:"updated_at" json:"updated_at"`
 }
 
 func (q *Queries) UpdateProduct(ctx context.Context, arg UpdateProductParams) (int64, error) {
 	result, err := q.db.Exec(ctx, updateProduct,
 		arg.ID,
 		arg.Name,
-		arg.PriceCents,
+		arg.PriceMinorUnits,
 		arg.Currency,
 		arg.SellerID,
 		arg.UpdatedAt,

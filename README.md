@@ -158,6 +158,7 @@ migrations/
 ├── 000001_initial_schema.down.sql  # Rollback for initial schema
 ├── 000002_price_as_money.up.sql    # Money as integer cents + currency
 ├── 000003_outbox.up.sql            # Transactional outbox table
+├── 000004_price_minor_units.up.sql # Rename to ISO 4217 minor units
 └── ...
 ```
 
@@ -235,16 +236,16 @@ curl -s -X POST http://localhost:8080/api/v1/sellers \
 {"id":"0197a3c2-...","name":"Acme Corp","created_at":"2026-07-14T09:00:00Z","updated_at":"2026-07-14T09:00:00Z"}
 ```
 
-Create a product for that seller (prices are integer cents — never floats):
+Create a product for that seller (prices are integer minor units — never floats):
 
 ```bash
 curl -s -X POST http://localhost:8080/api/v1/products \
   -H 'Content-Type: application/json' \
-  -d '{"name": "Wooden Chair", "price_cents": 4999, "currency": "EUR", "seller_id": "<seller-id-from-above>"}'
+  -d '{"name": "Wooden Chair", "price_minor_units": 4999, "currency": "EUR", "seller_id": "<seller-id-from-above>"}'
 ```
 
 ```json
-{"id":"0197a3c3-...","name":"Wooden Chair","price_cents":4999,"currency":"EUR","seller_id":"0197a3c2-...","created_at":"...","updated_at":"..."}
+{"id":"0197a3c3-...","name":"Wooden Chair","price_minor_units":4999,"currency":"EUR","seller_id":"0197a3c2-...","created_at":"...","updated_at":"..."}
 ```
 
 Replay a request with the same `idempotency_key` — you get the cached response back instead of a duplicate seller:

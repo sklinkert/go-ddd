@@ -7,12 +7,12 @@ import (
 )
 
 type UpdateProductCommand struct {
-	IdempotencyKey string
-	Id             uuid.UUID
-	Name           string
-	PriceCents     int64
-	Currency       entities.Currency
-	SellerId       uuid.UUID
+	IdempotencyKey  string
+	Id              uuid.UUID
+	Name            string
+	PriceMinorUnits int64
+	Currency        entities.Currency
+	SellerId        uuid.UUID
 }
 
 type UpdateProductCommandResult struct {

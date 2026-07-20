@@ -23,7 +23,7 @@ func (p *Product) validate() error {
 	if p.Name == "" {
 		return fmt.Errorf("%w: name must not be empty", ErrValidation)
 	}
-	if p.Price.Cents() == 0 {
+	if p.Price.MinorUnits() == 0 {
 		return fmt.Errorf("%w: price must be greater than 0", ErrValidation)
 	}
 	if p.SellerId == uuid.Nil {
@@ -49,7 +49,7 @@ func NewProduct(name string, price Money, seller ValidatedSeller) *Product {
 		SellerId:  seller.Id,
 	}
 
-	product.recordEvent(events.NewProductCreated(product.Id, name, price.Cents(), string(price.Currency()), seller.Id))
+	product.recordEvent(events.NewProductCreated(product.Id, name, price.MinorUnits(), string(price.Currency()), seller.Id))
 
 	return product
 }

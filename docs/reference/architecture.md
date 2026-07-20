@@ -33,7 +33,7 @@ The wiring point where everything meets is [`cmd/marketplace/main.go`](https://g
 
 **Infrastructure** ([tutorial 5](../tutorial/05-repositories.md), [7](../tutorial/07-domain-events-outbox.md)) — the details. sqlc-generated, type-safe SQL behind the domain's repository interfaces; row-to-entity mapping routes through validating constructors; the aggregate write and its outbox events share one transaction; the relay polls and publishes with at-least-once semantics.
 
-**Interface** — the edge. Echo controllers parse DTOs, call services, and map sentinel errors to status codes in [`errors.go`](https://github.com/sklinkert/go-ddd/blob/main/internal/interface/api/rest/errors.go): `ErrProductNotFound` → 404, `ErrValidation` → 400, `ErrRequestInFlight` → 409, `ErrIdempotencyKeyReuse` → 422. DTOs use explicit primitives (`price_cents`, not `price`) so the wire format can never be ambiguous.
+**Interface** — the edge. Echo controllers parse DTOs, call services, and map sentinel errors to status codes in [`errors.go`](https://github.com/sklinkert/go-ddd/blob/main/internal/interface/api/rest/errors.go): `ErrProductNotFound` → 404, `ErrValidation` → 400, `ErrRequestInFlight` → 409, `ErrIdempotencyKeyReuse` → 422. DTOs use explicit primitives (`price_minor_units`, not `price`) so the wire format can never be ambiguous.
 
 ## The request flows
 

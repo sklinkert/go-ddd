@@ -263,17 +263,17 @@ components:
             $ref: "#/components/schemas/Seller"
     CreateProductRequest:
       type: object
-      required: [name, price_cents, currency, seller_id]
+      required: [name, price_minor_units, currency, seller_id]
       properties:
         idempotency_key:
           type: string
         name:
           type: string
           example: Wooden Chair
-        price_cents:
+        price_minor_units:
           type: integer
           format: int64
-          description: Price in minor units (cents) — no floats for money.
+          description: Price in ISO 4217 minor units (cents for EUR/USD) — no floats for money.
           example: 4999
         currency:
           type: string
@@ -283,13 +283,13 @@ components:
           format: uuid
     UpdateProductRequest:
       type: object
-      required: [name, price_cents, currency, seller_id]
+      required: [name, price_minor_units, currency, seller_id]
       properties:
         idempotency_key:
           type: string
         name:
           type: string
-        price_cents:
+        price_minor_units:
           type: integer
           format: int64
         currency:
@@ -306,7 +306,7 @@ components:
           format: uuid
         name:
           type: string
-        price_cents:
+        price_minor_units:
           type: integer
           format: int64
         currency:
