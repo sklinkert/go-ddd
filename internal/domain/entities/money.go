@@ -70,6 +70,11 @@ func (m Money) String() string {
 type moneyJSON struct {
 	MinorUnits int64    `json:"minor_units"`
 	Currency   Currency `json:"currency"`
+
+	// LegacyCents catches payloads from before the minor-units rename.
+	// Ignoring it would decode an old value as zero and NewMoney would
+	// happily accept that, so its presence is an explicit error instead.
+	LegacyCents *int64 `json:"cents,omitempty"`
 }
 
 func (m Money) MarshalJSON() ([]byte, error) {
@@ -82,6 +87,10 @@ func (m *Money) UnmarshalJSON(data []byte) error {
 	var raw moneyJSON
 	if err := json.Unmarshal(data, &raw); err != nil {
 		return err
+	}
+
+	if raw.LegacyCents != nil {
+		return fmt.Errorf("%w: legacy field %q is no longer supported, use %q", ErrValidation, "cents", "minor_units")
 	}
 
 	money, err := NewMoney(raw.MinorUnits, raw.Currency)

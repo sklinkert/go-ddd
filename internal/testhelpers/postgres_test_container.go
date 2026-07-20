@@ -84,23 +84,9 @@ func (p *PostgresTestContainer) Close(t *testing.T) {
 
 // applySchema applies all up-migrations in order
 func applySchema(ctx context.Context, pool *pgxpool.Pool) error {
-	// Get current working directory and find project root
-	cwd, err := os.Getwd()
+	projectRoot, err := findProjectRoot()
 	if err != nil {
-		return fmt.Errorf("failed to get working directory: %w", err)
-	}
-
-	// Find project root by looking for go.mod file
-	projectRoot := cwd
-	for {
-		if _, err := os.Stat(filepath.Join(projectRoot, "go.mod")); err == nil {
-			break
-		}
-		parent := filepath.Dir(projectRoot)
-		if parent == projectRoot {
-			return fmt.Errorf("could not find project root (go.mod not found)")
-		}
-		projectRoot = parent
+		return err
 	}
 
 	migrationPaths, err := filepath.Glob(filepath.Join(projectRoot, "migrations", "*.up.sql"))
@@ -124,6 +110,36 @@ func applySchema(ctx context.Context, pool *pgxpool.Pool) error {
 	}
 
 	return nil
+}
+
+// findProjectRoot walks up from the working directory to the go.mod.
+func findProjectRoot() (string, error) {
+	cwd, err := os.Getwd()
+	if err != nil {
+		return "", fmt.Errorf("failed to get working directory: %w", err)
+	}
+
+	projectRoot := cwd
+	for {
+		if _, err := os.Stat(filepath.Join(projectRoot, "go.mod")); err == nil {
+			return projectRoot, nil
+		}
+		parent := filepath.Dir(projectRoot)
+		if parent == projectRoot {
+			return "", fmt.Errorf("could not find project root (go.mod not found)")
+		}
+		projectRoot = parent
+	}
+}
+
+// ProjectRoot returns the repository root for tests that need real files,
+// like migration files.
+func ProjectRoot(t *testing.T) string {
+	t.Helper()
+
+	root, err := findProjectRoot()
+	require.NoError(t, err)
+	return root
 }
 
 // TruncateTables cleans all test data from the database tables

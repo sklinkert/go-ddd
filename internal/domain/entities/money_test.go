@@ -142,3 +142,14 @@ func TestMoney_UnmarshalJSON_InvalidState(t *testing.T) {
 		})
 	}
 }
+
+// A pre-rename payload must fail loudly: silently ignoring "cents" would
+// decode as a zero amount, which NewMoney accepts.
+func TestMoney_UnmarshalJSON_RejectsLegacyCentsField(t *testing.T) {
+	var money Money
+	err := json.Unmarshal([]byte(`{"cents":1234,"currency":"USD"}`), &money)
+
+	require.Error(t, err)
+	assert.ErrorIs(t, err, ErrValidation)
+	assert.Contains(t, err.Error(), "minor_units")
+}
