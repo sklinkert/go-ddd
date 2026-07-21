@@ -45,6 +45,7 @@ func (pc *ProductController) CreateProductController(c echo.Context) error {
 			"error": "Invalid product Id format",
 		})
 	}
+	productCommand.IdempotencyKey = idempotencyKey(c, productCommand.IdempotencyKey)
 
 	result, err := pc.service.CreateProduct(c.Request().Context(), productCommand)
 	if err != nil {
@@ -116,6 +117,7 @@ func (pc *ProductController) UpdateProductController(c echo.Context) error {
 			"error": "Invalid seller Id format",
 		})
 	}
+	productCommand.IdempotencyKey = idempotencyKey(c, productCommand.IdempotencyKey)
 
 	result, err := pc.service.UpdateProduct(c.Request().Context(), productCommand)
 	if err != nil {
@@ -135,7 +137,10 @@ func (pc *ProductController) DeleteProductController(c echo.Context) error {
 		})
 	}
 
-	_, err = pc.service.DeleteProduct(c.Request().Context(), &command.DeleteProductCommand{Id: id})
+	_, err = pc.service.DeleteProduct(c.Request().Context(), &command.DeleteProductCommand{
+		IdempotencyKey: idempotencyKey(c, ""),
+		Id:             id,
+	})
 	if err != nil {
 		return writeCommandError(c, err, "Failed to delete product")
 	}
