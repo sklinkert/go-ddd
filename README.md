@@ -135,7 +135,7 @@ This separation enables different optimization strategies:
 
 ### Idempotency Keys
 Idempotency ensures that multiple identical requests have the same effect as a single request. This is crucial for handling network failures and retries in distributed systems. Implementation:
-- Each command accepts an optional `idempotency_key` in the request
+- Every mutating endpoint (create, update, **and delete**) accepts an optional key. The conventional `Idempotency-Key` HTTP header is preferred; an `idempotency_key` field in the JSON body is still honored as a fallback, and the header wins when both are sent
 - The key is **reserved atomically** (`INSERT ... ON CONFLICT DO NOTHING`), so two concurrent requests with the same key can never both execute — no check-then-write race
 - A completed request returns its cached response; a still-running one returns an "in progress" error so the client retries later
 - Reusing a key with a **different payload** is rejected instead of silently returning the wrong cached response

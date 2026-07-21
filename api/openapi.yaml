@@ -3,7 +3,11 @@ info:
   title: go-ddd Marketplace API
   description: |
     Example REST API of the go-ddd template. Sellers manage products.
-    Write endpoints accept an optional `idempotency_key` making retries safe.
+    Write endpoints (create, update, delete) are idempotent: send an
+    `Idempotency-Key` header to make retries safe. A completed request with the
+    same key replays its cached response; the same key with a different payload
+    is rejected. The legacy `idempotency_key` body field is still honored as a
+    fallback.
   version: "1.0.0"
   license:
     name: MIT
@@ -43,6 +47,8 @@ paths:
     post:
       summary: Create a seller
       operationId: createSeller
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
       requestBody:
         required: true
         content:
@@ -71,6 +77,8 @@ paths:
     put:
       summary: Update a seller
       operationId: updateSeller
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
       requestBody:
         required: true
         content:
@@ -106,6 +114,7 @@ paths:
       operationId: deleteSeller
       parameters:
         - $ref: "#/components/parameters/Id"
+        - $ref: "#/components/parameters/IdempotencyKey"
       responses:
         "204":
           description: Seller deleted
@@ -115,6 +124,8 @@ paths:
     post:
       summary: Create a product
       operationId: createProduct
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
       requestBody:
         required: true
         content:
@@ -160,6 +171,7 @@ paths:
       operationId: updateProduct
       parameters:
         - $ref: "#/components/parameters/Id"
+        - $ref: "#/components/parameters/IdempotencyKey"
       requestBody:
         required: true
         content:
@@ -180,6 +192,7 @@ paths:
       operationId: deleteProduct
       parameters:
         - $ref: "#/components/parameters/Id"
+        - $ref: "#/components/parameters/IdempotencyKey"
       responses:
         "204":
           description: Product deleted
@@ -194,6 +207,16 @@ components:
       schema:
         type: string
         format: uuid
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: false
+      description: >-
+        Unique key that makes this request safe to retry. Repeating the request
+        with the same key replays the original response instead of executing
+        again.
+      schema:
+        type: string
   responses:
     BadRequest:
       description: Malformed request

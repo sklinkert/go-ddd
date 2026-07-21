@@ -45,6 +45,7 @@ func (sc *SellerController) CreateSellerController(c echo.Context) error {
 			"error": "Invalid seller Id format",
 		})
 	}
+	sellerCommand.IdempotencyKey = idempotencyKey(c, sellerCommand.IdempotencyKey)
 
 	commandResult, err := sc.service.CreateSeller(c.Request().Context(), sellerCommand)
 	if err != nil {
@@ -110,6 +111,7 @@ func (sc *SellerController) PutSellerController(c echo.Context) error {
 			"error": "Invalid seller Id format",
 		})
 	}
+	updateSellerCommand.IdempotencyKey = idempotencyKey(c, updateSellerCommand.IdempotencyKey)
 
 	commandResult, err := sc.service.UpdateSeller(c.Request().Context(), updateSellerCommand)
 	if err != nil {
@@ -129,7 +131,10 @@ func (sc *SellerController) DeleteSellerController(c echo.Context) error {
 		})
 	}
 
-	_, err = sc.service.DeleteSeller(c.Request().Context(), &command.DeleteSellerCommand{Id: id})
+	_, err = sc.service.DeleteSeller(c.Request().Context(), &command.DeleteSellerCommand{
+		IdempotencyKey: idempotencyKey(c, ""),
+		Id:             id,
+	})
 	if err != nil {
 		return writeCommandError(c, err, "Failed to delete seller")
 	}
