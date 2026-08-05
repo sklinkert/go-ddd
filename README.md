@@ -311,6 +311,7 @@ make build        # build the server binary into ./bin
 make test         # run all tests with the race detector (needs Docker)
 make test-unit    # run only tests that don't require Docker
 make lint         # run golangci-lint
+make vulncheck    # scan application and test code for known vulnerabilities
 make fmt          # format the code (gofmt + goimports)
 make migrate-up   # apply migrations against $DATABASE_URL
 make sqlc         # regenerate sqlc code

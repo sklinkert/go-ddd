@@ -3,12 +3,13 @@
 # Local database URL used by migrate-* targets. Override on the CLI:
 #   make migrate-up DATABASE_URL=postgres://user:pass@host:5432/db?sslmode=disable
 DATABASE_URL ?= postgres://marketplace:marketplace@localhost:5432/marketplace?sslmode=disable
+GOVULNCHECK_VERSION := v1.6.0
 
 # Packages whose tests require Docker (testcontainers).
 DOCKER_TEST_PKGS := github.com/sklinkert/go-ddd/internal/infrastructure/db/postgres \
                     github.com/sklinkert/go-ddd/internal/testhelpers
 
-.PHONY: help build run test test-unit cover lint fmt tidy vendor sqlc migrate-up migrate-down docker-up docker-down
+.PHONY: help build run test test-unit cover lint vulncheck fmt tidy vendor sqlc migrate-up migrate-down docker-up docker-down
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
@@ -32,6 +33,9 @@ cover: ## Run all tests and print total coverage (needs Docker)
 
 lint: ## Run golangci-lint
 	golangci-lint run ./...
+
+vulncheck: ## Scan application and test code for known vulnerabilities
+	go run golang.org/x/vuln/cmd/govulncheck@$(GOVULNCHECK_VERSION) -test ./...
 
 fmt: ## Format code (gofmt + goimports)
 	golangci-lint fmt ./...

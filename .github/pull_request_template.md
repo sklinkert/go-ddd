@@ -10,5 +10,6 @@
 
 - [ ] `make test` passes (needs Docker)
 - [ ] `make lint` passes
+- [ ] `make vulncheck` passes
 - [ ] Schema changes include up + down migrations and regenerated sqlc code
 - [ ] New behavior is covered by tests
