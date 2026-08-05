@@ -319,6 +319,7 @@ make build        # 构建服务端二进制到 ./bin
 make test         # 运行全部测试，含竞态检测（需要 Docker）
 make test-unit    # 仅运行不需要 Docker 的测试
 make lint         # 运行 golangci-lint
+make vulncheck    # 扫描应用和测试代码中的已知漏洞
 make fmt          # 格式化代码（gofmt + goimports）
 make migrate-up   # 对 $DATABASE_URL 应用迁移
 make sqlc         # 重新生成 sqlc 代码

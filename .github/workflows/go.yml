@@ -1,4 +1,4 @@
-# This workflow builds, lints and tests the Go project.
+# This workflow builds, lints, tests and scans the Go project for vulnerabilities.
 # For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-go
 
 name: Go
@@ -62,3 +62,17 @@ jobs:
       uses: golangci/golangci-lint-action@v7
       with:
         version: v2.12.2
+
+  security:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.26.x'
+        cache: true
+
+    - name: Check for known vulnerabilities
+      run: make vulncheck
