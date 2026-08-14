@@ -326,7 +326,7 @@ Click **"Use this template"** on GitHub to bootstrap your own service from this 
 
 If this template helps you, **give it a ⭐** — it helps others find it.
 
-[![Star History Chart](https://api.star-history.com/svg?repos=sklinkert/go-ddd&type=Date)](https://star-history.com/#sklinkert/go-ddd&Date)
+[![Star History Chart](https://star-history.dera.page/svg?repos=sklinkert/go-ddd&type=Date)](https://star-history.dera.page/#sklinkert/go-ddd&Date)
 
 ### License
 Distributed under the MIT License. See LICENSE for more information.
