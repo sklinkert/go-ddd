@@ -65,8 +65,8 @@ github.com/go-logr/stdr
 ## explicit; go 1.12
 github.com/go-ole/go-ole
 github.com/go-ole/go-ole/oleutil
-# github.com/golang-migrate/migrate/v4 v4.19.1
-## explicit; go 1.24.0
+# github.com/golang-migrate/migrate/v4 v4.20.1
+## explicit; go 1.25.11
 github.com/golang-migrate/migrate/v4
 github.com/golang-migrate/migrate/v4/database
 github.com/golang-migrate/migrate/v4/database/multistmt
