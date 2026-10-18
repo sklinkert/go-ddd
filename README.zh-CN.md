@@ -335,7 +335,7 @@ make sqlc         # 重新生成 sqlc 代码
 
 如果这个模板对你有帮助，**请点一个 ⭐** —— 这能帮助更多人发现它。
 
-[![Star History Chart](https://api.star-history.com/svg?repos=sklinkert/go-ddd&type=Date)](https://star-history.com/#sklinkert/go-ddd&Date)
+[![Star History Chart](https://star-history.dera.page/svg?repos=sklinkert/go-ddd&type=Date)](https://star-history.dera.page/#sklinkert/go-ddd&Date)
 
 ### 许可证
 
