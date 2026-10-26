@@ -37,6 +37,13 @@ Help and questions: [Github Discussions](https://github.com/labstack/echo/discus
 ## Sponsors
 
 <div>
+  <a href="https://blacksmith.sh" style="display: inline-flex; align-items: center; gap: 10px">
+    <img src="https://github.com/useblacksmith.png?size=56" height="28px" alt="Blacksmith logo"></img>
+  <b>Blacksmith – faster, drop-in GitHub Actions runners</b>
+    </a>
+</div>
+<br/>
+<div>
   <a href="https://encore.dev" style="display: inline-flex; align-items: center; gap: 10px">
     <img src="https://user-images.githubusercontent.com/78424526/214602214-52e0483a-b5fc-4d4c-b03e-0b7b23e012df.svg" height="28px" alt="encore icon"></img>
   <b>Encore – the platform for building Go-based cloud backends</b>
@@ -54,7 +61,15 @@ Click [here](https://github.com/sponsors/labstack) for more information on spons
 // go get github.com/labstack/echo/{version}
 go get github.com/labstack/echo/v4
 ```
-Latest version of Echo supports last four Go major [releases](https://go.dev/doc/devel/release) and might work with older versions.
+Echo v4.16.1 requires Go 1.26 or later so it can use patched `golang.org/x/` dependencies. Use a supported, patched Go toolchain when building applications.
+
+### Security defaults in v4.16.1
+
+`BodyDump` captures at most 5 MiB of the request and 5 MiB of the response by default. The application and client still receive the complete bodies. Configure `BodyDumpConfig.MaxRequestBytes` and `MaxResponseBytes` to change the capture limits; `-1` disables a limit.
+
+`Decompress` limits decompressed request bodies to 100 MiB by default. Reading beyond the limit returns HTTP 413, including through JSON and XML binding. Configure `DecompressConfig.MaxDecompressedSize` to change the limit; `-1` disables it. Apply any smaller application body limit after decompression.
+
+The proxy now validates WebSocket upgrade responses, closes both WebSocket connections when either side disconnects, and removes incoming `Forwarded` headers. Backends should use the proxy's validated forwarding headers and enforce their own authorization.
 
 ### Example
 
@@ -99,6 +114,7 @@ Following list of middleware is maintained by Echo team.
 |------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | [github.com/labstack/echo-jwt](https://github.com/labstack/echo-jwt)         | [JWT](https://github.com/golang-jwt/jwt) middleware                                                                                                                                                                                                                                                                           | 
 | [github.com/labstack/echo-contrib](https://github.com/labstack/echo-contrib) | [casbin](https://github.com/casbin/casbin), [gorilla/sessions](https://github.com/gorilla/sessions), [jaegertracing](https://github.com/uber/jaeger-client-go), [prometheus](https://github.com/prometheus/client_golang/), [pprof](https://pkg.go.dev/net/http/pprof), [zipkin](https://github.com/openzipkin/zipkin-go) middlewares | 
+| [github.com/labstack/echo-otel](https://github.com/labstack/echo-otel/tree/v4) | [OpenTelemetry](https://opentelemetry.io/) middleware for tracing and metrics (`github.com/labstack/echo-otel/v4`)                                                                                                                                                                                                                    |
 
 # Third-party middleware repositories
 

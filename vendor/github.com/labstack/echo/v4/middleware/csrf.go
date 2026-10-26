@@ -5,6 +5,7 @@ package middleware
 
 import (
 	"crypto/subtle"
+	"errors"
 	"net/http"
 	"slices"
 	"strings"
@@ -165,6 +166,9 @@ func (config CSRFConfig) ToMiddleware() (echo.MiddlewareFunc, error) {
 	if cErr != nil {
 		return nil, cErr
 	}
+	if len(extractors) == 0 {
+		return nil, errors.New("echo csrf middleware could not create extractors from TokenLookup string")
+	}
 
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
@@ -268,6 +272,9 @@ func (config CSRFConfig) ToMiddleware() (echo.MiddlewareFunc, error) {
 }
 
 func validateCSRFToken(token, clientToken string) bool {
+	if token == "" || clientToken == "" {
+		return false
+	}
 	return subtle.ConstantTimeCompare([]byte(token), []byte(clientToken)) == 1
 }
 

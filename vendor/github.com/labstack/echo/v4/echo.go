@@ -285,7 +285,7 @@ const (
 
 const (
 	// Version of Echo
-	Version = "4.16.0"
+	Version = "4.16.2"
 	website = "https://echo.labstack.com"
 	// http://patorjk.com/software/taag/#p=display&f=Small%20Slant&t=Echo
 	banner = `
@@ -860,6 +860,8 @@ func (e *Echo) TLSListenerAddr() net.Addr {
 }
 
 // StartH2CServer starts a custom http/2 server with h2c (HTTP/2 Cleartext).
+//
+//lint:ignore SA1019 Preserve the v4 public API through its supported lifetime; x/net remains security patched.
 func (e *Echo) StartH2CServer(address string, h2s *http2.Server) error {
 	e.startupMutex.Lock()
 	// Setup
