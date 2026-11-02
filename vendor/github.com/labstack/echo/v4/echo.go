@@ -97,7 +97,10 @@ type Echo struct {
 	Validator        Validator
 	Renderer         Renderer
 	Logger           Logger
-	IPExtractor      IPExtractor
+	// IPExtractor defines how Context.RealIP determines the client IP address.
+	// If nil, only the connection peer is used. Applications behind a proxy must
+	// configure a header extractor that trusts only their own proxies.
+	IPExtractor IPExtractor
 	// SchemeExtractor defines the strategy for determining the request scheme (`http` or `https`),
 	// particularly important when behind proxies or load balancers that terminate TLS.
 	// Used by Context.Scheme and by the HTTPS redirect, Secure and Proxy middlewares.
@@ -285,7 +288,7 @@ const (
 
 const (
 	// Version of Echo
-	Version = "4.16.0"
+	Version = "4.16.3"
 	website = "https://echo.labstack.com"
 	// http://patorjk.com/software/taag/#p=display&f=Small%20Slant&t=Echo
 	banner = `
@@ -860,6 +863,8 @@ func (e *Echo) TLSListenerAddr() net.Addr {
 }
 
 // StartH2CServer starts a custom http/2 server with h2c (HTTP/2 Cleartext).
+//
+//lint:ignore SA1019 Preserve the v4 public API through its supported lifetime; x/net remains security patched.
 func (e *Echo) StartH2CServer(address string, h2s *http2.Server) error {
 	e.startupMutex.Lock()
 	// Setup
