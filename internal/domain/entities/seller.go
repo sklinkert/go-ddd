@@ -35,8 +35,13 @@ func (s *Seller) validate() error {
 }
 
 func (s *Seller) UpdateName(name string) error {
-	s.Name = name
-	s.UpdatedAt = time.Now()
+	updated := *s
+	updated.Name = name
+	updated.UpdatedAt = time.Now()
+	if err := updated.validate(); err != nil {
+		return err
+	}
 
-	return s.validate()
+	*s = updated
+	return nil
 }

@@ -40,13 +40,14 @@ func TestProduct_UpdateName_EmptyName(t *testing.T) {
 	require.NoError(t, err)
 
 	product := NewProduct("Original Product", mustMoney(t, 9999, USD), *validatedSeller)
+	originalUpdatedAt := product.UpdatedAt
 
 	// Test empty name validation
 	err = product.UpdateName("")
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "name must not be empty")
-	// Note: The current implementation modifies first, then validates, so name changes even on error
-	assert.Equal(t, "", product.Name)
+	assert.Equal(t, "Original Product", product.Name)
+	assert.Equal(t, originalUpdatedAt, product.UpdatedAt)
 }
 
 func TestProduct_UpdatePrice(t *testing.T) {
@@ -74,13 +75,14 @@ func TestProduct_UpdatePrice_ZeroPrice(t *testing.T) {
 	require.NoError(t, err)
 
 	product := NewProduct("Test Product", mustMoney(t, 5000, USD), *validatedSeller)
+	originalUpdatedAt := product.UpdatedAt
 
 	zeroPrice := mustMoney(t, 0, USD)
 	err = product.UpdatePrice(zeroPrice)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "price must be greater than 0")
-	// Note: The current implementation modifies first, then validates, so price changes even on error
-	assert.Equal(t, zeroPrice, product.Price)
+	assert.Equal(t, mustMoney(t, 5000, USD), product.Price)
+	assert.Equal(t, originalUpdatedAt, product.UpdatedAt)
 }
 
 func TestProduct_AssignSeller(t *testing.T) {
