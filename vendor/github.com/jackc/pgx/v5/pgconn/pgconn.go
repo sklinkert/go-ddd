@@ -355,7 +355,7 @@ func connectOne(ctx context.Context, config *Config, connectConfig *connectOneCo
 
 	var sslCert *sslCertState
 	if connectConfig.tlsConfig != nil {
-		tlsConfig, state := prepareTLSConfigForConnect(connectConfig.tlsConfig, config.SSLCertMode)
+		tlsConfig, state := config.prepareTLSConfigForConnect(connectConfig.tlsConfig)
 		sslCert = state
 		pgConn.contextWatcher = ctxwatch.NewContextWatcher(&DeadlineContextWatcherHandler{Conn: pgConn.conn})
 		pgConn.contextWatcher.Watch(ctx)
@@ -717,7 +717,9 @@ func (pgConn *PgConn) peekMessage() (pgproto3.BackendMessage, error) {
 // receiveMessage receives a message without setting up context cancellation
 func (pgConn *PgConn) receiveMessage() (pgproto3.BackendMessage, error) {
 	if pgConn.status == connStatusClosed {
-		return nil, &connLockError{status: "conn closed"}
+		// The connection was closed by a failure earlier in this operation, after a request may already have been sent.
+		// Unlike a lock failure this is not safe to retry.
+		return nil, &pgconnError{err: ErrConnClosed, safeToRetry: false}
 	}
 
 	msg, err := pgConn.peekMessage()
@@ -826,11 +828,12 @@ func (pgConn *PgConn) Close(ctx context.Context) error {
 }
 
 // asyncClose marks the connection as closed and asynchronously sends a cancel query message and closes the underlying
-// connection.
+// connection. The cancel query message is not sent if the connection is still starting up, as no query can be running.
 func (pgConn *PgConn) asyncClose() {
 	if pgConn.status == connStatusClosed {
 		return
 	}
+	sendCancelRequest := pgConn.status != connStatusConnecting
 	pgConn.status = connStatusClosed
 
 	go func() {
@@ -842,7 +845,9 @@ func (pgConn *PgConn) asyncClose() {
 		ctx, cancel := context.WithDeadline(context.Background(), deadline)
 		defer cancel()
 
-		pgConn.CancelRequest(ctx)
+		if sendCancelRequest {
+			pgConn.CancelRequest(ctx)
+		}
 
 		pgConn.conn.SetDeadline(deadline)
 
@@ -1197,7 +1202,7 @@ func (pgConn *PgConn) CancelRequest(ctx context.Context) error {
 	// plaintext (e.g. unix sockets or sslmode=disable).
 	if pgConn.tlsConfig != nil {
 		// Cancel requests have no AuthenticationOk, so only the prepared TLS config is needed.
-		tlsConfig, _ := prepareTLSConfigForConnect(pgConn.tlsConfig, pgConn.config.SSLCertMode)
+		tlsConfig, _ := pgConn.config.prepareTLSConfigForConnect(pgConn.tlsConfig)
 		var tlsCancelConn net.Conn
 		if pgConn.config.SSLNegotiation == "direct" {
 			tlsCancelConn = tls.Client(cancelConn, tlsConfig)
