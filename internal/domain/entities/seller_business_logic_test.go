@@ -24,13 +24,14 @@ func TestSeller_UpdateName(t *testing.T) {
 
 func TestSeller_UpdateName_EmptyName(t *testing.T) {
 	seller := NewSeller("Original Seller")
+	originalUpdatedAt := seller.UpdatedAt
 
 	// Test empty name validation
 	err := seller.UpdateName("")
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "name must not be empty")
-	// Note: The current implementation modifies first, then validates, so name changes even on error
-	assert.Equal(t, "", seller.Name)
+	assert.Equal(t, "Original Seller", seller.Name)
+	assert.Equal(t, originalUpdatedAt, seller.UpdatedAt)
 }
 
 func TestSeller_Validate_CreatedAtAfterUpdatedAt(t *testing.T) {

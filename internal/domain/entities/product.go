@@ -68,23 +68,38 @@ func (p *Product) PullEvents() []events.DomainEvent {
 }
 
 func (p *Product) UpdateName(name string) error {
-	p.Name = name
-	p.UpdatedAt = time.Now()
+	updated := *p
+	updated.Name = name
+	updated.UpdatedAt = time.Now()
+	if err := updated.validate(); err != nil {
+		return err
+	}
 
-	return p.validate()
+	*p = updated
+	return nil
 }
 
 func (p *Product) UpdatePrice(price Money) error {
-	p.Price = price
-	p.UpdatedAt = time.Now()
+	updated := *p
+	updated.Price = price
+	updated.UpdatedAt = time.Now()
+	if err := updated.validate(); err != nil {
+		return err
+	}
 
-	return p.validate()
+	*p = updated
+	return nil
 }
 
 // AssignSeller moves the product to a different (validated) seller.
 func (p *Product) AssignSeller(seller ValidatedSeller) error {
-	p.SellerId = seller.Id
-	p.UpdatedAt = time.Now()
+	updated := *p
+	updated.SellerId = seller.Id
+	updated.UpdatedAt = time.Now()
+	if err := updated.validate(); err != nil {
+		return err
+	}
 
-	return p.validate()
+	*p = updated
+	return nil
 }
